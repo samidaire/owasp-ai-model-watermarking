@@ -30,7 +30,7 @@ Git Bash, from `demo/`:
 - Uses the saved checkpoints in `ckpt/`. Takes **~26 s** on the RTX 5080.
 - `--retrain` retrains every model first (+30 s on GPU, ~1.5 min on CPU).
 - `--pause` waits for Enter between demos, for presenting.
-- `--hashed` re-runs the Poseidon-committed proofs. Each takes ~1.5 min (calibrate ~16 s, setup ~34 s, prove ~40–47 s) and writes a ~10 GB temporary proving key, which is deleted afterwards.
+- `--hashed` re-runs the Poseidon-committed proofs. Each of the two runs (owner, thief) takes ~1.5–1.7 min (calibrate ~16 s, setup ~33–34 s, prove ~39–47 s) and writes a ~10.5 GB (9.8 GiB) temporary proving key, which is deleted afterwards.
 - **No GPU?** The global `python` (CPU torch) runs `run_all.py` without `--ezkl`. EZKL is installed only in `.venv`.
 
 ## What each script shows
@@ -53,14 +53,14 @@ Git Bash, from `demo/`:
 | Accuracy, clean vs watermarked | 98.69% vs 98.66%; owner BER 0.000 (clean model 0.531) |
 | Pruning 65% / 90% | Accuracy 65.7% / 9.4%; owner BER 0.000 / 0.016. The watermark outlives the model. |
 | FTAL-5, RTAL-5, int4 | BER 0.000 |
-| Overwrite (thief embeds own mark) | Owner BER 0.047 **and** thief BER 0.000: two valid marks, ambiguity again |
+| Overwrite (thief embeds own mark) | Owner BER 0.047 **and** the thief's own mark valid (thief BER 0.000 in `run_log.txt`, an earlier run; not yet saved in the JSON): two valid marks, ambiguity again |
 | Feature permutation | Accuracy unchanged, **owner BER 0.438: removed**. Owner realignment restores BER 0.000. |
 | Forgery (Uchida and ZKROWNN relation) | Thief BER 0.000 on stolen, clean and null models. Entry KS D = 0.0104 < 0.0142. Large-margin forgery matches the owner's margins (min 1.43 vs 1.42). |
-| D1 / D2 | 1000/1000 (true by construction) / 0/20,000 accepted (best thief BER 0.250); D2 work factor ~2^32 at T=64 (GPU-feasible), ~2^120 at T=256 |
-| EZKL uncommitted (logrows 15) | prove 0.63 s, verify 20 ms, proof 60 KB, pk 132 MB, peak RAM 0.6 GiB |
-| EZKL Poseidon-committed (logrows 20) | prove ~36 s, verify ~0.5–0.6 s, proof 65 KB, pk 9.8 GiB, sampled peak RAM 2.6 GiB |
+| D1 / D2 | 1000/1000 (true by construction) / 0/20,000 accepted (best thief BER 0.250); D2 work factor ~2^32 at T=64 (GPU-feasible), ~2^120 at T=256. At the measured 9,680 seeds/s that is ~71 single-core hours for a 50% chance (2.49e9 seeds ÷ 9,680/s ≈ 257,463 s). `committed_seed.json` stores those seconds in a field named `single_core_hours`, which is why the UI shows "257,463 core-hours"; that units bug is being fixed in code (FIX-01). |
+| EZKL uncommitted (logrows 15) | prove 0.66–0.67 s, verify 21 ms, proof 60 KiB, pk 132 MiB, peak RAM 0.6 GiB |
+| EZKL Poseidon-committed (logrows 20) | prove 39–47 s (thief 39.1 s, owner 46.9 s), verify 0.56–0.58 s, proof 64.5 KiB, pk 9.8 GiB, sampled peak RAM 2.6 GiB |
 
-Numbers vary slightly per retrain: the seed is random each time `01_train.py` runs.
+Numbers are taken from `demo/results/*.json` (`train`, `attacks`, `forgery`, `committed_seed`, `vk_crosscheck`, `ezkl_*/summary.json`); where the owner and thief runs differ, the range is given. A script that regenerates this table from the JSON is planned (NFR-08). Numbers vary slightly per retrain: the seed is random each time `01_train.py` runs.
 
 ## Caveats (say these out loud)
 

@@ -241,16 +241,16 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 | SoK-subset removal attacks | ✅ | ✅ live |
 | **Ambiguity/forgery attack on uncommitted keys** (G1) | ✅ (pure PyTorch) | ✅ live, the highlight |
 | **Committed-seed fix** (key *and* signature derived from the seed) | ✅ | ✅ live |
-| ZK proof of Uchida extraction (EZKL/Halo2) | ✅ **Measured:** prove 0.63 s, verify 20 ms, 60 KB proof, 0.6 GiB RAM | ✅ live |
-| Poseidon commitment to (X, s) in-circuit | ✅ **Measured:** logrows 20, prove ~36 s, pk 9.8 GiB, sampled peak RAM 2.6 GiB | ✅ live (precomputed) |
+| ZK proof of Uchida extraction (EZKL/Halo2) | ✅ **Measured:** prove 0.66–0.67 s, verify 21 ms, 60 KiB proof, 0.6 GiB RAM | ✅ live |
+| Poseidon commitment to (X, s) in-circuit | ✅ **Measured:** logrows 20, prove 39–47 s, verify 0.56–0.58 s, pk 9.8 GiB, sampled peak RAM 2.6 GiB | ✅ live (precomputed) |
 | Deriving X, s from the seed in-circuit (D2 level) | ⚠️ Not yet attempted; expected to be costly | Phase 3 |
 | LLM fingerprint on a ≤3B model | ⚠️ Stretch | Recorded |
 | ZK over an LLM | ❌ | ❌ |
 
-**Phase-0 spike results (measured on this machine, 2026-10-05; code in `demo/`):**
+**Phase-0 spike results (measured on this machine, 2026-10-05; code in `demo/`; numbers from `demo/results/*.json`, ranges where the owner and thief runs differ):**
 - **Uncommitted proof (G1, confirmed cryptographically).** The thief's forged key produces an EZKL proof that **verifies under the owner's own verification key** (identical VK hash when the settings are equal). Without a commitment, a ZK ownership proof cannot tell owner from thief.
 - **Poseidon-committed proof (`param_visibility="hashed"`).** The owner's public hash matches the published value and the thief's does not. This is the D1 level (direct commitment plus timestamp).
-- **Cost of committing.** Committing raises logrows from 15 to 20 and proving time from 0.63 s to about 36 s. That trade-off is what RQ3 studies.
+- **Cost of committing.** Committing raises logrows from 15 to 20 and proving time from 0.66–0.67 s to 39–47 s. That trade-off is what RQ3 studies.
 - **Removal attacks.** The Uchida watermark survives pruning past the point where the model is useless, plus FTAL, RTAL and int4. It is **erased by feature permutation at zero accuracy cost** (the SoK attack), and recovered by owner-side realignment. This is measured evidence for G2.
 
 ---
