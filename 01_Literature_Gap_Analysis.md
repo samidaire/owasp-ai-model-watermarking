@@ -112,7 +112,7 @@ The control is referenced under three threats:
 | Hardware | **128 GB RAM, AMD "Ryzen 3990X"** desktop. Even so, part of the MLP's first layer had to be precomputed "due to memory constraints". | Training on RTX A6000 + Xeon Gold 6338. Proving hardware is not separately stated in the sections I read. | Cloud (Lilith) |
 | Threat model | **Prover is semi-honest:** "P will not deviate from the protocol" | Adversary is a malicious end user. Assumes **honest setup** (the true decoder is committed in VK) and a semi-honest arbitrator. Adaptive and spoofing attacks are declared "orthogonal". | Not formalised |
 | Removal attacks evaluated | **None.** It inherits DeepSigns' claims ("same BER and detection success as DeepSigns"). | **Yes, at the content level:** variable renaming (AUROC > 0.93 at 50% renamed), LLM refactoring, re-watermarking (AUROC 0.72), forgery (argued from ZK soundness) | **None.** LSB steganography is fragile by construction; the paper reports no robustness tests. |
-| Forgery / ambiguity | **Not addressed.** Key, projection matrix *A* and signature are all private witnesses with no prior commitment. | Partly addressed. The VK commits to the decoder and zkBER binds the signature to {0,1}, but this relies on an honest setup. | Not addressed. It uses a secret-keyed SHA-256 of a perceptual hash. |
+| Forgery / ambiguity | **Addressed by key secrecy alone, with no commitment.** The abstract says the keys "have to be kept private to prevent discovery, forging, and removal". But the key, projection matrix *A* and signature are all private witnesses with no prior commitment, so nothing stops a claimant from choosing them after seeing the model (§5 G1). | Partly addressed. The VK commits to the decoder and zkBER binds the signature to {0,1}, but this relies on an honest setup. | Not addressed. It uses a secret-keyed SHA-256 of a perceptual hash. |
 | Code | No code link in the paper | Customised EZKL. Release not confirmed. | Full-stack app described (FastAPI + Next.js). Release not confirmed. |
 
 **Discrepancies worth recording (reviewers notice these):**
@@ -307,7 +307,7 @@ Item 1 is not built yet. The Phase-0 spike (§6) reaches only the D1 level: it c
 | G6: zkLLM "not a consumer-GPU workflow" | ⚠️ **Refined with data:** A100 40 GB; memory 1.88–23.1 GB. Small OPT models fit in 16 GB by reported memory. |
 | "Python 3.14 likely too new" | ❌ **Corrected:** PyTorch CUDA wheels for cp314 on Windows exist |
 | EZKL "licence via CLA, needs checking" | ⚠️ **Escalated:** no open-source licence file found; now gap G5 |
-| P2, P3, P9 venues | ✅ **Confirmed:** USENIX Sec '18 (Semantic Scholar), IEEE S&P '22 (arXiv text), ICLR '26 (arXiv comment line) |
+| P2, P4, P15 venues | ✅ **Confirmed:** P2 USENIX Sec '18 (Semantic Scholar; usenix.org in v2.1), P4 IEEE S&P '22 (arXiv text), P15 ICLR '26 (arXiv comment line) |
 | (new) Forgery / ambiguity gap | ➕ **Added as G1** (core). Supported by P5, P11, P13, P12, P15 and project requirement R2. |
 | (new) OWASP AI Exchange control text | ➕ **Added.** The wording is quoted verbatim; R1/R2/L1 are the project's labels for it, not OWASP numbering. |
 | (new) Phase-0 spike | ➕ **Added** (§6). EZKL works on this machine. A forged proof verifies under the owner's VK, and the Poseidon commitment separates owner from thief. Costs measured. |

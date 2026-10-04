@@ -40,7 +40,7 @@ Git Bash, from `demo/`:
 | `00_env_check.py` | — | torch/CUDA/sm_120/VRAM, MNIST present |
 | `01_train.py` | A | Owner commits SHA-256(seed‖owner) **at embedding time**; key *X* and signature *b* derived from the seed; trains clean, watermarked and 4 null models |
 | `02_attacks.py` | B | SoK-style removal attacks: pruning, int8/int4, FTAL, RTAL, overwriting, **feature permutation** (+ owner realignment). Writes `results/attacks.png` |
-| `03_forgery.py` | C | Counterfeit key gives the thief BER 0 ("MALLORY!"); KS test says it's indistinguishable; the same sign-fit satisfies **ZKROWNN's Algorithm 1 relation** on *any* model (evaluated in PyTorch, not their circuit) |
+| `03_forgery.py` | C | Counterfeit key gives the thief BER 0 ("MALLORY!"). Entry distributions match a real key (KS test); under ZK the verifier sees neither. The same sign-fit satisfies **ZKROWNN's Algorithm 1 relation** on *any* model (evaluated in PyTorch, not their circuit) |
 | `04_committed_seed.py` | D | D0 owner verifies; **D1** free signature: thief wins 100%; **D2** derived signature: thief's seed search accepted 0/20,000 (theory 2.8e-10 per try). Writes `results/forgery_search.png` |
 | `05_ezkl_spike.py` | E1 | EZKL (Halo2/KZG) proof of extraction: private key+signature, public weights, public score |
 | `06_vk_crosscheck.py` | E2 | **Thief's forged proof verifies under the owner's verification key** (no commitment) |
