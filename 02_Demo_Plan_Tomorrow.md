@@ -47,10 +47,10 @@
 
 ## 3. Live demo: what to say at each pause
 
-**Primary: the web UI.** Double-click `Start-Demo-UI.cmd` in the project folder. It starts the local server and opens http://127.0.0.1:8765 in your browser; keep its window open. Or run this in PowerShell (paths are for Yash's machine; elsewhere run `python demo\server.py --open` from the project folder):
+**Primary: the web UI.** Double-click `Start-Demo-UI.cmd` in the project folder. It starts the local server and opens http://127.0.0.1:8765 in your browser; keep its window open. Or run this in PowerShell from the project folder (without the ML venv, `python demo\server.py --open` also works):
 
 ```powershell
-& "demo\.venv\Scripts\python.exe" "demo\server.py" --open
+& ".\demo\.venv\Scripts\python.exe" ".\demo\server.py" --open
 ```
 
 How to drive it:
@@ -60,10 +60,10 @@ How to drive it:
 - Use **Theme: light** on a projector.
 - **Don't press "Retrain with a new seed…" or "Re-run E3…" in the meeting.** Both ask for confirmation. Retraining makes B–E stale, and E3 takes ~3 minutes.
 
-**Fallback: the CLI.** This exact command was tested end-to-end in PowerShell on Yash's machine (exit 0, ~26 s); elsewhere run `.\.venv\Scripts\python.exe run_all.py --ezkl --pause` from the `demo` folder:
+**Fallback: the CLI.** This command was tested end-to-end in PowerShell on Yash's machine (exit 0, ~26 s). Run it from the `demo` folder:
 
 ```powershell
-& "demo\.venv\Scripts\python.exe" "demo\run_all.py" --ezkl --pause
+.\.venv\Scripts\python.exe run_all.py --ezkl --pause
 ```
 
 | Demo | What appears (dry-run values) | What to say |
