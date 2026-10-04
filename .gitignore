@@ -56,3 +56,6 @@ demo/results/**/extract.onnx
 # demo F identities: encrypted with the PUBLIC demo passphrase, committed on purpose (see demo/ckpt/v2/README.md)
 !demo/ckpt/v2/owner.key
 !demo/ckpt/v2/registry.key
+
+# packaged proving keys (scripts/package_keys.py)
+dist/

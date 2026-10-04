@@ -122,7 +122,8 @@ def compile_circuit(cfg: Config, force: bool = False) -> Artifacts:
     src = a.build / f"main_{a.name}.circom"
     text = main_source(cfg)
     stamp = a.build / f"{a.name}.srchash"
-    digest = hashlib.sha256((text + (circuits_dir() / "ownership.circom").read_text()).encode()).hexdigest()
+    circuit_src = (circuits_dir() / "ownership.circom").read_text().replace("\r\n", "\n")   # git may check out CRLF
+    digest = hashlib.sha256((text + circuit_src).encode()).hexdigest()
     if not force and a.r1cs.exists() and a.wasm.exists() and stamp.exists() and stamp.read_text() == digest:
         return a
     src.write_text(text)
