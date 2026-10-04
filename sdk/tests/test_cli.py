@@ -40,3 +40,40 @@ def test_owner_registry_flow(tmp_path, monkeypatch, capsys):
     c = run("claim", "registration.json", "--suspect", "model.pt", "--out", "claim.json")
     claim = json.loads((tmp_path / c["claim"]).read_text())
     assert claim["registration_sha256"] == rcp["registration_sha256"]
+
+
+@pytest.mark.ml
+@pytest.mark.zk
+def test_cli_prove_and_verify_demo_f(tmp_path, monkeypatch, capsys):
+    """Owner proves and verifier verifies through the CLI, with demo F's public demo identities and model."""
+    from pathlib import Path
+    from sigil.zk import circom as Z
+    from sigil import protocol as P
+    root = Path(__file__).resolve().parents[2]
+    v2 = root / "demo" / "ckpt" / "v2"
+    if not (Z.artifacts(P.Config()).zkey.exists() and (v2 / "watermarked_v2.pt").exists()):
+        pytest.skip("needs the T=64 setup and demo F's saved model")
+    monkeypatch.setenv("SIGIL_PASSPHRASE", "sigil-demo-only-passphrase")
+    monkeypatch.setenv("SIGIL_REGISTRY_PASSPHRASE", "sigil-demo-only-passphrase")
+    monkeypatch.chdir(tmp_path)
+    model, clean = str(v2 / "watermarked_v2.pt"), str(root / "demo" / "ckpt" / "clean.pt")
+    common = ["--owner", str(v2 / "owner.key"), "--seed", str(v2 / "seed.json")]
+    assert main(["--json", "detect", model, *common]) == 0
+    assert json.loads(capsys.readouterr().out)["accepted"] is True
+    assert main(["--json", "register", model, *common, "--registry-key", str(v2 / "registry.key")]) == 0
+    capsys.readouterr()
+    reg = json.loads((tmp_path / "registration.json").read_text())
+    rcp = json.loads((tmp_path / "registration.receipt.json").read_text())
+    assert main(["--json", "claim", "registration.json", "--suspect", model]) == 0
+    capsys.readouterr()
+    assert main(["--json", "prove", model, "--claim", "claim.json", *common, "--out", "bundle"]) == 0
+    capsys.readouterr()
+    trusted = ["--trusted-registry", rcp["registry_public_key"]]
+    args = ["bundle", "--registration", "registration.json", "--receipt", "registration.receipt.json", *trusted]
+    import time
+    assert main(["--json", "verify", *args, "--suspect", model]) == 0
+    assert json.loads(capsys.readouterr().out)["accepted"] is True
+    assert main(["--json", "verify", *args, "--suspect", clean]) == 1         # wrong suspect file
+    v = json.loads(capsys.readouterr().out)
+    assert not v["accepted"] and any("different" in r for r in v["reasons"])
+    assert reg["commitment"]

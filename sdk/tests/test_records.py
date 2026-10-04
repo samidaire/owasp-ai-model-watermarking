@@ -64,3 +64,11 @@ def test_claim_has_fresh_nonce():
     rec = make_registration(KeyPair.generate(), P.new_seed(), CFG, "ab" * 32)
     c1, c2 = make_claim(rec, "ef" * 32), make_claim(rec, "ef" * 32)
     assert c1["nonce"] != c2["nonce"] and c1["registration_sha256"] == registration_hash(rec)
+
+
+def test_timestamps_are_millisecond_precise_and_compared_as_times():
+    from sigil.records import parse_time, utc_now
+    t = utc_now()
+    assert t.endswith("Z") and "." in t
+    assert parse_time("2026-10-05T03:05:18Z") < parse_time("2026-10-05T03:05:18.123Z")
+    assert parse_time("2026-10-05T03:05:18.999Z") < parse_time("2026-10-05T03:05:19Z")

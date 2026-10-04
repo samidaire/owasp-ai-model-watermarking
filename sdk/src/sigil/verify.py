@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from . import protocol as P
-from .records import registration_hash, verify_receipt, verify_registration
+from .records import parse_time, registration_hash, verify_receipt, verify_registration
 
 
 @dataclass
@@ -45,8 +45,11 @@ def verify_ownership(*, proof: dict, public: list[str], registration: dict, rece
     check("registration_valid", not reg_problems, "registration invalid: " + "; ".join(reg_problems))
     rcp_problems = verify_receipt(receipt, registration, trusted_registry_keys)
     check("receipt_valid", not rcp_problems, "registry receipt invalid: " + "; ".join(rcp_problems))
-    check("registered_before_claim", receipt.get("registered_at", "~") < claim.get("opened_at", ""),
-          "registration is not earlier than the claim")
+    try:
+        before = parse_time(receipt["registered_at"]) < parse_time(claim["opened_at"])
+    except (KeyError, ValueError, TypeError, AttributeError):
+        before = False
+    check("registered_before_claim", before, "registration is not earlier than the claim")
     check("claim_matches_registration", claim.get("registration_sha256") == registration_hash(registration),
           "claim refers to a different registration")
     check("claim_matches_suspect", claim.get("suspect_model_sha256") == suspect_model_sha256,

@@ -44,7 +44,14 @@ def sha256_hex(data: bytes) -> str:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    """UTC time with millisecond precision, e.g. 2026-10-05T03:05:01.123Z."""
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def parse_time(s: str) -> datetime:
+    """Parse a record timestamp (with or without fractional seconds). Always compare parsed times,
+    never strings: '…:18Z' and '…:18.123Z' don't sort correctly as text."""
+    return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(timezone.utc)
 
 
 def _b64(b: bytes) -> str:
@@ -131,7 +138,7 @@ def verify_receipt(receipt: dict, rec: dict, trusted_registry_keys: set[str]) ->
 
 def earliest(candidates: list[tuple[dict, dict]]) -> tuple[dict, dict] | None:
     """Dispute rule: among (registration, receipt) pairs that are already verified, the earliest wins."""
-    return min(candidates, key=lambda c: c[1]["registered_at"], default=None)
+    return min(candidates, key=lambda c: parse_time(c[1]["registered_at"]), default=None)
 
 
 # ------------------------------------------------------------------ claim (verifier-issued)
