@@ -16,6 +16,8 @@ The demo is evaluated against the OWASP AI Exchange `#MODEL WATERMARKING` requir
 | `frontend/` | React + TypeScript web UI (the reference implementation). See `frontend/README.md`. |
 | `contract/` | API types, captured fixtures, recorded logs, and a minimal example UI |
 | **`UI_INTEGRATION.md`** | **How a UI connects to the backend: every endpoint and field, and how to drop in a new UI** |
+| **`REQUIREMENTS.md`** | **What must be built to complete the project against the SOP: requirement IDs, acceptance criteria, owners, SOP traceability** |
+| **`WORKFLOW.md`** | **How it gets built: phases (complete the build → update the UI design → migrate the UI), milestones, gates, timeline, team workflow** |
 | `Start-Demo-UI.cmd` / `Start-Demo-UI-Simulate.cmd` | Windows launchers |
 
 ## Run
