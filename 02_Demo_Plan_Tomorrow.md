@@ -13,11 +13,11 @@
 | # | Outcome | Evidence you show |
 |---|---|---|
 | 1 | Scope agreed: OWASP's ZK-ownership project, not output watermarking | OWASP project page and the verbatim AI Exchange requirements R1/R2 (§1, §2) |
-| 2 | The gap accepted as real and backed by citations | §3.2 comparison table and the forward-citation sweep (§3.3) |
+| 2 | The gap accepted as real, backed by citations, and stated no wider than the prior work allows | §3.2 comparison table, the forward-citation sweep (§3.3), and the prior-work positioning (§3.4) |
 | 3 | The core problem *and* the fix seen running on your PC | Demos A–E (below) |
 | 4 | Scope approved, and possibly a nod to contribute upstream to OWASP | §7 plan, RQ1–RQ3 |
 
-**One-line pitch:** *"ZK proofs let you prove you own a model without revealing your watermark key. The current method (ZKROWNN) assumes the person proving ownership is honest and never commits to the key. Drop that assumption and a thief can fit a key to a stolen model, and on my machine the thief's proof verifies under the owner's own verification key. I'll show that live, then fix it with a committed seed, in line with OWASP's requirement to 'avoid ambiguity where multiple parties could plausibly claim ownership.'"*
+**One-line pitch:** *"ZK proofs let you prove you own a model without revealing your watermark key. The current method (ZKROWNN) assumes the person proving ownership is honest and never commits to the key. Drop that assumption and a thief can fit a key to a stolen model, and on my machine the thief's proof verifies under the owner's own verification key. I'll show that live, then fix it with a committed seed. Committing to a key isn't new in itself (Adi et al. did it for trigger sets in 2018). What I'm building is a proof of the weight extraction itself, with the key and signature derived from that seed inside the circuit. All of this is in line with OWASP's requirement to 'avoid ambiguity where multiple parties could plausibly claim ownership.'"*
 
 ---
 
@@ -26,7 +26,7 @@
 | Time | Segment | Content | Source |
 |---|---|---|---|
 | 0:00–2:00 | Problem | Model theft. OWASP ML05, LLM10, AI Exchange #MODEL WATERMARKING; R1 and R2 quoted verbatim | §1, §2 |
-| 2:00–6:00 | Literature | Taxonomy; SoK verdict ("none … robust in practice"); the three ZK systems compared | §3, §4 |
+| 2:00–6:00 | Literature | Taxonomy; SoK verdict ("none … robust in practice"); the three ZK systems compared; prior work on committed and hash-derived keys (Adi, Li, NeuralMark, FedZKP) | §3, §3.4, §4 |
 | 6:00–8:00 | Gaps | G1 forgery (core), G2 robustness × ZK, G5 no licence-clean tool; the citation sweep as method | §3.3, §5 |
 | 8:00–16:00 | **Live demo** | Web UI: panels A → E, pressing **Run live** on each (narration in §3). CLI fallback: `run_all.py --ezkl --pause` | demo/ |
 | 16:00–18:00 | Feasibility + plan | Measured costs (§4 below), 16-week phases, RQ1–RQ3 | §6, §7 |
@@ -121,7 +121,7 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 | On-screen noise from EZKL | Low | The UI and `run_all.py` share one noise filter; the full output is in `results/web_job_log.txt` and `run_log.txt` |
 | UI won't load | Low | Use the CLI fallback command in §3. The UI only needs the Python server: no npm, no internet. |
 | Accidental retrain in the UI | Low | It asks for confirmation first. If it happens, B–E show "Stale": press **Run all live**, and skip E3 or run **Re-run E3…** (~3 min). |
-| Overclaiming | Med | Use the caveats in demo/README.md: indicative θ; relation not their code; E3 is D1-level |
+| Overclaiming | Med | Use the caveats in demo/README.md: indicative θ; relation not their code; E3 is D1-level. State novelty only as narrowly as 01 §3.4 does: commitments, hash-derived keys and ZK ownership proofs all have prior work. |
 
 ---
 
@@ -130,7 +130,8 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 | Question | Answer |
 |---|---|
 | "Why zero-knowledge at all?" | Revealing the key lets anyone remove or forge the watermark. That's ZKROWNN's own motivation (§3.2). |
-| "What's novel? ZKROWNN exists." | ZKROWNN assumes an honest prover, commits nothing, and has no attack evaluation. I showed that its relation is forgeable and that a forged proof verifies under the owner's VK. I then add a committed seed, with key *and* signature derived, and test under SoK attacks. The sweep found nothing doing this (§3.3, §5). |
+| "What's novel? ZKROWNN exists." | ZKROWNN assumes an honest prover, commits nothing, and has no attack evaluation. I showed that its relation is forgeable and that a forged proof verifies under the owner's VK. The pieces of my fix are **not new on their own**:<br>• Adi et al. (USENIX Sec '18) commit to the trigger set on a time-stamped bulletin board and sketch a ZK argument.<br>• Li et al. (2019) and NeuralMark (AAAI '26) derive the watermark from a signature or a hash.<br>• FedZKP (2023) proves ownership in ZK.<br>What I add is narrower: a SNARK that proves Uchida-style extraction from the weights. Both the key and the signature are derived inside the circuit from a committed seed bound to an authenticated owner key. θ is enforced in-circuit, and the proof is bound to the suspect model. On top of that come the measured forgery, robustness × ZK and cost results (RQ1–RQ3; §3.4, §5, §7). Today's E3 is only the D1 level of that. |
+| "Isn't that FedZKP, or Adi et al.?" | No. FedZKP's ZK proof shows knowledge of a credential (an xLPN secret); the watermark extraction and the Hamming check happen in the clear, in a federated setting. Adi's ZK argument covers a black-box trigger set, and the paper leaves an efficient proof open. My circuit is meant to prove the white-box extraction itself, from a committed seed (§3.4). |
 | "You attacked Uchida, not DeepSigns." | Demo C part 2 runs the same sign-fit against ZKROWNN's DeepSigns-style Alg. 1 relation, and it's satisfied on every model. |
 | "Can't the thief just commit after stealing?" | With a free signature, yes: D1 wins by construction. With a derived signature they must search seeds: ~2³² work at T=64, feasible on a GPU, so timestamps remain necessary. At T=256 it's ~2¹²⁰ (RQ1). |
 | "Is E3 the full fix?" | No. It's the D1 level inside ZK. Deriving the key in-circuit (D2) is Phase 3, and the logrows-20 cost shows why it needs optimisation. |

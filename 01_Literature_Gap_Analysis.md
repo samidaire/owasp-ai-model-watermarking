@@ -1,6 +1,6 @@
 # OWASP AI Model Watermarking: Literature Review and Gap Analysis (v2)
 
-*v1: 2026-10-04 (pass 1, abstracts only). **v2: 2026-10-05, pass 2.** In pass 2 I read the full texts of the core zero-knowledge papers, ran a forward-citation sweep, and checked every venue.*
+*v1: 2026-10-04 (pass 1, abstracts only). **v2: 2026-10-05, pass 2.** In pass 2 I read the full texts of the core zero-knowledge papers, ran a forward-citation sweep, and checked every venue. **v2.1: 2026-10-05, after review.** The review found prior work that the sweep missed: Adi et al. (P2, re-read in full), Li et al. (P18), NeuralMark (P19) and FedZKP (P20). They are added in §3.4, and the contribution is restated more narrowly (§0, §5 G1, §7).*
 
 *Rule used throughout: every claim cites a source that was opened and read this session. The verification column in Section 9 says how deeply each one was read (full text, abstract, or metadata only). Nothing is cited from memory.*
 
@@ -12,17 +12,22 @@
 - **What OWASP requires.** OWASP's own control text, **#MODEL WATERMARKING** in the AI Exchange, sets two requirements: watermarks must *"remain detectable even if the model is modified (for example through fine-tuning or pruning)"*, and must *"avoid ambiguity where multiple parties could plausibly claim ownership of the same model."* [S4]
 - **How much research exists:**
   - Embedding watermarks and attacking them: **mature**. The robustness verdict is negative: "none of the surveyed watermarking schemes is robust in practice." [S7]
-  - ZK-verified ownership: **very thin**. A forward-citation sweep of the founding paper (ZKROWNN, DAC 2023) found **2 follow-up systems** among about 13 citing works, and neither covers model weights.
+  - ZK-verified ownership: **thin**. A forward-citation sweep of ZKROWNN (DAC 2023) found **2 follow-up systems** among about 13 citing works, and neither covers model weights. Work outside the sweep covers parts of the idea (§3.4):
+    - Adi et al. (2018) already make the verification key a **commitment** to the trigger set, publish it on a **time-stamped bulletin board**, and sketch a **ZK argument** for public verification.
+    - Li et al. (2019) and NeuralMark (AAAI 2026) **derive the watermark from a signature or a hash** of an owner secret.
+    - FedZKP (2023) embeds the hash of a ZK public instance into the weights and proves ownership in ZK.
 - **Biggest gap.** ZKROWNN assumes a **semi-honest prover**. Its secret key, projection matrix and signature are all private and uncommitted, and it was **never evaluated against removal attacks**. [S8, full text] Three independent lines of work show that ownership claims can be forged:
   - ambiguity attacks [S16];
   - false claims built from transferable adversarial examples [S17];
   - random-key forgeability of regularised watermarks [S18].
 
   ZK makes this worse, because it *hides* the very key a verifier would need to inspect.
-- **Proposed contribution.** A *committed-seed* ZK ownership protocol, evaluated under an OWASP-aligned attack suite:
-  - **both the key and the signature are derived from one secret seed**, whose hash is committed and timestamped **at embedding time**;
-  - ownership is proven in ZK at dispute time;
-  - robustness is measured against SoK-style removal attacks [S7].
+- **Proposed contribution (stated narrowly).** Committing to a key, timestamping it, deriving the watermark from a hash or signature, and proving ownership in ZK all have precedent (§3.4). What remains defensible is narrower:
+  - a **SNARK proof of Uchida-style white-box extraction** in which **both the key and the signature are derived inside the circuit** from a committed seed;
+  - the seed commitment is **bound to an authenticated owner key**, the threshold θ is **enforced in-circuit**, and the proof is **bound to the suspect model**;
+  - plus measured results: forgery (RQ1), robustness × ZK under SoK-style removal attacks [S7] (RQ2), and cost (RQ3).
+
+  The current demo reaches only the D1 level of this (E3 commits to the key and signature directly); the in-circuit derivation is still to be built.
 - **Fit with your machine.** It is feasible on your 32 GB / RTX 5080 machine. RoSeMary's published EZKL proof needed **about 2.6 GB of RAM and 7.2 s** [S9]. ZKROWNN's largest circuit (2.09M constraints) proved in 45 s, but on a 128 GB machine [S8].
 
 ---
@@ -75,7 +80,7 @@ The control is referenced under three threats:
 | # | Paper | Venue | Read depth | Key verified content |
 |---|---|---|---|---|
 | P1 | Uchida, Nagai, Sakazawa, Satoh: *Embedding Watermarks into Deep Neural Networks* | ICMR 2017 | Abstract | White-box. A regulariser embeds bits into one layer's weights. Survives fine-tuning and **65% parameter pruning**. Code released. [S10] |
-| P2 | Adi, Baum, Cisse, Pinkas, Keshet: *Turning Your Weakness Into a Strength: Watermarking DNNs by Backdooring* | **USENIX Security 2018** (venue checked via Semantic Scholar) | Abstract | Black-box trigger-set (backdoor) watermark. Negligible accuracy loss. [S11] |
+| P2 | Adi, Baum, Cisse, Pinkas, Keshet: *Turning Your Weakness Into a Strength: Watermarking Deep Neural Networks by Backdooring* | **USENIX Security 2018**, pp. 1615–1631 (venue checked via Semantic Scholar and usenix.org) | **Full text: §4, §4.1, §6, App. A.1** | Trigger-set (backdoor) watermark, checked by black-box queries; negligible accuracy loss. **More than a black-box trigger set:** the backdoor is the marking key and **a commitment to it (trigger inputs and labels) is the verification key** (§4). That key must be public before verification, e.g. on "a time-stamped bulletin board like a blockchain" (§4.1). App. A.1 gives a **zero-knowledge argument** for public verifiability (cut-and-choose plus Fiat–Shamir): the prover shows in ZK that the unopened commitments open to inputs the model classifies as committed. A practically efficient ZK proof is left open (§6). See §3.4. [S11] |
 | P3 | Rouhani, Chen, Koushanfar: *DeepSigns: A Generic Watermarking Framework for Protecting the Ownership of Deep Learning Models* | arXiv 1804.00750. ZKROWNN cites an ASPLOS 2019 version under a different title. | Title and authors from the PDF | Watermark embedded in the **activation-map distributions** (GMM means) of hidden layers. **This is the scheme ZKROWNN proves.** [S12] |
 | P4 | Lukas, Jiang, Li, Kerschbaum: *SoK: How Robust is Image Classification DNN Watermarking?* | **IEEE S&P 2022** (stated in the arXiv text) | Full tables | Evaluates **11 schemes**, including Uchida, DeepSigns, Adi, Jia, DAWN and others, against a large attack suite: fine-tuning (FTAL/RTAL…), pruning, fine-pruning, weight quantisation, **weight shifting**, neural cleanse, overwriting, distillation, Knockoff Nets, retraining, and **smooth retraining**. Verdict: "none of the surveyed watermarking schemes is robust in practice." Code and data public. [S7] |
 | P5 | Fan, Ng, Chan: *Rethinking DNN Ownership Verification: Embedding Passports to Defeat Ambiguity Attacks* | **NeurIPS 2019** | Abstract | Ambiguity attacks "aim to cast doubts on the ownership verification by forging counterfeit watermarks" and "pose serious threats to existing DNN watermarking methods". [S16] |
@@ -91,6 +96,9 @@ The control is referenced under three threats:
 | P15 | Russinovich, Cai, Salem: *Hey, That's My Model! Introducing Chain & Hash* | **ICLR 2026** (the arXiv page comment says "Published at ICLR 2026"; it also appears in ICLR 2026 proceedings search results) | Abstract | **Cryptographically binds** fingerprint prompts to their responses. Robust to fine-tuning and removal. Works on LoRA adapters. Code: github.com/microsoft/Chain-Hash. [S21] |
 | P16 | Gloaguen, Jovanović, Staab, Vechev: *Towards Watermarking of Open-Source LLMs* | arXiv 2025 | Abstract | Open-weight LLM watermarks must survive **merging, quantisation and fine-tuning**. Current methods do not. [S22] |
 | P17 | Liu et al.: *Implicit Identity Technologies for LLMs: Fingerprinting and Watermarking across Datasets, Models, and Generated Content* | **IJCAI-ECAI 2026** (survey) | Abstract | A lifecycle taxonomy of fingerprinting (intrinsic) versus watermarking (embedded) for ownership and provenance. Useful as the most recent survey anchor. [S23] |
+| P18 | Li, Wenger, Shan, Zhao, Zheng: *Piracy Resistant Watermarks for Deep Neural Networks* | arXiv 1910.01226 (v3, Dec 2020; no venue stated on arXiv) | **Full text: §6** | The owner **RSA-signs** a verifier string *v* (owner's unique identifier ‖ global timestamp). Four **SHA-256** hashes of that signature give the watermark: filter pattern, label and pixel value (§6.1, Alg. 1–2). Black-box "null embedding", applied only at initial training, resists piracy (adding a second watermark). The signature is shown to a verification authority; no ZK. [S26] |
+| P19 | Yao, Song, Jin: *Hashed Watermark as a Filter: Defeating Forging and Overwriting Attacks in Weight-based Neural Network Watermarking* (**NeuralMark**) | **AAAI 2026** (arXiv comment "Accepted by AAAI 2026"), arXiv 2507.11137 | Method and verification (arXiv HTML) | White-box, weight-based. The watermark is **b = H(K)**, a SHAKE-256 hash of a secret key, and b also acts as a filter that selects the parameters to embed in. This targets forging (the hash's avalanche effect blocks gradient-based key fitting) and overwriting; average pooling targets fine-tuning and pruning. Evaluated on 13 convolutional and Transformer architectures. Verification hands K to "a fully trusted third-party verifier"; no ZK, no timestamp. [S27] |
+| P20 | Yang, Yin, Zhu, Gu, Fan, Cao, Yang: *FedZKP: Federated Model Ownership Verification with Zero-knowledge Proof* | arXiv 2305.04507 (no venue stated) | **Full text: §5, §7** | Federated learning. The watermark is **h = H(A‖y), the hash of an xLPN public instance**, embedded in the signs of batch-norm scale weights (white-box). Ownership: a validity check of the extracted h against H(A‖y) **in the clear** (Hamming distance), then an interactive xLPN Σ-protocol **ZK proof of knowledge of the secret** (s, e). Tested against fine-tuning, pruning and targeted destruction. [S28] |
 
 ### 3.2 The three ZK-watermarking systems, read in full
 
@@ -132,10 +140,30 @@ The control is referenced under three threats:
 
 **Also found outside the sweep (not citing ZKROWNN):** Sato & Tanaka, *Protecting Ownership of Trained DNN Models with Zero-Knowledge Proofs*, ICISS 2024, Springer LNCS 2025, DOI 10.1007/978-3-031-80020-7_22. It is **closed access and the abstract is withheld**. ZK-WAGON describes it as using ZK-STARKs over Merkle roots with a risk of weight exposure; that is a secondary description, not one I verified.
 
-**Conclusion:** among works citing the founding paper, **no system covers ZK-verified ownership of model weights under removal and forgery attacks.** Limits of this sweep:
+**Conclusion (narrowed in v2.1):** among works citing ZKROWNN, no system proves white-box extraction from model weights in ZK *and* evaluates it under removal and forgery attacks. This holds **only within the sweep**. Works that don't cite ZKROWNN already cover parts of it (§3.4): Adi et al. commit to and timestamp the key and sketch a ZK argument; FedZKP gives a ZK ownership proof for a white-box federated watermark and tests fine-tuning and pruning. Limits of this sweep:
 - it covers one citation index;
-- it misses papers that don't cite ZKROWNN;
+- it misses papers that don't cite ZKROWNN, which is how it missed P18–P20 and the commitment in P2 (found in the 2026-10-05 review);
 - it was not repeated for Uchida, because the API rate-limited my requests.
+
+### 3.4 Prior work on committed, hash-derived or ZK-verified ownership (added in v2.1)
+
+| Work | How the watermark is bound to the owner | ZK | What is watermarked | What it does not do, relative to this project |
+|---|---|---|---|---|
+| **Adi et al. 2018** (P2) | Verification key = **commitment** to trigger inputs and labels, published on a **time-stamped bulletin board** before any dispute | **ZK argument sketched** (App. A.1); an efficient proof is left open | Black-box trigger set | No implemented proof; no white-box extraction; the trigger set is sampled, not derived from a committed seed |
+| **Li et al. 2019** (P18) | Watermark = SHA-256 hashes of an **RSA signature over owner ID ‖ global timestamp** | None | Black-box input pattern (null embedding) | The signature is revealed to a verification authority; no ZK |
+| **ChainMarks 2025** (P12) | Triggers from a hash chain of a secret key; labels from the owner's digital signature | None | Black-box trigger set | No ZK |
+| **NeuralMark 2026** (P19) | Watermark = **SHAKE-256 hash of a secret key**, also used to select the embedding parameters | None | White-box weights | The key is revealed to a fully trusted verifier; no commitment or timestamp |
+| **FedZKP 2023** (P20) | Watermark = **hash of an xLPN public instance**, embedded in batch-norm weights | **ZK proof of knowledge of the xLPN secret** | White-box weights (federated) | Extraction and the Hamming-distance check run in the clear, outside the proof; the ZK statement is about the credential, not the extraction |
+| **ZKROWNN 2023** (P7) | Nothing committed; the key, projection matrix and signature are free private witnesses | **SNARK of the extraction** (Groth16) | White-box activations (DeepSigns) | Semi-honest prover; no commitment; no removal-attack evaluation |
+| **This project (target)** | Seed commitment bound to an authenticated owner key; **key and signature derived from the seed inside the circuit** | SNARK of Uchida-style extraction, θ enforced in-circuit, proof bound to a hash of the suspect weights | White-box weights | Not built yet. Today's demo (E3) is the D1 level: it commits to the key and signature directly. |
+
+**What this changes.** Committing to a key in advance, timestamping it, deriving the watermark from a hash or a signature, and proving ownership in ZK each have precedent. I therefore don't claim any of them as new. In the papers I read, none of them puts **the white-box extraction itself** inside a succinct proof whose only secret is a committed seed from which the key and signature are both derived:
+- Adi's ZK argument is about a black-box trigger set, and it isn't implemented;
+- FedZKP's ZK statement is knowledge of a credential, with extraction outside the proof;
+- Li and NeuralMark reveal the signature or key to a trusted verifier;
+- ZKROWNN proves extraction but commits to nothing.
+
+That combination, together with the measured forgery (RQ1), robustness × ZK (RQ2) and cost (RQ3) results, is the claimed contribution (§7).
 
 ---
 
@@ -143,15 +171,21 @@ The control is referenced under three threats:
 
 ```
 Model ownership verification
-├── White-box (weights/activations)  Uchida P1, DeepSigns P3 ──────┐
-├── Black-box (queries)              Adi P2, Jia P6, ChainMarks P12 │ mature (2017+)
-├── LLM fingerprints                 IF P14, Chain&Hash P15         │ growing
-├── Removal attacks                  SoK P4, open-LLM P16 ──────────┘ mature; verdict NEGATIVE
+├── White-box (weights/activations)  Uchida P1, DeepSigns P3,       ──┐
+│                                    NeuralMark P19                   │
+├── Black-box (queries)              Adi P2, Li P18, Jia P6,          │ mature (2017+)
+│                                    ChainMarks P12                   │
+├── LLM fingerprints                 IF P14, Chain&Hash P15           │ growing
+├── Removal attacks                  SoK P4, open-LLM P16 ────────────┘ mature; verdict NEGATIVE
 ├── Ownership FORGERY                Passports P5, False Claims P11,  ◄─ well established as a threat
 │                                    Beyond Robustness P13
-└── ZK-verified ownership            ZKROWNN P7 (weights)            ◄─ very thin; none combine
-        ├── outputs only             RoSeMary P8 (code), ZK-WAGON P9    ZK with forgery resistance
-        └── zkML infrastructure      zkLLM P10, EZKL                     and attack evaluation
+├── Committed / hash-derived keys    Adi P2 (commitment + timestamp), ◄─ established defence (§3.4)
+│                                    Li P18, ChainMarks P12, NeuralMark P19
+└── ZK-verified ownership            ZKROWNN P7 (weights, no commit), ◄─ thin; none proves white-box
+        │                            FedZKP P20 (credential, FL),        extraction from a committed
+        │                            Adi P2 (ZK argument, sketched)      seed (§3.4)
+        ├── outputs only             RoSeMary P8 (code), ZK-WAGON P9
+        └── zkML infrastructure      zkLLM P10, EZKL
 ```
 
 ---
@@ -160,8 +194,8 @@ Model ownership verification
 
 | ID | Gap | Evidence (verified) | FYP potential |
 |---|---|---|---|
-| **G1** | **Relaxing the semi-honest-prover assumption: uncommitted ZK ownership proofs are forgeable, and ZK hides the forgery.** *(This is my analysis, to be demonstrated in the project, not a finding stated in the literature.)* ZKROWNN **explicitly assumes** a semi-honest prover (S8 §III-A), so a malicious claimant is *outside its stated threat model*. That is a limitation of the assumption, not a bug they missed. The assumption is unrealistic in real disputes: P11 shows malicious accusers deviating undetected, and P5 and P13 show counterfeit or random keys passing verification. **Construction:** in ZKROWNN's Alg. 1, the projection matrix *A*, signature and trigger key are all private witnesses, and the bits are thresholds of sigmoid(µ·A). A claimant who sees the model can compute µ, pick any target bits, and for each column draw a random vector and flip its sign so that µ·aⱼ lands on the desired side. The result is BER 0 for a signature of their choosing, the same maths as the Uchida ambiguity attack applied to µ instead of w. ZK then hides the fitted *A* from the verifier. ChainMarks [P12] and Chain & Hash [P15] bind keys by hashing but have **no ZK**. RoSeMary commits its decoder in the VK, but **assumes an honest setup and watermarks outputs, not weights**. | S8 (threat model, Alg. 1), S9 §3.3, S16, S17, S18, S20, S21; OWASP R2 | **Core contribution.** A *committed-seed ZK ownership* protocol (§7). **Demonstrated live** in three steps: forgery succeeds without commitment; it still succeeds 100% when only the key is derived and the signature is free; it falls to roughly the null false-positive rate when the signature is also derived from the seed. |
-| **G2** | **ZK-verified model watermarks have never been tested against removal attacks.** ZKROWNN inherits DeepSigns' claims; SoK [P4] showed that DeepSigns, Uchida and the other schemes fail under adaptive attacks. | S8 §IV, S7 Tables II–III; OWASP R1 | **Yes, and measurable.** Run a subset of SoK attacks (FTAL/RTAL, pruning, fine-pruning, quantisation, weight shifting, distillation) and record whether the ZK proof still verifies. |
+| **G1** | **Relaxing the semi-honest-prover assumption: uncommitted ZK ownership proofs are forgeable, and ZK hides the forgery.** *(This is my analysis, to be demonstrated in the project, not a finding stated in the literature.)* ZKROWNN **explicitly assumes** a semi-honest prover (S8 §III-A), so a malicious claimant is *outside its stated threat model*. That is a limitation of the assumption, not a bug they missed. The assumption is unrealistic in real disputes: P11 shows malicious accusers deviating undetected, and P5 and P13 show counterfeit or random keys passing verification. **Construction:** in ZKROWNN's Alg. 1, the projection matrix *A*, signature and trigger key are all private witnesses, and the bits are thresholds of sigmoid(µ·A). A claimant who sees the model can compute µ, pick any target bits, and for each column draw a random vector and flip its sign so that µ·aⱼ lands on the desired side. The result is BER 0 for a signature of their choosing, the same maths as the Uchida ambiguity attack applied to µ instead of w. ZK then hides the fitted *A* from the verifier. ChainMarks [P12] and Chain & Hash [P15] bind keys by hashing but have **no ZK**. RoSeMary commits its decoder in the VK, but **assumes an honest setup and watermarks outputs, not weights**. **What prior work already covers (§3.4):** committing to the key and timestamping it before any dispute, with a sketched ZK argument for trigger sets (Adi [P2]); deriving the watermark from a signature over owner ID and timestamp (Li [P18]) or from a hash of a secret key (NeuralMark [P19], ChainMarks [P12]); and a ZK ownership proof for a hash-derived white-box watermark, with extraction checked in the clear (FedZKP [P20]). **What G1 leaves open:** a SNARK proving Uchida-style extraction in which the key *and* the signature are derived in-circuit from a committed seed bound to an authenticated owner key, with θ enforced in-circuit and the proof bound to the suspect model. | S8 (threat model, Alg. 1), S9 §3.3, S11 (§4, App. A.1), S16, S17, S18, S20, S21, S26, S27, S28; OWASP R2 | **Core contribution, stated narrowly** (§3.4, §7). The *committed-seed ZK ownership* protocol, with the in-circuit derivation still to be built. **Demonstrated live** in three steps: forgery succeeds without commitment; it still succeeds 100% when only the key is derived and the signature is free; it falls to roughly the null false-positive rate when the signature is also derived from the seed. |
+| **G2** | **ZK-proved extraction from model weights has never been tested against removal attacks.** ZKROWNN inherits DeepSigns' claims; SoK [P4] showed that DeepSigns, Uchida and the other schemes fail under adaptive attacks. FedZKP [P20] does test fine-tuning, pruning and targeted destruction, but its extraction runs outside the proof, and SoK's adaptive attacks (e.g. weight shifting, permutation) are not in its evaluation. | S8 §IV, S7 Tables II–III, S28 §7; OWASP R1 | **Yes, and measurable.** Run a subset of SoK attacks (FTAL/RTAL, pruning, fine-pruning, quantisation, weight shifting, distillation) and record whether the ZK proof still verifies. |
 | **G3** | **Binding the proof to the suspect model.** ZKROWNN takes the model as a *public* input (the VK grows to 16 MB for the MLP), so it needs white-box access to the suspect model. | S8 Alg. 1, §IV-A | **Yes.** Commit to the suspect weights by hash and make the hash public. Document that white-box access is required. |
 | **G4** | **Exfiltration (API theft) is not covered by white-box watermarks.** OWASP's own limitation L1 says so. Entangled Watermarks [P6] is the cited direction. | S4 (L1), S19 | **Partly.** State it as a scope limit. Optional extension: a black-box ChainMarks-style trigger set. |
 | **G5** | **No open, licence-clean implementation exists for the OWASP project.** The OWASP repo has no code [S2]. EZKL, the tool used by RoSeMary and ZK-WAGON, has **no open-source licence file**: the repo root has only `cla.md`, Cargo.toml and PyPI declare no licence, and the README only describes the CLA. | S2, S15 (checked via the GitHub API, Cargo.toml, PyPI JSON) | **Yes.** Build the PoC behind a backend-agnostic interface. Use EZKL for research, and assess a permissively licensed backend before contributing anything to OWASP. |
@@ -225,6 +259,12 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 
 **Working title:** *Committed-Seed Zero-Knowledge Ownership Verification for Neural Network Watermarks: an OWASP AI Exchange-aligned reference implementation.*
 
+**Claimed contribution (narrowed in v2.1).** The building blocks are not new: commitments and timestamps (Adi [P2]), hash- or signature-derived watermarks (Li [P18], NeuralMark [P19], ChainMarks [P12]), and ZK ownership proofs (ZKROWNN [P7], FedZKP [P20]). See §3.4. The contribution is:
+1. a **SNARK proof of Uchida-style white-box extraction** in which **both the key and the signature are derived inside the circuit** from a committed seed, the commitment is **bound to an authenticated owner key**, the threshold θ is **enforced in-circuit**, and the proof is **bound to the suspect model** (a public hash of its weights);
+2. **measured** forgery resistance (RQ1), robustness × ZK (RQ2) and cost (RQ3) for that construction.
+
+Item 1 is not built yet. The Phase-0 spike (§6) reaches only the D1 level: it commits to the key and signature directly.
+
 **Research questions:**
 1. **RQ1 (R2/G1):** Without a key commitment, how cheaply can an adversary forge a valid ZK ownership proof for a model they don't own? Does deriving both key and signature from a committed seed reduce forgery success to the null false-positive rate?
 2. **RQ2 (R1/G2):** Under SoK-style removal attacks, at what attack strength does the ZK ownership proof stop verifying, and what accuracy cost does the attacker pay?
@@ -234,8 +274,9 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 - **Embed (at embedding time, not release; this also covers the development-time theft threat in §2):**
   - pick a secret seed *s*;
   - derive **both** the signature *b = H("sig" ‖ s ‖ owner_id)[:T]* **and** the key *X = PRG(H("key" ‖ s))*;
-  - publish the commitment *C = H(s ‖ owner_id)* with a trusted timestamp (Sigstore/OpenSSF signing [S3] is a natural OWASP-native anchor);
+  - publish the commitment *C = H(s ‖ owner_id)* with a trusted timestamp (Sigstore/OpenSSF signing [S3] is a natural OWASP-native anchor). Publishing a commitment on a time-stamped board is Adi et al.'s idea [P2]; what differs here is that the proof later opens it *inside* the extraction circuit;
   - embed *b* with the Uchida regulariser.
+  - *Review note (v2.1):* `owner_id` must be the hash of an **authenticated owner public key**, not a free string. Otherwise a thief can grind owner IDs as well as seeds.
 - **Dispute:** hash the suspect weights *W′* into a public value. The prover gives a ZK proof that they know *s* such that *H(s ‖ id) = C* and *BER(step(PRG(H("key"‖s))·w′), H("sig"‖s‖id)[:T]) ≤ θ*.
 - **Why the signature must be derived too:** if *b* were a free choice, a thief who already holds the weights could pick any seed, derive *X*, *set b := extract(X, W)* and commit to that. They would get BER 0 every time. With *b* also fixed by *s*, the thief's only move is an adaptive **search over seeds** until extraction happens to match. Each try succeeds with roughly the null false-positive probability, which RQ1 measures. The **timestamp ordering** (earliest commitment wins) is defence in depth on top.
 - **Choosing θ:** run the owner's key against independently trained "null" models. A handful of null models gives only an *indicative* threshold for the demo. The project needs enough null models to state a false-positive rate (this addresses P13's random-key result).
@@ -270,7 +311,9 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 | (new) Forgery / ambiguity gap | ➕ **Added as G1** (core). Supported by P5, P11, P13, P12, P15, OWASP R2. |
 | (new) OWASP AI Exchange control text | ➕ **Added.** R1/R2/L1 quoted verbatim. |
 | (new) Phase-0 spike | ➕ **Added** (§6). EZKL works on this machine. A forged proof verifies under the owner's VK, and the Poseidon commitment separates owner from thief. Costs measured. |
-| "No unified tool" | ✅ **Confirmed** by the forward-citation sweep (method and limits in §3.3) |
+| "No unified tool" | ⚠️ **Narrowed in v2.1.** The forward-citation sweep (§3.3) found no unified tool, but it missed prior work that doesn't cite ZKROWNN (§3.4) |
+| (v2.1) "No system covers ZK-verified ownership of model weights under removal and forgery attacks" | ❌ **Overclaim corrected.** Adi [P2] (commitment, timestamp, ZK argument), Li [P18], NeuralMark [P19] and FedZKP [P20] cover parts of it. The contribution is restated narrowly (§0, §3.4, §5 G1, §7). |
+| (v2.1) P2 described only as a "black-box trigger set" | ❌ **Corrected.** Its verification key is a commitment to the trigger set, published on a time-stamped bulletin board, with a ZK argument for public verifiability (§4, §4.1, App. A.1) |
 
 ---
 
@@ -288,7 +331,7 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 | S8 | Sheybani et al., ZKROWNN (DAC '23): https://arxiv.org/abs/2309.06779 | **Full text** |
 | S9 | Zhang et al., RoSeMary (TAISAP): https://arxiv.org/abs/2502.02068 | **Threat model, ZK and eval sections** |
 | S10 | Uchida et al. (ICMR '17): https://arxiv.org/abs/1701.04082 | Abstract |
-| S11 | Adi et al. (USENIX Sec '18): https://arxiv.org/abs/1802.04633 | Abstract + venue |
+| S11 | Adi et al. (USENIX Sec '18): https://arxiv.org/abs/1802.04633; https://www.usenix.org/conference/usenixsecurity18/presentation/adi | **Full text (§4, §4.1, §6, App. A.1)** + venue (re-read 2026-10-05, v2.1) |
 | S12 | Rouhani et al., DeepSigns: https://arxiv.org/abs/1804.00750 | PDF title page |
 | S13 | Ramakrishnan et al., ZK-WAGON (AI-ML Systems '25): https://arxiv.org/abs/2510.01967 | **Full text** |
 | S14 | Sun et al., zkLLM (CCS '24): https://arxiv.org/abs/2404.16109 | Setup + Table 1 |
@@ -303,4 +346,7 @@ ZKROWNN mentions the Uchida formula in its background section but **does not imp
 | S23 | Liu et al., Implicit Identity survey (IJCAI-ECAI '26): https://arxiv.org/abs/2605.29245 | Abstract |
 | S24 | PyTorch 2.7 release: https://pytorch.org/blog/pytorch-2-7/ | Release notes |
 | S25 | Xu et al., Instructional Fingerprinting (NAACL '24): https://arxiv.org/abs/2401.12255 | Abstract (cited as P14) |
+| S26 | Li et al., Piracy Resistant Watermarks: https://arxiv.org/abs/1910.01226 (v3) | **Full text §6** (v2.1) |
+| S27 | Yao et al., NeuralMark (AAAI '26): https://arxiv.org/abs/2507.11137 (v2; HTML https://arxiv.org/html/2507.11137v2) | Abstract, method and verification (v2.1) |
+| S28 | Yang et al., FedZKP: https://arxiv.org/abs/2305.04507 (v2) | **Full text §5, §7** (v2.1) |
 | — | Sato & Tanaka (ICISS '24), DOI 10.1007/978-3-031-80020-7_22 | **Metadata only.** Closed access; not used as evidence. |

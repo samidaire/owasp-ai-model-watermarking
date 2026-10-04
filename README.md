@@ -6,6 +6,16 @@ It shows two things:
 - **Uncommitted zero-knowledge (ZK) ownership proofs for neural-network watermarks can be forged.** A thief's forged proof verifies under the owner's own verification key.
 - **A committed seed fixes this.** The watermark key and signature are both derived from a seed committed at embedding time.
 
+**What is and isn't new.** Committing to a watermark key, timestamping it, deriving the watermark from a hash or a signature, and proving ownership in ZK all have prior work:
+- Adi et al., USENIX Security 2018;
+- Li et al., arXiv 1910.01226;
+- NeuralMark, AAAI 2026;
+- FedZKP, arXiv 2305.04507.
+
+The project's contribution is narrower. It is a SNARK proof of Uchida-style white-box extraction in which **both the key and the signature are derived inside the circuit** from a committed seed bound to an authenticated owner key, with the threshold enforced in-circuit and the proof bound to the suspect model. Around that come measured forgery (RQ1), robustness × ZK (RQ2) and cost (RQ3) results.
+
+The current demo reaches only the D1 level: E3 commits to the key and signature directly, and the in-circuit derivation is still to be built (`REQUIREMENTS.md` ZK-01). See `01_Literature_Gap_Analysis.md` §3.4.
+
 The demo is evaluated against the OWASP AI Exchange `#MODEL WATERMARKING` requirements.
 
 | Path | What |
