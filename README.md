@@ -1,6 +1,6 @@
-# OWASP AI Model Watermarking: committed-seed ZK ownership verification
+# Committed-seed ZK ownership verification for neural-network watermarks
 
-This is a final-year engineering project aligned with the [OWASP AI Model Watermarking](https://owasp.org/projects/ai-model-watermarking) incubator project.
+A **student final-year engineering project**, aligned with the [OWASP AI Model Watermarking](https://owasp.org/www-project-ai-model-watermarking/) incubator project (also listed at <https://owasp.org/projects/ai-model-watermarking>). **It is not official OWASP work** and is not published or endorsed by OWASP. Contributing it upstream is only a possible later step (`02_Demo_Plan_Tomorrow.md` §8).
 
 It shows two things:
 - **Uncommitted zero-knowledge (ZK) ownership proofs for neural-network watermarks can be forged.** A thief's forged proof verifies under the owner's own verification key.
@@ -16,7 +16,7 @@ The project's contribution is narrower. It is a SNARK proof of Uchida-style whit
 
 The current demo reaches only the D1 level: E3 commits to the key and signature directly, and the in-circuit derivation is still to be built (`REQUIREMENTS.md` ZK-01). See `01_Literature_Gap_Analysis.md` §3.4.
 
-The demo is evaluated against the OWASP AI Exchange `#MODEL WATERMARKING` requirements.
+The demo is evaluated against **project requirements R1 (robustness) and R2 (non-ambiguity)**. We derived them from the OWASP AI Exchange `#MODEL WATERMARKING` text, which says watermarks should "remain detectable even if the model is modified" and should "avoid ambiguity where multiple parties could plausibly claim ownership of the same model". The R1/R2 labels are ours, not OWASP's.
 
 | Path | What |
 |---|---|
