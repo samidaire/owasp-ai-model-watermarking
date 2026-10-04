@@ -291,16 +291,17 @@ def probe_env():
                              timeout=120, env=child_env())
         lines = (out.stdout or "").strip().splitlines()
         if out.returncode != 0 or not lines:
-            err = (out.stderr or "").strip().splitlines()
-            raise RuntimeError(err[-1].strip() if err else f"probe exited with code {out.returncode}")
-        facts = json.loads(lines[-1])
-        ENV.clear()
-        ENV.update(facts)
-        ENV["status"] = "ok"
-    except Exception as e:  # noqa: BLE001 - surfaced in the UI, never fatal (e.g. no torch installed)
-        ENV.clear()
-        ENV.update({"status": "error",
-                    "error": scrub_paths(f"torch not available to {rel(PY)}: {e.__class__.__name__}: {e}")})
+            err = (out.stderr or "").strip().splitlines()      # e.g. "ModuleNotFoundError: No module named 'torch'"
+            detail = err[-1].strip() if err else f"probe exited with code {out.returncode} and no output"
+        else:
+            ENV.clear()
+            ENV.update(json.loads(lines[-1]))
+            ENV["status"] = "ok"
+            return
+    except Exception as e:  # noqa: BLE001 - surfaced in the UI, never fatal
+        detail = f"{e.__class__.__name__}: {e}"
+    ENV.clear()
+    ENV.update({"status": "error", "error": scrub_paths(f"torch not available to {rel(PY)}: {detail}")})
 
 
 def read_json(p: Path):

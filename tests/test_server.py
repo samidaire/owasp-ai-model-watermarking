@@ -181,6 +181,22 @@ def test_local_hosts_are_accepted(port, host):
     assert call(port, "GET", "/api/state", host=host)[0] == 200
 
 
+def test_gpu_probe_reports_the_last_stderr_line(monkeypatch):
+    monkeypatch.setattr(server, "ENV", {"status": "probing"})
+    monkeypatch.setattr(server, "PY", sys.executable)
+    try:
+        import torch  # noqa: F401
+        pytest.skip("torch is installed here, so the probe succeeds")
+    except ImportError:
+        pass
+    server.probe_env()
+    assert server.ENV["status"] == "error"
+    assert server.ENV["error"].endswith("ModuleNotFoundError: No module named 'torch'")
+    monkeypatch.setattr(server, "PY", str(DEMO / "no-such-python.exe"))
+    server.probe_env()
+    assert server.ENV["status"] == "error" and "FileNotFoundError" in server.ENV["error"]
+
+
 def test_host_and_origin_parsers():
     assert server.host_of("[::1]evil.com") is None and server.host_of("localhost:evil") is None
     assert server.host_of("[::1]:8765") == "::1" and server.host_of("Localhost:5173") == "localhost"
