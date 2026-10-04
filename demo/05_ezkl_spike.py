@@ -8,6 +8,12 @@ on the suspect model's PUBLIC watermark vector w, score = #{j : s_j * (X_j . w) 
                   i.e. a ZK-friendly commitment to (X, s) that can be published at embedding time
   --who thief   : prove with the thief's FORGED key instead (demo C's counterfeit)
 
+Secrets (interim FIX-03): the exported circuit model (extract.onnx), the compiled circuit and the
+witness all contain the private key X and signature s, so they are deleted as soon as the proof
+is made (and on failure). KEEP_ONNX=1 keeps them for debugging. --keep-onnx keeps only the
+THIEF's extract.onnx (a forged key, not the owner's), which 06_vk_crosscheck.py recompiles and
+then deletes.
+
 EZKL licence note: no open-source licence file in the EZKL repo (01 report, gap G5).
 Research/demo use only. SRS from ezkl.get_srs (public); falls back to gen_srs (TEST ONLY).
 """
@@ -17,6 +23,7 @@ from pathlib import Path as _Path
 _os.environ.setdefault("HOME", str(_Path.home()))
 import argparse
 import asyncio
+import atexit
 import inspect
 import json
 import os
@@ -31,6 +38,8 @@ from wm_core import RESULTS, T_BITS, banner, device, load_model, load_owner, tex
 ap = argparse.ArgumentParser()
 ap.add_argument("--vis", choices=["private", "hashed"], default="private")
 ap.add_argument("--who", choices=["owner", "thief"], default="owner")
+ap.add_argument("--keep-onnx", action="store_true",
+                help="thief only: keep extract.onnx for 06_vk_crosscheck.py (ignored for the owner)")
 args = ap.parse_args()
 
 OUT = RESULTS / f"ezkl_{args.vis}_{args.who}"
@@ -38,6 +47,31 @@ OUT.mkdir(parents=True, exist_ok=True)
 P = {k: str(OUT / v) for k, v in dict(onnx="extract.onnx", data="input.json", settings="settings.json",
                                        compiled="extract.compiled", srs="kzg.srs", witness="witness.json",
                                        vk="vk.key", pk="pk.key", proof="proof.json").items()}
+
+KEEP_ALL = os.environ.get("KEEP_ONNX") == "1"              # debugging only: leaves the key on disk
+if args.keep_onnx and args.who == "owner":
+    print("  --keep-onnx ignored for the owner: extract.onnx would contain the owner's key (KEEP_ONNX=1 to debug)")
+SECRET_FILES = [P["compiled"], P["witness"]]
+if not (args.keep_onnx and args.who == "thief"):
+    SECRET_FILES += [P["onnx"], P["onnx"] + ".data"]
+
+
+def delete_secret_files():
+    """Remove every file that embeds the private params (X, s). Idempotent; also runs at exit."""
+    if KEEP_ALL:
+        return []
+    removed = []
+    for f in SECRET_FILES:
+        try:
+            if os.path.exists(f):
+                os.remove(f)
+                removed.append(os.path.basename(f))
+        except OSError as e:                              # e.g. still open on Windows; retried at exit
+            print(f"  WARNING: could not delete {os.path.basename(f)} ({e.strerror}); delete it by hand")
+    return removed
+
+
+atexit.register(delete_secret_files)                      # also on failure part-way through
 
 
 def run(fn, *a, **kw):
@@ -145,6 +179,12 @@ _, times["gen_witness"] = timed("gen_witness", ezkl.gen_witness, P["data"], P["c
 _, times["setup"] = timed("setup", ezkl.setup, P["compiled"], P["vk"], P["pk"], srs_path=srs)
 _, times["prove"] = timed("prove", ezkl.prove, P["witness"], P["compiled"], P["pk"], P["proof"], srs_path=srs)
 ok, times["verify"] = timed("verify", ezkl.verify, P["proof"], P["settings"], P["vk"], srs_path=srs)
+_removed = delete_secret_files()                          # the proof is made: the key must not stay on disk
+if KEEP_ALL:
+    print("  KEEP_ONNX=1: extract.onnx, extract.compiled and witness.json KEPT (they contain the private key)")
+else:
+    print(f"  Deleted {', '.join(_removed) or 'nothing'} (they embed the private key and signature)"
+          + ("; kept extract.onnx (thief's forged key) for 06_vk_crosscheck.py" if P["onnx"] not in SECRET_FILES else ""))
 
 proof = json.load(open(P["proof"]))
 pretty = proof.get("pretty_public_inputs") or {}

@@ -33,7 +33,7 @@ if args.retrain or not (ROOT / "ckpt" / "watermarked.pt").exists():
 steps += [("02_attacks.py", []), ("03_forgery.py", []), ("04_committed_seed.py", ["--tries", str(args.tries)])]
 if args.ezkl:
     steps += [("05_ezkl_spike.py", ["--vis", "private", "--who", "owner"]),
-              ("05_ezkl_spike.py", ["--vis", "private", "--who", "thief"]),
+              ("05_ezkl_spike.py", ["--vis", "private", "--who", "thief", "--keep-onnx"]),   # for 06, which deletes it
               ("06_vk_crosscheck.py", [])]
     if args.hashed:
         steps += [("05_ezkl_spike.py", ["--vis", "hashed", "--who", "owner"]),

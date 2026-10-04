@@ -54,7 +54,7 @@ STEPS = {
     "forgery": [["03_forgery.py"]],
     "committed": [["04_committed_seed.py", "--tries", "{tries}"]],
     "zk": [["05_ezkl_spike.py", "--vis", "private", "--who", "owner"],
-           ["05_ezkl_spike.py", "--vis", "private", "--who", "thief"],
+           ["05_ezkl_spike.py", "--vis", "private", "--who", "thief", "--keep-onnx"],   # 06 needs it, then deletes it
            ["06_vk_crosscheck.py"]],
     "zk_hashed": [["05_ezkl_spike.py", "--vis", "hashed", "--who", "owner"],
                   ["05_ezkl_spike.py", "--vis", "hashed", "--who", "thief"],

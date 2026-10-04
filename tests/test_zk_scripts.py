@@ -101,9 +101,13 @@ def fake_ezkl(results, monkeypatch):
     return calls
 
 
-def test_e2_records_public_checks(results, fake_ezkl, capsys):
+def test_e2_records_public_checks_and_deletes_circuit_files(results, fake_ezkl, capsys, monkeypatch):
+    monkeypatch.delenv("KEEP_ONNX", raising=False)
     runpy.run_path(str(DEMO / "06_vk_crosscheck.py"), run_name="__main__")
     out = capsys.readouterr().out
+    # FIX-03: the thief's circuit model, the recompiled circuit and the witness are gone
+    leftovers = [p.name for p in results.rglob("*") if p.name in ("extract.onnx", "thief.compiled", "witness.json")]
+    assert leftovers == []
     vk = json.loads((results / "vk_crosscheck.json").read_text())
     assert vk["thief_verified_under_owner_vk"] is True and vk["identical"] is True
     for name in ("owner", "thief_under_owner_vk"):
