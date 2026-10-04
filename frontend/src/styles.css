@@ -285,6 +285,15 @@ details.tableview summary { cursor: pointer; color: var(--text-secondary); }
 .console .run { color: #86b6ef; }
 .console .warn { color: #fab219; }
 
+.errorcard {
+  display: flex; gap: 12px; align-items: flex-start; padding: 16px 18px; border-radius: 12px; max-width: 1120px;
+  border: 1px solid color-mix(in srgb, var(--critical) 40%, transparent); background: color-mix(in srgb, var(--critical) 7%, var(--surface-1));
+}
+.errorcard .ic { font-size: 18px; line-height: 1.2; font-weight: 800; color: var(--critical-text); }
+.errorcard p { margin: 0 0 8px; }
+.errorcard .msg { color: var(--critical-text); word-break: break-word; }
+#root > .errorcard { margin: 24px 32px; }
+
 .banner { margin: 16px 32px 0; }
 .stale { margin-left: 4px; }
 

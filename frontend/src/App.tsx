@@ -3,6 +3,7 @@ import {
   ApiError, cancelJob, followJob, getJob, getState, isStale, runStep, type DemoState, type JobInfo, type ServerStep,
 } from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Callout } from "./components/ui";
 import { short } from "./format";
 import { PanelA } from "./panels/PanelA";
@@ -308,15 +309,22 @@ export default function App() {
           <div className="navhint">← → or PageUp / PageDown to move between demos.</div>
         </nav>
         <main>
-          {s ? <step.Panel s={s} ctl={{ running, run }}
-            refreshing={Boolean(running && (PANEL_OF[running] === step.key || PANEL_OF[running] === "*"))} />
-            : !offline && <p style={{ color: "var(--text-secondary)" }}>Loading saved results…</p>}
+          {s ? (
+            // One boundary per panel (keyed, so moving to another panel starts clean): a render error in one
+            // panel shows an error card there, and the other panels, the sidebar and the console keep working.
+            <ErrorBoundary key={step.key} name={`Demo ${step.key} (${step.title})`} onReload={refresh} resetKey={s}>
+              <step.Panel s={s} ctl={{ running, run }}
+                refreshing={Boolean(running && (PANEL_OF[running] === step.key || PANEL_OF[running] === "*"))} />
+            </ErrorBoundary>
+          ) : !offline && <p style={{ color: "var(--text-secondary)" }}>Loading saved results…</p>}
         </main>
       </div>
 
-      <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)}
-        onCancel={job?.info.running && !job.lost && !cancelUnsupported ? cancel : undefined}
-        cancelling={Boolean(job?.info.running && cancelling === job.info.id)} />
+      <ErrorBoundary name="The console" onReload={() => setConsoleOpen(true)}>
+        <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)}
+          onCancel={job?.info.running && !job.lost && !cancelUnsupported ? cancel : undefined}
+          cancelling={Boolean(job?.info.running && cancelling === job.info.id)} />
+      </ErrorBoundary>
     </div>
   );
 }
