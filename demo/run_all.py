@@ -15,7 +15,7 @@ import sys
 import time
 from pathlib import Path
 
-from demo_common import child_env, is_noise
+from demo_common import child_env, is_noise, scrub_paths
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = Path(__file__).resolve().parent
@@ -33,7 +33,7 @@ if args.retrain or not (ROOT / "ckpt" / "watermarked.pt").exists():
 steps += [("02_attacks.py", []), ("03_forgery.py", []), ("04_committed_seed.py", ["--tries", str(args.tries)])]
 if args.ezkl:
     steps += [("05_ezkl_spike.py", ["--vis", "private", "--who", "owner"]),
-              ("05_ezkl_spike.py", ["--vis", "private", "--who", "thief"]),
+              ("05_ezkl_spike.py", ["--vis", "private", "--who", "thief", "--keep-onnx"]),   # for 06, which deletes it
               ("06_vk_crosscheck.py", [])]
     if args.hashed:
         steps += [("05_ezkl_spike.py", ["--vis", "hashed", "--who", "owner"]),
@@ -49,6 +49,7 @@ with open(ROOT / "results" / "run_log.txt", "w", encoding="utf-8") as log:
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                 env=child_env())
         for line in proc.stdout:
+            line = scrub_paths(line)      # no absolute user paths in the served log (FIX-15)
             log.write(line)
             if not is_noise(line):
                 sys.stdout.write(line)

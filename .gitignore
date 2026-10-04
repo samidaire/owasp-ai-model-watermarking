@@ -45,3 +45,11 @@ sdk/build/
 sdk/dist/
 backend/.env
 tools/bin/
+
+# throwaway test venv used by automation agents
+.venv-agent/
+# retrain (FIX-12): backups of previous owner secrets, and the staging area of a running retrain
+demo/ckpt/backup/
+demo/ckpt/.staging/
+# FIX-03: exported circuit models embed the private key and signature; never commit them
+demo/results/**/extract.onnx

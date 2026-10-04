@@ -93,10 +93,11 @@ All responses are JSON, except the SSE stream and files. Types are in **`contrac
 |---|---|---|---|
 | `GET /api/state` | Everything needed to render every panel | 200 `DemoState` | none |
 | `GET /api/steps` | Step catalogue: what can be run, labels, durations, confirmations | 200 `StepsResponse` | none |
-| `POST /api/run` | Start a demo step | 202 `JobInfo` | 400 bad step/tries · 403 foreign origin · 409 busy · 415 not JSON |
+| `POST /api/run` | Start a demo step | 202 `JobInfo` | 400 bad step/tries, or body not a JSON object · 403 foreign host/origin · 409 busy · 413 body too large · 415 not JSON |
+| `POST /api/jobs/{id}/cancel` | Stop a running job | 202 `JobInfo` (`cancelled: true`) | 403 foreign host/origin · 404 unknown id · 409 not running · 415 not JSON |
 | `GET /api/jobs/{id}` | Job status and all output so far | 200 `JobDetail` | 404 unknown id |
 | `GET /api/jobs/{id}/stream` | Live output (Server-Sent Events) | 200 `text/event-stream` | 404 unknown id |
-| `GET /results/{file}` | Result files: `attacks.png`, `forgery_search.png`, `attacks.csv`, `run_log.txt`, `*.json` | 200 file | 404 |
+| `GET /results/{file}` | Result files: `attacks.png`, `forgery_search.png`, `attacks.csv`, `run_log.txt`, `*.json` | 200 file (`Cache-Control: no-cache`) | 404 |
 | `GET /*` | Your static UI (SPA fallback to `index.html`) | 200 | 503 if no build |
 
 ### 4.1 `GET /api/state` → `DemoState`
@@ -114,31 +115,34 @@ All responses are JSON, except the SSE stream and files. Types are in **`contrac
     "ezkl": { "private_owner": { … }, "private_thief": { … }, "hashed_owner": { … }, "hashed_thief": { … } }
   },
   "job": { "id": "b44c5420d32c", "step": "all", "running": false, "code": 0,
-           "started": 1791143395.46, "ended": 1791143421.69, "lines": 211 }   // or null
+           "started": 1791143395.46, "ended": 1791143421.69, "lines": 211,
+           "cancelled": false, "timed_out": false }   // or null
 }
 ```
 
-- **Any result may be `null`** if that step has never run. Render an empty state with a Run button.
+- **Any result may be `null`** if that step has never run. Render an empty state with a Run button. A result file that is missing, half-written or malformed is also `null`; it never breaks `/api/state`.
 - **`env.status`** is `"probing"` for a few seconds after start-up. Poll `/api/state` every ~2 s until it changes to `"ok"` or `"error"`.
 - **`job`** is the most recent job, or `null`. If `job.running` is true on page load (e.g. the user reloaded mid-run), re-attach to `/api/jobs/{id}/stream`.
+- **`JobInfo.cancelled` and `JobInfo.timed_out`** are always present (`false` unless the job was cancelled, §4.6, or killed by its step's timeout, §4.2).
 
 ### 4.2 `GET /api/steps` → `StepsResponse`
 
 The live catalogue is in `contract/fixtures/steps.json`.
 
-| `id` | Panel | ~seconds | `confirm` | Writes |
-|---|---|---|---|---|
-| `evaluate` | A | 5 | — | `train.json` |
-| `retrain` | A | 35 | **yes**: replaces the owner key; B–E go stale | `public_commitment.json`, `train.json` |
-| `attacks` | B | 10 | — | `attacks.json`, `.csv`, `.png` |
-| `forgery` | C | 3 | — | `forgery.json` |
-| `committed` | D | 3 | — (option `tries`: 20000 or 100000) | `committed_seed.json`, `forgery_search.png` |
-| `zk` | E | 10 | — | `ezkl_private_*/summary.json`, `vk_crosscheck.json` |
-| `zk_hashed` | E | 200 | **yes**: ~3 min, ~10 GB temporary disk | `ezkl_hashed_*/summary.json` |
-| `all` | `*` | 30 | — | evaluate → attacks → forgery → committed → zk |
+| `id` | Panel | ~seconds | `timeout` | `confirm` | Writes |
+|---|---|---|---|---|---|
+| `evaluate` | A | 5 | 120 | — | `train.json` |
+| `retrain` | A | 35 | 350 | **yes**: replaces the owner key; B–E go stale | `public_commitment.json`, `train.json` |
+| `attacks` | B | 10 | 120 | — | `attacks.json`, `.csv`, `.png` |
+| `forgery` | C | 3 | 120 | — | `forgery.json` |
+| `committed` | D | 3 | 120 | — (option `tries`: 20000 or 100000) | `committed_seed.json`, `forgery_search.png` |
+| `zk` | E | 10 | 120 | — | `ezkl_private_*/summary.json`, `vk_crosscheck.json` |
+| `zk_hashed` | E | 200 | 1800 | **yes**: ~3 min, ~10 GB temporary disk | `ezkl_hashed_*/summary.json` |
+| `all` | `*` | 30 | 300 | — | evaluate → attacks → forgery → committed → zk |
 
 - **`confirm`.** When it's non-null, show its text and require a confirmation before POSTing. These steps are destructive or slow.
 - **Labels and durations.** Use `label` and `seconds` for buttons and for "this takes ~N s" hints.
+- **`timeout`.** Seconds after which the server kills a job of this step. It then ends with `code: -3` and `timed_out: true`. The limits are generous (`max(120, 10 × seconds)`; `zk_hashed` 1800), so a timeout means something is stuck.
 
 ### 4.3 `POST /api/run`
 
@@ -155,6 +159,7 @@ Content-Type: application/json
 | `tries` | no | `committed` only: 20000 or 100000. Default 20000. |
 
 - **202** returns the new `JobInfo`. Start streaming it.
+- **400** means an unknown `step`, a bad `tries`, invalid JSON, or a body that isn't a JSON object (e.g. a list). The reply is always JSON: `{"error": "…"}`.
 - **409** means a job is already running: `{"error": "another demo is running", "job": JobInfo}`. **Only one job runs at a time.** Disable all Run buttons while any job is running (`state.job.running`).
 - **415** means you didn't send `Content-Type: application/json`. Use `fetch` with that header; HTML form posts are rejected deliberately (§10).
 
@@ -175,11 +180,11 @@ data: "  DEMO C, part 1: Uchida ambiguity attack (thief has only the stolen weig
 : keepalive
 
 event: done
-data: {"id": "bc32eea65dd4", "step": "forgery", "running": false, "code": 0, "started": …, "ended": …, "lines": 44}
+data: {"id": "bc32eea65dd4", "step": "forgery", "running": false, "code": 0, "started": …, "ended": …, "lines": 44, "cancelled": false, "timed_out": false}
 ```
 
 - **Each output line** is one unnamed event. `data` is a **JSON-encoded string** (so `JSON.parse(e.data)`), and `id` is its 0-based line index.
-- **A `done` event** is sent once the job ends. Its `data` is the final `JobInfo`: `code: 0` means success, anything else means failure. After it, the server closes the stream. Close your `EventSource` and refetch `/api/state`.
+- **A `done` event** is sent once the job ends. Its `data` is the final `JobInfo`: `code: 0` means success, `-2` cancelled (§4.6), `-3` timed out (§4.2), anything else failure. After it, the server closes the stream. Close your `EventSource` and refetch `/api/state`.
 - **`: keepalive`** comments arrive every ~10 s while a job is quiet. Browsers ignore them.
 - **Reconnects resume.** If the connection drops, `EventSource` reconnects automatically and sends `Last-Event-ID`. The server then resumes after that line, with no duplicates. Opening a new stream without that header replays from line 0.
 - **The job keeps running** if no one is listening. `GET /api/jobs/{id}` returns `output: string[]` with everything so far.
@@ -207,7 +212,22 @@ These are optional static images if you'd rather show the matplotlib figures tha
 - `/results/forgery_search.png`: the D2 histogram;
 - `/results/run_log.txt`: the last CLI run.
 
-The JSON in `/api/state` carries the same data, so you can draw interactive charts instead.
+The JSON in `/api/state` carries the same data, so you can draw interactive charts instead. Files are served with `Cache-Control: no-cache`, so after a re-run the browser revalidates and shows the new image.
+
+### 4.6 `POST /api/jobs/{id}/cancel`
+
+```http
+POST /api/jobs/b44c5420d32c/cancel
+Content-Type: application/json
+
+{}
+```
+
+- **Same checks as `POST /api/run`:** a local `Host`, no foreign `Origin` (403), and `Content-Type: application/json` (415). The body is ignored, but if you send one it must be a JSON object.
+- **202** returns the job's `JobInfo` with `cancelled: true`. The server kills the job's whole process tree (in simulate mode it stops the replay) and waits up to ~5 s for it to end, so `running` is usually already `false` and `code` is `-2`. The stream still ends with its `done` event.
+- **409** means the job had already finished: `{"error": "job not running", "job": JobInfo}`. Treat it as done and refetch `/api/state`.
+- **404** means an unknown id, e.g. after a server restart.
+- **Results stay consistent.** Result files are replaced atomically, so a cancelled step leaves each file either old or new, never half-written. A cancelled `retrain` keeps the old owner key unless it was already swapping in the new one.
 
 ---
 
@@ -215,16 +235,22 @@ The JSON in `/api/state` carries the same data, so you can draw interactive char
 
 ```
 idle ──POST /api/run──▶ running (state.job.running = true; stream lines)
+                           │   ├─ POST /api/jobs/{id}/cancel ──▶ server kills the job
+                           │   └─ step's timeout passes ───────▶ server kills the job
                            │
-                           └─ "done" event ──▶ finished (code 0 = ok, else failed) ──▶ refetch /api/state ──▶ idle
+                           └─ "done" event ──▶ finished ──▶ refetch /api/state ──▶ idle
+                                               code 0 = ok · -2 = cancelled · -3 = timed out · other = failed
 ```
 
 - **While running:**
   - keep showing the previous results, dimmed, for the affected panel;
   - show a spinner on that panel;
   - disable every Run button;
+  - offer a Cancel button (§4.6);
   - stream lines into a console.
 - **On failure** (`code != 0`): keep the old results and show the last console lines. Never blank a panel.
+- **Cancelled or timed out** (`cancelled` / `timed_out` true): say so ("Cancelled", "Timed out after N s", with N from the step's `timeout`) rather than a generic failure. The old results stay, as for any failure.
+- **A job always finishes.** Even if a script or the server's job runner crashes, the job ends with a non-zero code and the traceback in its output, and the next `POST /api/run` is accepted. The server never stays stuck on "busy".
 - **Robustness:** while a job runs, also poll `/api/state` every ~5 s, in case the stream drops behind a proxy.
 
 ---
