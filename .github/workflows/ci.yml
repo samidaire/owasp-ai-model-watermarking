@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies (no ML stack)
+        run: uv pip install --system pytest numpy cryptography httpx
+      - name: Install the SDK (core only) when present
+        shell: bash
+        run: if [ -f sdk/pyproject.toml ]; then uv pip install --system -e ./sdk; fi
+      - name: Run tests
+        shell: bash
+        run: |
+          if ls tests/*.py sdk/tests/*.py >/dev/null 2>&1; then
+            python -m pytest -q -m "not ml and not zk"
+          else
+            echo "no tests yet"
+          fi
+
+  demo-smoke:
+    name: Demo server smoke test (simulate mode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Start the server and check /api/state
+        run: |
+          python demo/server.py --simulate --port 8765 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8765/api/state >/dev/null && break; sleep 1; done
+          curl -sf http://127.0.0.1:8765/api/state | python -c "import json,sys; s=json.load(sys.stdin); assert s['mode']=='simulate', s['mode']; assert s['api_version']==1; print('ok', sorted(s['results']))"
+
+  frontend:
+    name: Frontend typecheck and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Built UI must not load anything from the network (NFR-01)
+        working-directory: .
+        run: python3 scripts/check_offline_build.py frontend/dist
+
+  secrets:
+    name: Secret scan (CR-04)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

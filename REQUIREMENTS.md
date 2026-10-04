@@ -81,20 +81,20 @@ A phase is done when its exit gate in [WORKFLOW.md](WORKFLOW.md) passes. The pro
 
 ## 4. Decisions to confirm (before Phase 1, milestone M2)
 
-| ID | Decision | Recommended default | Why | Decided by |
+| ID | Decision | Decision taken | Why | Status |
 |---|---|---|---|---|
-| DEC-01 | ZK backend | **Circom 2 + SnarkJS (Groth16)** as the primary backend; keep EZKL only as a research-comparison backend | The SOP names Circom and SnarkJS. They're GPL-3.0 licensed, whereas EZKL has no licence. Groth16 proofs are a few hundred bytes. | SD + guide |
-| DEC-02 | Key derivation | Derive the key **X ∈ {−1,+1}^(T×M)** with a Poseidon-based PRG, replacing numpy's Gaussian generator | The key can then be re-derived inside the circuit (the D2 level), and it no longer depends on the numpy version. Parity must be shown first (WM-02). | SD + MA |
-| DEC-03 | Signature length | T = 64 for the live demo; **T = 256** as the security configuration | Seed-search work is about 2^32 at T = 64 versus about 2^120 at T = 256 | SD + MA |
-| DEC-04 | Models | MNIST CNN for the live demo; **CIFAR-10 ResNet-18** (PyTorch) for evaluation; one **Keras CNN** for TensorFlow coverage | Fast demo, credible evaluation, SOP framework coverage | MA |
-| DEC-05 | Owner identity | **Ed25519** signatures (ECC, per the SOP's "RSA / ECC") | Small, fast, well supported by `cryptography` | SD |
-| DEC-06 | Database | **PostgreSQL 16**; SQLite for unit tests only | The SOP names PostgreSQL | YB |
-| DEC-07 | Product/package name | Working name **`sigil`** (matches the design); renamed in one place if changed | One name across SDK, CLI and UI | Team |
-| DEC-08 | Licence | Apache-2.0 for the SDK, backend and frontend; **GPL-3.0 for `circuits/`**, because circomlib is GPL-3.0 | Clean OWASP contribution path | Team + guide |
-| DEC-09 | Scope statement | Present the project as the SOP **plus** a research contribution (forgery study, committed seed, RQ1–RQ3); send the guide a short SOP addendum | The build already goes beyond the SOP in research depth | SD |
-| DEC-10 | Timestamps | The registry signs timestamps, which works offline; add an optional RFC 3161 token when online | The demo room may have no internet | SD + YB |
+| DEC-01 | ZK backend | **Circom 2 + SnarkJS (Groth16)** as the primary backend; keep EZKL only as a research-comparison backend | The SOP names Circom and SnarkJS. They're GPL-3.0 licensed, whereas EZKL has no licence. Groth16 proofs are a few hundred bytes. | **Confirmed 2026-10-05** |
+| DEC-02 | Key derivation | Derive the key **X ∈ {−1,+1}^(T×M)** with a Poseidon-based PRG, replacing numpy's Gaussian generator | The key can then be re-derived inside the circuit (the D2 level), and it no longer depends on the numpy version. Parity must be shown first (WM-02). | **Confirmed 2026-10-05** |
+| DEC-03 | Signature length | T = 64 for the live demo; **T = 256** as the security configuration | Seed-search work is about 2^32 at T = 64 versus about 2^120 at T = 256 | **Confirmed 2026-10-05** |
+| DEC-04 | Models | MNIST CNN for the live demo; **CIFAR-10 ResNet-18** (PyTorch) for evaluation; one **Keras CNN** for TensorFlow coverage | Fast demo, credible evaluation, SOP framework coverage | **Confirmed 2026-10-05** |
+| DEC-05 | Owner identity | **Ed25519** signatures (ECC, per the SOP's "RSA / ECC") | Small, fast, well supported by `cryptography` | **Confirmed 2026-10-05** |
+| DEC-06 | Database | **PostgreSQL 16**; SQLite for unit tests only | The SOP names PostgreSQL | **Confirmed 2026-10-05** |
+| DEC-07 | Product/package name | Working name **`sigil`** (matches the design); renamed in one place if changed | One name across SDK, CLI and UI | **Confirmed 2026-10-05** |
+| DEC-08 | Licence | Apache-2.0 for the SDK, backend and frontend; **GPL-3.0 for `circuits/`**, because circomlib is GPL-3.0 | Clean OWASP contribution path | **Confirmed 2026-10-05** |
+| DEC-09 | Scope statement | Present the project as the SOP **plus** a research contribution (forgery study, committed seed, RQ1–RQ3); send the guide a short SOP addendum | The build already goes beyond the SOP in research depth | **Confirmed 2026-10-05** |
+| DEC-10 | Timestamps | The registry signs timestamps, which works offline; add an optional RFC 3161 token when online | The demo room may have no internet | **Confirmed 2026-10-05** |
 
-Record each decision here with **"Confirmed on <date>"** once agreed.
+All ten decisions were **confirmed on 2026-10-05** by the project lead. The only governing requirement is the SOP, so each was chosen as the option that best fulfils it. Any later change is recorded here with its date.
 
 ---
 
