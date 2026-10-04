@@ -22,8 +22,8 @@ dependencies = [
 
 [project.optional-dependencies]
 torch = ["torch>=2.2"]
-tf = ["tensorflow>=2.16"]
-onnx = ["onnx>=1.16"]
+tf = ["tensorflow>=2.16", "tf2onnx>=1.16"]          # tf2onnx: Keras -> ONNX export (WM-05)
+onnx = ["onnx>=1.16", "onnxscript>=0.2"]             # onnxscript: torch.onnx.export(dynamo=True)
 dev = ["pytest>=8", "pytest-timeout>=2.3"]
 
 [project.scripts]
