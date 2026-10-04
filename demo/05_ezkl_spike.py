@@ -109,7 +109,8 @@ print(f"  ONNX: ir_version={_m.ir_version} opset={[o.version for o in _m.opset_i
 if _m.ir_version > 8:
     _m.ir_version = 8
     onnx.save(_m, P["onnx"])
-json.dump({"input_data": [w.flatten().tolist()]}, open(P["data"], "w"))
+from demo_common import atomic_write_text
+atomic_write_text(P["data"], json.dumps({"input_data": [w.flatten().tolist()]}))
 
 ra = ezkl.PyRunArgs()
 ra.input_visibility = "public"
@@ -158,13 +159,13 @@ summary = {
     "peak_rss_bytes": _peak["rss"],
 }
 _peak["stop"] = True
-from demo_common import current_commitment   # web UI: detect results made with an older owner key
+from demo_common import current_commitment, write_json   # web UI: detect results made with an older owner key
 summary["commitment"] = current_commitment()
 summary["min_margin"] = float(margins.min())
 pp = pretty.get("processed_params")
 if pp:
     summary["param_commitment_poseidon"] = pp
-json.dump(summary, open(OUT / "summary.json", "w"), indent=2)
+write_json(OUT / "summary.json", summary)                 # atomic: the server may be reading it
 if not os.environ.get("KEEP_PK"):
     os.remove(P["pk"])                                      # proving keys can be ~10 GB; size is logged
 banner("DEMO E RESULT")
