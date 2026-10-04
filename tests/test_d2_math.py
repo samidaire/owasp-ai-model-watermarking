@@ -30,13 +30,15 @@ def test_work_estimate_is_in_hours():
     assert est["single_core_seconds"] == pytest.approx(est["single_core_hours"] * 3600)
 
 
-def test_saved_run_is_about_71_core_hours():
-    """FIX-01 acceptance: the saved D2 run (9,381 seeds/s) costs ~71 single-core hours, not ~257,000."""
+def test_saved_run_gives_tens_of_core_hours():
+    """FIX-01 acceptance: the saved D2 run costs tens of single-core hours (~71 for the
+    2026-10-04 run), not ~257,000. Robust to results being regenerated on another machine."""
     d2 = json.loads((Path(__file__).resolve().parents[1] / "demo" / "results" / "committed_seed.json")
                     .read_text(encoding="utf-8"))["d2"]
     est = d2_work_estimate(d2["p_per_try"], d2["tries"], d2["seconds"])
-    assert est["single_core_hours"] == pytest.approx(71, abs=2)
     assert est["seeds_for_half"] == pytest.approx(d2["seeds_for_half"])
+    assert est["single_core_hours"] == pytest.approx(d2["seeds_for_half"] / d2["seeds_per_s"] / 3600)
+    assert 10 < est["single_core_hours"] < 1000
 
 
 @pytest.mark.parametrize("args", [(0, 1, 1), (1, 1, 1), (0.1, 0, 1), (0.1, 1, 0)])

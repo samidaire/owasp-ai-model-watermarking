@@ -287,7 +287,10 @@ def _alive(pid: int) -> bool:
         os.kill(pid, 0)
     except ProcessLookupError:
         return False
-    return True
+    try:                                   # a killed but not yet reaped process is a zombie: dead
+        return "\nState:\tZ" not in Path(f"/proc/{pid}/status").read_text()
+    except OSError:
+        return True
 
 
 def test_live_cancel_kills_the_process_tree(port, live, monkeypatch):
