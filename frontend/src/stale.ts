@@ -1,7 +1,7 @@
 // Staleness (UI_INTEGRATION.md §7), decided in ONE place for both the sidebar and the panels.
 import type { DemoState } from "./api";
 
-export type PanelKey = "A" | "B" | "C" | "D" | "E";
+export type PanelKey = "A" | "B" | "C" | "D" | "E" | "F";
 export type Freshness = "fresh" | "stale" | "unknown";
 export type PanelStatus = Freshness | "missing";
 
@@ -28,6 +28,8 @@ function commitmentsOf(k: PanelKey, s: DemoState): (string | null | undefined)[]
       r.ezkl?.hashed_owner?.commitment, r.ezkl?.hashed_thief?.commitment,
       r.vk_crosscheck?.commitment,
     ];
+    // Demo F has its own owner identity and commitment (protocol v2), unrelated to the v1 seed.
+    case "F": return [];
   }
 }
 
@@ -40,6 +42,7 @@ export function panelPresent(k: PanelKey, s: DemoState): boolean {
     case "C": return Boolean(r.forgery);
     case "D": return Boolean(r.committed_seed);
     case "E": return Boolean(r.ezkl?.private_owner && r.ezkl?.private_thief);
+    case "F": return Boolean(r.protocol_v2);
   }
 }
 

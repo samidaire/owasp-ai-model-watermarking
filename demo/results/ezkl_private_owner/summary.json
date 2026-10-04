@@ -12,20 +12,20 @@
     ]
   ],
   "public_param_hashes": null,
-  "proof_bytes": 61706,
+  "proof_bytes": 61653,
   "vk_bytes": 66823,
   "pk_bytes": 138479371,
   "seconds": {
-    "gen_settings": 0.031,
-    "calibrate": 0.679,
-    "compile": 0.009,
-    "srs": 0.009,
-    "gen_witness": 0.041,
-    "setup": 0.7,
-    "prove": 0.663,
-    "verify": 0.021
+    "gen_settings": 0.075,
+    "calibrate": 0.586,
+    "compile": 0.0,
+    "srs": 0.008,
+    "gen_witness": 0.033,
+    "setup": 1.112,
+    "prove": 1.119,
+    "verify": 0.019
   },
-  "peak_rss_bytes": 658259968,
+  "peak_rss_bytes": 624058368,
   "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
   "min_margin": 24.120929718017578
 }

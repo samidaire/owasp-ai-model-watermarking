@@ -2,10 +2,10 @@
 ==============================================================================
   ENVIRONMENT CHECK
 ==============================================================================
-  Python      : 3.14.0 (Windows 11)
+  Python      : 3.12.13 (Windows 11)
   PyTorch     : 2.14.1+cu130  (CUDA build: 13.0)
-  GPU         : NVIDIA GeForce RTX 5080  sm_120  15.9 GiB
-  CUDA matmul : OK (-16357.7)
+  GPU         : NVIDIA GeForce RTX 4060 Laptop GPU  sm_89  8.0 GiB
+  CUDA matmul : OK (30508.8)
   MNIST data  : OK
 
 ==============================================================================
@@ -26,25 +26,25 @@
   int4 quantisation            acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
 
   -- fine-tuning on the thief's own 10k samples --
-  [FTAL-1] epoch 1/1  loss=0.0221  (0.3s)
-  FTAL 1 epoch                 acc=0.9859   owner BER=0.000   -> WATERMARK SURVIVES
-  [FTAL-5] epoch 1/5  loss=0.0221  (0.1s)
-  [FTAL-5] epoch 2/5  loss=0.0004  (0.1s)
-  [FTAL-5] epoch 3/5  loss=0.0286  (0.1s)
-  [FTAL-5] epoch 4/5  loss=0.0011  (0.1s)
-  [FTAL-5] epoch 5/5  loss=0.0007  (0.1s)
-  FTAL 5 epochs                acc=0.9891   owner BER=0.000   -> WATERMARK SURVIVES
-  [RTAL-5] epoch 1/5  loss=0.1934  (0.1s)
-  [RTAL-5] epoch 2/5  loss=0.0041  (0.1s)
-  [RTAL-5] epoch 3/5  loss=0.0065  (0.1s)
-  [RTAL-5] epoch 4/5  loss=0.0034  (0.1s)
-  [RTAL-5] epoch 5/5  loss=0.0009  (0.1s)
-  RTAL 5 epochs                acc=0.9830   owner BER=0.000   -> WATERMARK SURVIVES
+  [FTAL-1] epoch 1/1  loss=0.0227  (0.5s)
+  FTAL 1 epoch                 acc=0.9861   owner BER=0.000   -> WATERMARK SURVIVES
+  [FTAL-5] epoch 1/5  loss=0.0228  (0.3s)
+  [FTAL-5] epoch 2/5  loss=0.0004  (0.3s)
+  [FTAL-5] epoch 3/5  loss=0.0506  (0.3s)
+  [FTAL-5] epoch 4/5  loss=0.0005  (0.3s)
+  [FTAL-5] epoch 5/5  loss=0.0013  (0.3s)
+  FTAL 5 epochs                acc=0.9884   owner BER=0.000   -> WATERMARK SURVIVES
+  [RTAL-5] epoch 1/5  loss=0.1586  (0.3s)
+  [RTAL-5] epoch 2/5  loss=0.0040  (0.3s)
+  [RTAL-5] epoch 3/5  loss=0.0012  (0.2s)
+  [RTAL-5] epoch 4/5  loss=0.0026  (0.3s)
+  [RTAL-5] epoch 5/5  loss=0.0004  (0.3s)
+  RTAL 5 epochs                acc=0.9847   owner BER=0.000   -> WATERMARK SURVIVES
 
   -- overwriting: thief embeds their own Uchida watermark in the same layer --
-  [overwrite] epoch 1/3  loss=0.5265  (0.1s)  BER=0.266
-  [overwrite] epoch 2/3  loss=0.2148  (0.1s)  BER=0.000
-  [overwrite] epoch 3/3  loss=0.1190  (0.1s)  BER=0.000
+  [overwrite] epoch 1/3  loss=0.5264  (0.3s)  BER=0.266
+  [overwrite] epoch 2/3  loss=0.2149  (0.3s)  BER=0.000
+  [overwrite] epoch 3/3  loss=0.1183  (0.3s)  BER=0.000
   overwrite 3 epochs           acc=0.9862   owner BER=0.047   -> WATERMARK SURVIVES
 
   -- feature permutation (SoK, 'Feature Permutation (Ours)') --
@@ -107,19 +107,19 @@
   DEMO D1: Naive fix (only the key is derived; signature is a free choice)
 ==============================================================================
   Thief forgeries accepted : 1000/1000  (100%)
-  Example thief commitment : bfe8165fe814df487932911cb451e940...  (made 2026-10-04T19:30:57+00:00, after the theft)
+  Example thief commitment : bfe8165fe814df487932911cb451e940...  (made 2026-10-04T22:17:25+00:00, after the theft)
   -> Only timestamp ordering separates owner from thief. A theft before the owner
      commits (e.g. a dev-time leak) would defeat even that.
 
 ==============================================================================
   DEMO D2: Real fix (key AND signature derived from the seed); thief searches 20,000 seeds
 ==============================================================================
-  Search time              : 2.1s (9,381 seeds/s)
+  Search time              : 3.3s (6,051 seeds/s)
   Best BER the thief found : 0.250   (mean 0.500)
   Forgeries accepted       : 0/20,000  at threshold BER <= 0.125
   Theory, per try          : P[Bin(64,0.5) <= 8] = 2.78e-10  -> expected 5.56e-06 hits
   Work factor              : ~2^31.7 seeds (~2.5e+09 for a 50% chance)
-                             = ~74 single-core hours at this rate:
+                             = ~114 single-core hours at this rate:
                              feasible on a GPU or cluster. Hence timestamps still matter,
                              and RQ1 must set signature length T and threshold theta.
   Target level (T=256 bits, as in Uchida; same theta=1/8): ~2^120 per try
@@ -139,21 +139,21 @@
   DEMO E: EZKL proof  (params=private, prover=owner)
 ==============================================================================
   Plain PyTorch score : 64/64   (min signed margin 24.12)
-demo/05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+demo\05_ezkl_spike.py:134: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
   torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
   ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
-  gen_settings           0.03s   -> True
-[tensor] decomposition error: integer 252503164928 is too large to be represented by base 16384 and n 2
+  gen_settings           0.08s   -> True
+[tensor] decomposition error: integer 262257250304 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 1103974412288 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 1117680496640 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 4393651970048 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 4137557581824 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 1988673265664 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 2171549302784 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 8958602584064 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 8421799002112 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 16842967711744 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 16552211709952 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
 
 
@@ -166,41 +166,42 @@ forward pass failed: "failed to forward: [halo2] General synthesis error"
 +------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
 
 
-  calibrate              0.68s   -> True
-  compile_circuit        0.01s   -> True
-  get_srs (public)       0.00s   -> True
-  gen_witness            0.04s   -> ok
-  setup                  0.68s   -> True
-  prove                  0.68s   -> ok
+  calibrate              0.59s   -> True
+  compile_circuit        0.00s   -> True
+  get_srs (public)       0.01s   -> True
+  gen_witness            0.03s   -> ok
+  setup                  1.11s   -> True
+  prove                  1.12s   -> ok
   verify                 0.02s   -> True
+  Deleted extract.compiled, witness.json, extract.onnx (they embed the private key and signature)
 
 ==============================================================================
   DEMO E RESULT
 ==============================================================================
   verified=True  logrows=15  SRS=public (get_srs)
   public output (score)  : [['64']]
-  prove 0.68s | verify 20 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.61 GiB
+  prove 1.12s | verify 19 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.58 GiB
   Saved demo/results/ezkl_private_owner/summary.json
 
 ==============================================================================
   DEMO E: EZKL proof  (params=private, prover=thief)
 ==============================================================================
   Plain PyTorch score : 64/64   (min signed margin 1.61)
-demo/05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+demo\05_ezkl_spike.py:134: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
   torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
   ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
-  gen_settings           0.03s   -> True
-[tensor] decomposition error: integer 120944939008 is too large to be represented by base 16384 and n 2
+  gen_settings           0.02s   -> True
+[tensor] decomposition error: integer 96006443008 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
 [tensor] decomposition error: integer 281805688832 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
 [tensor] decomposition error: integer 320788668416 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 2697245257728 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 160212434944 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 2253051936768 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 981255610368 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
-[tensor] decomposition error: integer 4506719830016 is too large to be represented by base 16384 and n 2
+[tensor] decomposition error: integer 14379384995840 is too large to be represented by base 16384 and n 2
 forward pass failed: "failed to forward: [halo2] General synthesis error"
 
 
@@ -213,20 +214,21 @@ forward pass failed: "failed to forward: [halo2] General synthesis error"
 +------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
 
 
-  calibrate              0.69s   -> True
+  calibrate              0.57s   -> True
   compile_circuit        0.01s   -> True
-  get_srs (public)       0.00s   -> True
-  gen_witness            0.04s   -> ok
-  setup                  0.67s   -> True
-  prove                  0.67s   -> ok
+  get_srs (public)       0.01s   -> True
+  gen_witness            0.03s   -> ok
+  setup                  1.09s   -> True
+  prove                  1.14s   -> ok
   verify                 0.02s   -> True
+  Deleted extract.compiled, witness.json (they embed the private key and signature); kept extract.onnx (thief's forged key) for 06_vk_crosscheck.py
 
 ==============================================================================
   DEMO E RESULT
 ==============================================================================
   verified=True  logrows=15  SRS=public (get_srs)
   public output (score)  : [['64']]
-  prove 0.67s | verify 22 ms | proof 60.3 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.62 GiB
+  prove 1.14s | verify 17 ms | proof 60.3 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.59 GiB
   Saved demo/results/ezkl_private_thief/summary.json
 
 ==============================================================================
@@ -235,23 +237,9 @@ forward pass failed: "failed to forward: [halo2] General synthesis error"
 owner VK                  : 531e35d69b318658
 thief VK (owner settings) : 531e35d69b318658
 thief proof verified under OWNER's VK: True
+public signals, owner               : ACCEPT  (score = 64, public input = the suspect model's w)
+public signals, thief_under_owner_vk: ACCEPT  (score = 64, public input = the suspect model's w)
   -> Without a published commitment, the verifier cannot tell owner and thief apart.
 
-==============================================================================
-  DEMO E3: Poseidon-committed proofs (precomputed: 05_ezkl_spike.py --vis hashed)
-==============================================================================
-  Owner's Poseidon commitment : 0x2b2a85af6e5d5909e2d0ea795e31242e5c2004f4234d79e79010c91350d08c47
-    (in the protocol: published at embedding time; in this demo: taken from the owner's run)
-  owner proof verifies=True  score=64  hash=0x2b2a85af6e5d5909...  -> ACCEPT
-  thief proof verifies=True  score=64  hash=0x29fa15c85efd094a...  -> REJECT (hash != published commitment)
-
-  Scope: this commits to (X, s) directly, i.e. the D1 level. A thief who fits a key AFTER the
-  theft and publishes their own hash is stopped only by timestamp ordering. Reaching D2 inside
-  the proof (deriving X and s from the committed seed in-circuit) is Phase 3 work.
-  Not yet linked: the SHA-256 seed commitment (demos A/D) and this Poseidon (X, s) commitment.
-  The hash covers params quantised at the calibrated scale, so a real commitment must also pin
-  the circuit settings at embedding time.
-
-  Cost of committing (vs uncommitted, logrows 15): logrows 20, prove 35.8s, verify 643 ms, proof 64.6 KB, pk 9.8 GiB, sampled peak RAM 2.64 GiB
-
-All demos finished in 27s. Log: results/run_log.txt
+  [E3, the Poseidon-hashed proofs, is precomputed: proving at logrows 20 needs more RAM than this
+   15 GB laptop has (it ran out of memory). The saved E3 results come from a 32 GB machine.]

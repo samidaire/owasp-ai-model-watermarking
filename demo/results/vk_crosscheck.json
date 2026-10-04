@@ -3,5 +3,31 @@
   "owner_vk": "531e35d69b318658",
   "thief_vk": "531e35d69b318658",
   "identical": true,
-  "thief_verified_under_owner_vk": true
+  "thief_verified_under_owner_vk": true,
+  "public_checks": {
+    "owner": {
+      "accepted": true,
+      "reasons": [],
+      "verified": true,
+      "score": 64.0,
+      "expected_score": 64,
+      "input_matches_suspect_model": true,
+      "max_input_diff": 6.103515625e-05,
+      "input_tolerance": 0.000244140625,
+      "param_hash": null,
+      "expected_param_hash": null
+    },
+    "thief_under_owner_vk": {
+      "accepted": true,
+      "reasons": [],
+      "verified": true,
+      "score": 64.0,
+      "expected_score": 64,
+      "input_matches_suspect_model": true,
+      "max_input_diff": 6.103515625e-05,
+      "input_tolerance": 0.000244140625,
+      "param_hash": null,
+      "expected_param_hash": null
+    }
+  }
 }

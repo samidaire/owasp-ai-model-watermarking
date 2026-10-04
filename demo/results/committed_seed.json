@@ -14,15 +14,15 @@
   },
   "d2": {
     "tries": 20000,
-    "seconds": 2.0662033557891846,
-    "seeds_per_s": 9679.589351146426,
+    "seconds": 3.305449962615967,
+    "seeds_per_s": 6050.613449362821,
     "min_ber": 0.25,
     "mean_ber": 0.49970625,
     "accepted": 0,
     "p_per_try": 2.781336121159862e-10,
     "log2_work": 31.743502845674723,
     "seeds_for_half": 2492137412.97435,
-    "single_core_hours": 257463.13428876895,
+    "single_core_hours": 114.4116044243044,
     "log2_work_T256": 120.36081582455206,
     "histogram": [
       {

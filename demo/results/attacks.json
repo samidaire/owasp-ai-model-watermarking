@@ -68,28 +68,28 @@
     {
       "attack": "FTAL 1 epoch",
       "family": "finetune",
-      "accuracy": 0.9859,
+      "accuracy": 0.9861,
       "owner_ber": 0.0,
       "survives": true
     },
     {
       "attack": "FTAL 5 epochs",
       "family": "finetune",
-      "accuracy": 0.9882,
+      "accuracy": 0.9884,
       "owner_ber": 0.0,
       "survives": true
     },
     {
       "attack": "RTAL 5 epochs",
       "family": "finetune",
-      "accuracy": 0.9834,
+      "accuracy": 0.9847,
       "owner_ber": 0.0,
       "survives": true
     },
     {
       "attack": "overwrite 3 epochs",
       "family": "overwrite",
-      "accuracy": 0.9865,
+      "accuracy": 0.9862,
       "owner_ber": 0.046875,
       "survives": true
     },

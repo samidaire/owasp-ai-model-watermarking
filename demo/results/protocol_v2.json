@@ -43,22 +43,22 @@
       "snark_valid": true
     },
     "timing": {
-      "witness_s": 0.583,
-      "prove_s": 8.409
+      "witness_s": 1.426,
+      "prove_s": 3.727
     },
     "public_signals": {
       "pk_hash": "10557720968573965342392388716199003360260180289581770851761209578987792373887",
       "config_hash": "15271129699624883643617381122826526107408270685721458958957380929102354020351",
       "commitment": "14475661460362725281066963650847473165930083274232007953091326006909907545690",
       "w_hash": "14028469963850227125800069942685689831239945386145919137286332054046889652829",
-      "nonce": "2142454761126983275705753570017247849912604489643124651249857313076589817383"
+      "nonce": "3382768077068078082860993590368233418991027366963353883235971145467820282553"
     },
-    "proof_json_bytes": 882
+    "proof_json_bytes": 879
   },
   "thief": {
-    "own_key": "no proof possible: 27/64 bits wrong (> 8)",
+    "own_key": "no proof possible: 28/64 bits wrong (> 8)",
     "owner_commitment": "no proof possible: the thief can't open the owner's commitment",
-    "own_key_errors": 27
+    "own_key_errors": 28
   },
   "misuse": {
     "replayed for another claim": {
@@ -104,7 +104,7 @@
     },
     {
       "attack": "fine-tune all layers, 5 epochs",
-      "accuracy": 0.9886,
+      "accuracy": 0.9888,
       "errors": 0,
       "proof_accepted": true,
       "reason": null
@@ -122,12 +122,12 @@
       {
         "party": "owner",
         "registered_at": "2026-10-04T21:43:18Z",
-        "errors": 0,
+        "errors": 1,
         "proof_accepted": true
       },
       {
         "party": "thief",
-        "registered_at": "2026-10-04T21:46:55Z",
+        "registered_at": "2026-10-04T22:23:43.693Z",
         "errors": 0,
         "proof_accepted": true
       }

@@ -3,6 +3,7 @@
     python scripts/setup_env.py                    # full live setup (auto GPU/CPU PyTorch)
     python scripts/setup_env.py --keys sigil-proving-keys.zip   # + the shipped proving keys (skip zk setup)
     python scripts/setup_env.py --minimal          # just the demo UI with saved results (nothing to install)
+    python scripts/setup_env.py --demo             # fastest live demo: CPU PyTorch, no TensorFlow, no backend
 
 Steps (each skipped when already done):
   1. uv (fast Python installer) and a project venv in .venv with Python 3.12
@@ -80,16 +81,16 @@ def python_env(args) -> None:
         run([*u, "python", "install", "3.12"])
         run([*u, "venv", "--python", "3.12", str(ROOT / ".venv")])
     pip = [*u, "pip", "install", "--python", str(VENV_PY)]
-    cuda = not args.cpu and gpu_present()
+    cuda = not args.cpu and gpu_present() and (args.gpu or not args.demo)
     step(f"PyTorch {TORCH_VERSION} ({'CUDA 13.0 build' if cuda else 'CPU build'})")
     index = "https://download.pytorch.org/whl/cu130" if cuda else "https://download.pytorch.org/whl/cpu"
     run([*pip, f"torch=={TORCH_VERSION}", "--index-url", index])
     step("demo requirements, sigil SDK, backend")
     run([*pip, "-r", str(ROOT / "demo" / "requirements.txt")])
-    extras = "torch,onnx,dev" + ("" if args.no_tf else ",tf")
+    extras = "torch,onnx,dev" + ("" if (args.no_tf or args.demo) else ",tf")
     run([*pip, "-e", f"{ROOT / 'sdk'}[{extras}]"])
     backend_req = ROOT / "backend" / "requirements.txt"
-    if backend_req.exists():
+    if backend_req.exists() and not args.demo:
         run([*pip, "-r", str(backend_req)])
 
 
@@ -149,6 +150,9 @@ def self_test() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--minimal", action="store_true", help="demo UI with saved results only: install nothing")
+    ap.add_argument("--demo", action="store_true",
+                    help="fastest live demo: CPU PyTorch (use --gpu for CUDA), no TensorFlow, no backend")
+    ap.add_argument("--gpu", action="store_true", help="with --demo: install the CUDA build if a GPU is present")
     ap.add_argument("--cpu", action="store_true", help="install the CPU build of PyTorch even if a GPU is present")
     ap.add_argument("--no-tf", action="store_true", help="skip TensorFlow/Keras (saves ~1 GB)")
     ap.add_argument("--keys", type=Path, help="zip of proving keys made by scripts/package_keys.py")
@@ -162,8 +166,10 @@ def main() -> None:
         return
     python_env(args)
     node_env()
-    if args.keys:
-        unpack_keys(args.keys)
+    bundled = sorted(ROOT.glob("dist/sigil-proving-keys*.zip")) + sorted(ROOT.glob("sigil-proving-keys*.zip"))
+    keys = args.keys or (bundled[0] if bundled else None)
+    if keys:
+        unpack_keys(keys)
     elif args.zk_setup:
         step("Groth16 setup for the T=64 circuit (downloads the Powers of Tau once)")
         run([VENV_PY, "-m", "sigil.cli", "zk-setup", "--bits", "64"])

@@ -4,7 +4,7 @@ $ python 08_protocol_v2.py
 ==============================================================================
   DEMO F1: owner identity, committed seed, watermark, signed registration
 ==============================================================================
-  owner public key   : e28b7f9e9f75ce21â€¦   commitment C = 14475661460362725281â€¦
+  owner public key   : e28b7f9e9f75ce21…   commitment C = 14475661460362725281…
   registry receipt   : 2026-10-04T21:43:18Z
   accuracy           : watermarked 0.9857
   owner detection    : 0/64 bits wrong -> ACCEPT
@@ -34,7 +34,7 @@ $ python 08_protocol_v2.py
   prune 65%                        acc=0.5026  errors= 0/64  proof: ACCEPTED
   prune 90%                        acc=0.0201  errors= 1/64  proof: ACCEPTED
   fine-tune all layers, 5 epochs   acc=0.9886  errors= 0/64  proof: ACCEPTED
-  feature permutation              acc=0.9857  errors=39/64  proof: none â€” no proof possible: 39/64 bits wrong (> 8)
+  feature permutation              acc=0.9857  errors=39/64  proof: none — no proof possible: 39/64 bits wrong (> 8)
 
 ==============================================================================
   DEMO F6: the thief overwrites with their own mark and registers it later

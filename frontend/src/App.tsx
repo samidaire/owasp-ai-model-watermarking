@@ -11,6 +11,7 @@ import { PanelB } from "./panels/PanelB";
 import { PanelC } from "./panels/PanelC";
 import { PanelD } from "./panels/PanelD";
 import { PanelE } from "./panels/PanelE";
+import { PanelF } from "./panels/PanelF";
 import { RunButton, type PanelProps } from "./panels/Shell";
 import { panelStatus, type PanelKey as Key, type PanelStatus } from "./stale";
 import { FALLBACK_STEPS, toCatalogue, type StepCatalogue } from "./steps";
@@ -21,9 +22,10 @@ const STEPS: { key: Key; title: string; sub: string; Panel: (p: PanelProps) => R
   { key: "C", title: "Ownership forgery", sub: "OWASP R2 · gap G1", Panel: PanelC },
   { key: "D", title: "Committed seed", sub: "The fix, without ZK", Panel: PanelD },
   { key: "E", title: "Zero-knowledge proofs", sub: "EZKL on this machine", Panel: PanelE },
+  { key: "F", title: "Protocol v2", sub: "Circom + Groth16, end to end", Panel: PanelF },
 ];
 const PANEL_OF: Record<ServerStep, Key | "*"> = {
-  evaluate: "A", retrain: "A", attacks: "B", forgery: "C", committed: "D", zk: "E", zk_hashed: "E", protocol_v2: "*", all: "*",
+  evaluate: "A", retrain: "A", attacks: "B", forgery: "C", committed: "D", zk: "E", zk_hashed: "E", protocol_v2: "F", all: "*",
 };
 const TITLE_OF: Record<ServerStep, string> = {
   evaluate: "Demo A (re-verify)", retrain: "Demo A (retrain)", attacks: "Demo B", forgery: "Demo C",
@@ -53,7 +55,7 @@ export default function App() {
   const [idx, setIdx] = useState(() => Math.max(0, STEPS.findIndex((x) => x.key === readPref("demo.step", "A"))));
   const [job, setJob] = useState<ConsoleJob | null>(null);
   const [consoleOpen, setConsoleOpen] = useState(false);
-  const [theme, setTheme] = useState(() => readPref("demo.theme", "auto"));
+  const [motion, setMotion] = useState(() => readPref("demo.motion", "on") !== "off");
   /** Step catalogue from GET /api/steps; the fallback (src/steps.ts) until it loads, or if it fails. */
   const [steps, setSteps] = useState<StepCatalogue>(FALLBACK_STEPS);
   const [stepsLoaded, setStepsLoaded] = useState(false);
@@ -171,10 +173,9 @@ export default function App() {
   }, [runningId, refresh, settle, attach]);
 
   useEffect(() => {
-    if (theme === "auto") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = theme;
-    writePref("demo.theme", theme);
-  }, [theme]);
+    document.documentElement.classList.toggle("still", !motion);
+    writePref("demo.motion", motion ? "on" : "off");
+  }, [motion]);
 
   const go = useCallback((i: number) => {
     const n = Math.max(0, Math.min(STEPS.length - 1, i));
@@ -262,8 +263,15 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <h1>Committed-seed ZK ownership verification</h1>
-          <span>OWASP AI Model Watermarking · final-year project demo</span>
+          <svg className="logo" width="40" height="40" viewBox="0 0 38 38" aria-hidden>
+            <rect x="1" y="1" width="36" height="36" rx="11" fill="var(--espresso)" />
+            <path d="M8 15c2.6-3.2 5.2-3.2 7.6 0s5 3.2 7.6 0 5-3.2 6.8 0" fill="none" stroke="var(--caramel)" strokeWidth="2.8" strokeLinecap="round" />
+            <path d="M8 23c2.6-3.2 5.2-3.2 7.6 0s5 3.2 7.6 0 5-3.2 6.8 0" fill="none" stroke="var(--paper)" strokeWidth="2.8" strokeLinecap="round" />
+          </svg>
+          <div className="words">
+            <h1>Committed-seed ZK ownership verification</h1>
+            <span>Student final-year project · aligned with OWASP AI Model Watermarking</span>
+          </div>
         </div>
         <div className="group">
           <span className={`chip${env?.status === "ok" && env.gpu ? " good" : env?.status === "error" ? " warn" : ""}`} title={env?.error}>
@@ -272,11 +280,9 @@ export default function App() {
           <span className="chip" title={s?.commitment ?? ""}>Owner commitment <span className="mono">{short(s?.commitment)}</span></span>
           <RunButton ctl={ctl} step="all" primary disabled={!s}
             hint="Re-verify A, then run B, C, D and E1 + E2 live. E3 stays precomputed." />
-          <select className="sel" value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Colour theme">
-            <option value="auto">Theme: auto</option>
-            <option value="light">Theme: light</option>
-            <option value="dark">Theme: dark</option>
-          </select>
+          <button type="button" className="toggle" aria-pressed={motion} onClick={() => setMotion((m) => !m)}>
+            <span className="knob" aria-hidden />Motion
+          </button>
         </div>
       </header>
 

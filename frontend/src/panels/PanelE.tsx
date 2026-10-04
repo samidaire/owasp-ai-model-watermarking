@@ -46,13 +46,13 @@ export function PanelE({ s, ctl, refreshing }: PanelProps) {
       </>}
       notes={<Notes
         say={[
-          "This is a real zero-knowledge proof on my 32 GB machine: the key and signature are private, the suspect's weights are public.",
+          "This is a real zero-knowledge proof on this machine: the key and signature are private, the suspect's weights are public.",
           "Without a commitment, the thief's forged proof verifies under my own verification key. The verifier literally cannot tell us apart. That is gap G1, demonstrated cryptographically.",
           "Commit inside the proof (Poseidon hash of the private parameters) and the thief is rejected.",
           "The cost jump from logrows 15 to 20 is the RQ3 trade-off I will optimise.",
         ]}
         caveats={[
-          "E3 commits to the key and signature directly: the D1 level plus a timestamp. Deriving them from the seed inside the circuit (D2 level) is Phase 3.",
+          "E3 commits to the key and signature directly: the D1 level plus a timestamp. Deriving them from the seed inside the circuit (D2 level) is what demo F does, with Circom + SnarkJS.",
           "E3's Poseidon commitment is not yet linked to demo A's SHA-256 seed commitment, and a real commitment must also pin the circuit's quantisation settings.",
           "EZKL ships no open-source licence file (gap G5): research and demo use only.",
         ]}
@@ -104,7 +104,7 @@ export function PanelE({ s, ctl, refreshing }: PanelProps) {
             </div>
             <div style={{ marginTop: 12 }}>
               <Callout tone="warn"><p><strong>Scope:</strong> this commits to the key and signature directly (D1 level). A thief who fits a key after the theft
-                and publishes their own hash is stopped only by timestamp ordering. Deriving them from the seed inside the proof (D2) is Phase 3.</p></Callout>
+                and publishes their own hash is stopped only by timestamp ordering. Deriving them from the seed inside the proof (D2) is demo F.</p></Callout>
             </div>
           </Card>
 
