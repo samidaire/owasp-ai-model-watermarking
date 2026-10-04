@@ -45,3 +45,7 @@ sdk/build/
 sdk/dist/
 backend/.env
 tools/bin/
+
+# M5 robustness: datasets and checkpoints are regenerated, never committed (results JSON/CSV/SVG are)
+experiments/data/
+experiments/ckpt/
