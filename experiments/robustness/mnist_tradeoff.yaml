@@ -1,0 +1,18 @@
+# ROB-07 trade-off on MNIST: accuracy cost and robustness vs lambda and T (also WM-09 at T=256).
+# Run:  python experiments/robustness/mnist_tradeoff.py      Schema: sigil.robustness.config/v1
+schema: sigil.robustness.config/v1
+version: 1
+name: mnist_tradeoff
+dataset: mnist
+seeds: [0, 1, 2, 3, 4]               # same owner identities and init seeds as mnist_matrix (T=64, lam=1 reuses its models)
+owner_training: {epochs: 3, lr: 0.001, batch_size: 128, optimizer: adam}
+layer: conv2
+M: 288
+lams: [0.1, 0.3, 1.0, 3.0]
+Ts: [64, 128, 256]                    # max_err = T/8
+attacks:                              # robustness probes: no-training pruning, fine-tuning, overwriting
+  prune_ratios: [0.9]
+  finetune: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}
+  overwrite:
+    lam: 1.0
+    fit: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}
