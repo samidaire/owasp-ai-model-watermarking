@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { DemoState, ServerStep } from "../api";
 import { ReqChip, StaleBadge } from "../components/ui";
-import { about, type StepCatalogue } from "../steps";
+import { about, RUNNING_NAME, type StepCatalogue } from "../steps";
 
 export interface RunCtl {
   /** Server step currently running, if any (one job at a time). */
@@ -24,12 +24,13 @@ export function RunButton({ ctl, step, primary, tries, hint, disabled }: {
   const busy = ctl.running !== null;
   const mine = ctl.running === step;
   const label = info.confirm ? `${info.label}…` : info.label;   // "…" = a confirmation follows
+  // The visible text is the accessible name, so it says what is running ("Running forgery…"), not just "Running…".
   return (
     <button className={`btn${primary ? " primary" : ""}`} disabled={busy || disabled}
       title={`${hint ?? info.description} (${about(info.seconds)})`}
       onClick={() => ctl.run(step, { tries })}>
       {mine ? <span className="spinner" aria-hidden /> : <span aria-hidden>▶</span>}
-      {mine ? "Running…" : label}
+      {mine ? `Running ${RUNNING_NAME[step]}…` : label}
     </button>
   );
 }
@@ -39,7 +40,7 @@ export function PanelShell({ letter, title, reqs, claim, actions, stale, refresh
   refreshing: boolean; notes: ReactNode; children: ReactNode;
 }) {
   return (
-    <article className={`panel${refreshing ? " refreshing" : ""}`} aria-labelledby={`h-${letter}`}>
+    <article className={`panel${refreshing ? " refreshing" : ""}`} aria-labelledby={`h-${letter}`} aria-busy={refreshing}>
       <header className="panelhead">
         <div className="titles">
           <div className="kicker">Demo {letter}</div>

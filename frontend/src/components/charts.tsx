@@ -14,6 +14,30 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
+/**
+ * Keyboard reading of a chart: the chart is ONE focusable figure (visible focus ring); ← / → move between
+ * the points in `order` (indices), and the current value is announced through a polite live region.
+ */
+function useChartKeys(order: number[], setHover: (f: (h: number | null) => number | null) => void) {
+  const step = (dir: 1 | -1) => setHover((h) => {
+    const at = h === null ? -1 : order.indexOf(h);
+    const next = at === -1 ? (dir === 1 ? 0 : order.length - 1) : Math.max(0, Math.min(order.length - 1, at + dir));
+    return order[next] ?? null;
+  });
+  return {
+    tabIndex: 0,
+    onKeyDown: (e: KeyboardEvent) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      // Keep the arrows inside the chart (they otherwise move between demo panels).
+      e.stopPropagation();
+      e.preventDefault();
+      step(e.key === "ArrowRight" ? 1 : -1);
+    },
+    onFocus: () => setHover((h) => h ?? order[0] ?? null),
+    onBlur: () => setHover(() => null),
+  };
+}
+
 function niceTicks(max: number, count = 4): number[] {
   if (max <= 0) return [0, 1];
   const raw = max / count;
@@ -52,52 +76,52 @@ export function LineChart({
     points.forEach((p, i) => { if (Math.abs(sx(p.x) - px) < Math.abs(sx(points[best].x) - px)) best = i; });
     setHover(best);
   };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key === "ArrowRight") { setHover((h) => Math.min(points.length - 1, (h ?? -1) + 1)); e.stopPropagation(); e.preventDefault(); }
-    if (e.key === "ArrowLeft") { setHover((h) => Math.max(0, (h ?? 1) - 1)); e.stopPropagation(); e.preventDefault(); }
-  };
+  const keys = useChartKeys(points.map((_, i) => i), setHover);
   const hp = hover !== null ? points[hover] : null;
 
   return (
     <div className="chart" ref={ref}>
-      {width > 0 && (
-        <svg height={height} role="img" aria-label={ariaLabel}>
-          {yTicks.map((t) => (
-            <g key={t}>
-              <line x1={m.l} x2={m.l + pw} y1={sy(t)} y2={sy(t)} stroke={t === 0 ? "var(--axis)" : "var(--grid)"} strokeWidth="1" />
-              <text className="tick" x={m.l - 8} y={sy(t)} dy="0.32em" textAnchor="end">{fmtY(t)}</text>
-            </g>
-          ))}
-          {xTicks.map((t) => (
-            <text key={t} className="tick" x={sx(t)} y={m.t + ph + 18} textAnchor="middle">{fmtX(t)}</text>
-          ))}
-          <text className="axislabel" x={m.l + pw / 2} y={height - 4} textAnchor="middle">{xLabel}</text>
-          {threshold && (
-            <g>
-              <line x1={m.l} x2={m.l + pw} y1={sy(threshold.y)} y2={sy(threshold.y)} stroke="var(--text-secondary)"
-                strokeWidth="1" strokeDasharray="4 3" />
-              <text className="annot" x={m.l + 6} y={sy(threshold.y) - 6} textAnchor="start">{threshold.label}</text>
-            </g>
-          )}
-          {hp && <line x1={sx(hp.x)} x2={sx(hp.x)} y1={m.t} y2={m.t + ph} stroke="var(--axis)" strokeWidth="1" />}
-          <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          {points.map((p, i) => (
-            <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={hover === i ? 5.5 : 4} fill={color} stroke="var(--surface-1)" strokeWidth="2" />
-          ))}
-          {last && (
-            <text className="annot" x={sx(last.x)} y={sy(last.y) - 10} textAnchor="end">{fmtY(last.y)}</text>
-          )}
-          <rect x={m.l} y={m.t} width={pw} height={ph} fill="transparent" tabIndex={0} aria-label={`${ariaLabel}: use arrow keys to read values`}
-            onPointerMove={onMove} onPointerLeave={() => setHover(null)} onFocus={() => setHover(0)} onBlur={() => setHover(null)}
-            onKeyDown={onKey} style={{ outline: "none" }} />
-        </svg>
-      )}
-      {hp && (
-        <div className="tooltip" style={{ left: sx(hp.x), top: sy(hp.y) }}>
-          <div className="tv">{fmtY(hp.y)}</div>
-          <div className="tl"><span className="key" style={{ background: color }} />{valueName} at {fmtX(hp.x)}</div>
-        </div>
-      )}
+      <figure className="chartfig" {...keys} aria-label={`${ariaLabel}. Left and right arrow keys read each value.`}>
+        {width > 0 && (
+          <svg height={height} aria-hidden="true" focusable="false">
+            {yTicks.map((t) => (
+              <g key={t}>
+                <line x1={m.l} x2={m.l + pw} y1={sy(t)} y2={sy(t)} stroke={t === 0 ? "var(--axis)" : "var(--grid)"} strokeWidth="1" />
+                <text className="tick" x={m.l - 8} y={sy(t)} dy="0.32em" textAnchor="end">{fmtY(t)}</text>
+              </g>
+            ))}
+            {xTicks.map((t) => (
+              <text key={t} className="tick" x={sx(t)} y={m.t + ph + 18} textAnchor="middle">{fmtX(t)}</text>
+            ))}
+            <text className="axislabel" x={m.l + pw / 2} y={height - 4} textAnchor="middle">{xLabel}</text>
+            {threshold && (
+              <g>
+                <line x1={m.l} x2={m.l + pw} y1={sy(threshold.y)} y2={sy(threshold.y)} stroke="var(--text-secondary)"
+                  strokeWidth="1" strokeDasharray="4 3" />
+                <text className="annot" x={m.l + 6} y={sy(threshold.y) - 6} textAnchor="start">{threshold.label}</text>
+              </g>
+            )}
+            {hp && <line x1={sx(hp.x)} x2={sx(hp.x)} y1={m.t} y2={m.t + ph} stroke="var(--axis)" strokeWidth="1" />}
+            <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            {points.map((p, i) => (
+              <circle key={i} cx={sx(p.x)} cy={sy(p.y)} r={hover === i ? 5.5 : 4} fill={color} stroke="var(--surface-1)" strokeWidth="2" />
+            ))}
+            {last && (
+              <text className="annot" x={sx(last.x)} y={sy(last.y) - 10} textAnchor="end">{fmtY(last.y)}</text>
+            )}
+            {/* Pointer hover only; keyboard reading is on the figure. */}
+            <rect x={m.l} y={m.t} width={pw} height={ph} fill="transparent"
+              onPointerMove={onMove} onPointerLeave={() => setHover(null)} />
+          </svg>
+        )}
+        {hp && (
+          <div className="tooltip" style={{ left: sx(hp.x), top: sy(hp.y) }} aria-hidden>
+            <div className="tv">{fmtY(hp.y)}</div>
+            <div className="tl"><span className="key" style={{ background: color }} />{valueName} at {fmtX(hp.x)}</div>
+          </div>
+        )}
+        <p className="sr-only" aria-live="polite">{hp ? `${valueName} at ${fmtX(hp.x)}: ${fmtY(hp.y)}` : ""}</p>
+      </figure>
       <details className="tableview">
         <summary>Table view</summary>
         <table className="data">
@@ -134,44 +158,48 @@ export function Histogram({ bins, markers, ariaLabel, tip, xLabel, height = 260 
     return `M${x},${base} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${base} Z`;
   };
   const hb = hover !== null ? bins[hover] : null;
+  const keys = useChartKeys(bins.flatMap((b, i) => (b.count > 0 ? [i] : [])), setHover);
 
   return (
     <div className="chart" ref={ref}>
-      {width > 0 && (
-        <svg height={height} role="img" aria-label={ariaLabel}>
-          {yTicks.map((t) => (
-            <g key={t}>
-              <line x1={m.l} x2={m.l + pw} y1={sy(t)} y2={sy(t)} stroke={t === 0 ? "var(--axis)" : "var(--grid)"} strokeWidth="1" />
-              <text className="tick" x={m.l - 8} y={sy(t)} dy="0.32em" textAnchor="end">{t.toLocaleString("en-US")}</text>
-            </g>
-          ))}
-          {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-            <text key={t} className="tick" x={sx(t)} y={base + 18} textAnchor="middle">{t.toFixed(2)}</text>
-          ))}
-          <text className="axislabel" x={m.l + pw / 2} y={height - 4} textAnchor="middle">{xLabel}</text>
-          {bins.map((b, i) => b.count > 0 && (
-            <path key={i} d={barPath(sx(b.x), sy(b.count))} fill="var(--series-1)" opacity={hover === null || hover === i ? 1 : 0.55} />
-          ))}
-          {markers.map((mk, idx) => (
-            <g key={mk.label}>
-              <line x1={sx(mk.x)} x2={sx(mk.x)} y1={m.t - 18 - idx * 14} y2={base}
-                stroke={mk.tone === "good" ? "var(--good)" : "var(--text-secondary)"}
-                strokeWidth={mk.tone === "good" ? 3 : 1} strokeDasharray={mk.tone === "good" ? undefined : "4 3"} />
-              <text className="annot" x={sx(mk.x) + 6} y={m.t - 8 - idx * 14} textAnchor="start">{mk.label}</text>
-            </g>
-          ))}
-          {bins.map((b, i) => (
-            <rect key={`h${i}`} x={sx(b.x) - band / 2} y={m.t} width={band} height={ph} fill="transparent"
-              onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)} />
-          ))}
-        </svg>
-      )}
-      {hb && (
-        <div className="tooltip" style={{ left: sx(hb.x), top: sy(hb.count) }}>
-          <div className="tv">{tip(hb).value}</div>
-          <div className="tl">{tip(hb).label}</div>
-        </div>
-      )}
+      <figure className="chartfig" {...keys} aria-label={`${ariaLabel}. Left and right arrow keys read each non-empty bar.`}>
+        {width > 0 && (
+          <svg height={height} aria-hidden="true" focusable="false">
+            {yTicks.map((t) => (
+              <g key={t}>
+                <line x1={m.l} x2={m.l + pw} y1={sy(t)} y2={sy(t)} stroke={t === 0 ? "var(--axis)" : "var(--grid)"} strokeWidth="1" />
+                <text className="tick" x={m.l - 8} y={sy(t)} dy="0.32em" textAnchor="end">{t.toLocaleString("en-US")}</text>
+              </g>
+            ))}
+            {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+              <text key={t} className="tick" x={sx(t)} y={base + 18} textAnchor="middle">{t.toFixed(2)}</text>
+            ))}
+            <text className="axislabel" x={m.l + pw / 2} y={height - 4} textAnchor="middle">{xLabel}</text>
+            {bins.map((b, i) => b.count > 0 && (
+              <path key={i} d={barPath(sx(b.x), sy(b.count))} fill="var(--series-1)" opacity={hover === null || hover === i ? 1 : 0.55} />
+            ))}
+            {markers.map((mk, idx) => (
+              <g key={mk.label}>
+                <line x1={sx(mk.x)} x2={sx(mk.x)} y1={m.t - 18 - idx * 14} y2={base}
+                  stroke={mk.tone === "good" ? "var(--good)" : "var(--text-secondary)"}
+                  strokeWidth={mk.tone === "good" ? 3 : 1} strokeDasharray={mk.tone === "good" ? undefined : "4 3"} />
+                <text className="annot" x={sx(mk.x) + 6} y={m.t - 8 - idx * 14} textAnchor="start">{mk.label}</text>
+              </g>
+            ))}
+            {bins.map((b, i) => (
+              <rect key={`h${i}`} x={sx(b.x) - band / 2} y={m.t} width={band} height={ph} fill="transparent"
+                onPointerEnter={() => setHover(i)} onPointerLeave={() => setHover(null)} />
+            ))}
+          </svg>
+        )}
+        {hb && (
+          <div className="tooltip" style={{ left: sx(hb.x), top: sy(hb.count) }} aria-hidden>
+            <div className="tv">{tip(hb).value}</div>
+            <div className="tl">{tip(hb).label}</div>
+          </div>
+        )}
+        <p className="sr-only" aria-live="polite">{hb ? `${tip(hb).label}: ${tip(hb).value}` : ""}</p>
+      </figure>
       <details className="tableview">
         <summary>Table view</summary>
         <table className="data">

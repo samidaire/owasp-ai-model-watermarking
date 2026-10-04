@@ -80,7 +80,9 @@ export function Console({ job, open, onToggle, onCancel, cancelling, timeout }: 
     <section className="console" aria-label="Demo console" ref={root}>
       {/* The whole bar toggles on click (a big target for a presenter); the buttons are the keyboard path. */}
       <div className="bar" onClick={(e) => { if (!(e.target as HTMLElement).closest("button")) onToggle(); }}>
-        {statusOf(job, cancelling, timeout)}
+        {/* Job status is announced to screen readers when it changes (running, finished, cancelled, …). The
+            ticking timer and the last output line stay outside this region so they don't flood it. */}
+        <div className="stwrap" role="status" aria-live="polite" aria-atomic="true">{statusOf(job, cancelling, timeout)}</div>
         {info && <span className="dim">{elapsed.toFixed(1)} s</span>}
         <span className="last">{last}</span>
         {onCancel && (

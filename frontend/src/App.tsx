@@ -296,7 +296,10 @@ export default function App() {
           </Callout>
         </div>
       )}
-      {notice && <div className="banner"><Callout tone="warn"><p>{notice}</p></Callout></div>}
+      {/* Always mounted, so notices (409 busy, cancel not supported, errors) are announced when they appear. */}
+      <div aria-live="polite">
+        {notice && <div className="banner"><Callout tone="warn"><p>{notice}</p></Callout></div>}
+      </div>
 
       <div className="layout">
         <nav className="sidenav" aria-label="Demo steps">

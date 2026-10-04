@@ -55,6 +55,12 @@ export function toCatalogue(r: StepsResponse): StepCatalogue {
   return out;
 }
 
+/** What a running step is doing, for "Running forgery…" button texts (their accessible names). */
+export const RUNNING_NAME: Record<ServerStep, string> = {
+  evaluate: "re-verification", retrain: "retraining", attacks: "attacks", forgery: "forgery",
+  committed: "seed search", zk: "E1 + E2 proofs", zk_hashed: "E3 proofs", all: "all demos",
+};
+
 /** "~10 s", "~3 min". */
 export function about(seconds: number): string {
   return seconds < 90 ? `~${Math.max(1, Math.round(seconds))} s` : `~${Math.round(seconds / 60)} min`;
