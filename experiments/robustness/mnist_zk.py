@@ -43,9 +43,10 @@ def main():
     dev = torch.device("cpu")              # proving is CPU work; weights are read from the files
     owner = Owner(f"m5/mnist/owner/{s}", pcfg)
     registry = keypair("m5/registry/ed25519")
-    folder = CKPT / f"mnist_attacked_s{s}"
+    prefix = cfg.get("ckpt_prefix", "mnist")
+    folder = CKPT / f"{prefix}_attacked_s{s}"
     manifest = json.loads((folder / "manifest.json").read_text())
-    registered = CKPT / f"mnist_wm_s{s}.pt"
+    registered = CKPT / f"{prefix}_wm_s{s}.pt"
     reg = make_registration(owner.keys, owner.seed, pcfg, sha256_file(registered), created_at="2026-10-01T09:00:00Z")
     rcp = make_receipt(registry, reg, registered_at="2026-10-01T09:00:01Z")
 
@@ -98,8 +99,8 @@ def main():
            "protocol_config": pcfg.to_dict(), "circuit": Z.circuit_name(pcfg) if Z else None, "status": status,
            "status_detail": why, "registration_commitment": reg["commitment"], "rows": rows,
            "all_consistent": all(r.get("consistent", True) for r in rows) if status == "complete" else None}
-    write_json(RESULTS / "mnist_zk.json", out)
-    log(f"done ({status}) -> results/mnist_zk.json")
+    write_json(RESULTS / f"{cfg.get('out', 'mnist_matrix').replace('matrix', 'zk')}.json", out)
+    log(f"done ({status})")
 
 
 if __name__ == "__main__":

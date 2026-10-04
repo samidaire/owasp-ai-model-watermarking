@@ -36,10 +36,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(HERE / "mnist.yaml"))
     ap.add_argument("--seeds", type=int, nargs="*")
-    ap.add_argument("--out", default="mnist_matrix")
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
     cfg = load_config(args.config)
     seeds = args.seeds if args.seeds is not None else cfg["seeds"]
+    prefix = cfg.get("ckpt_prefix", "mnist")                # checkpoint names: <prefix>_<kind>_s<seed>.pt
+    kinds = ["clean"] + [k for k in cfg["models"] if k != "clean"]
+    args.out = args.out or cfg.get("out", "mnist_matrix")
     dev = device()
     A.deterministic(True)
     env = env_info(dev)
@@ -70,9 +73,9 @@ def main():
                 return A.fit(m, d["x_owner"], d["y_owner"], recipe(cfg["owner_training"], 1000 + s),
                              regularizer=reg, extra=extra)
             with clock:
-                return cached(CKPT / f"mnist_{kind}_s{s}.pt", Net, go, dev)[0]
+                return cached(CKPT / f"{cfg.get('clean_prefix', prefix) if kind == 'clean' else prefix}_{kind}_s{s}.pt", Net, go, dev)[0]
 
-        models = {k: build(k) for k in ("clean", "wm", "dual")}
+        models = {k: build(k) for k in kinds}
         for kind, m in models.items():
             with clock:
                 ev = evaluate(m, owner, wmc["layer"], d["x_test"], d["y_test"], ts, MEAN, STD, k_ts)
@@ -85,7 +88,7 @@ def main():
         for kind in cfg["models"]:
             stolen = models[kind]
             base_acc = next(b["acc"] for b in bases if b["seed"] == s and b["model"] == kind)
-            zk_dir = CKPT / f"mnist_attacked_s{s}" if (s == cfg.get("zk_seed") and kind == "wm") else None
+            zk_dir = CKPT / f"{prefix}_attacked_s{s}" if (s == cfg.get("zk_seed") and kind == "wm") else None
             manifest = []
             for row in plan(cfg["attacks"], ctx):
                 t0 = time.time()
@@ -129,8 +132,8 @@ def main():
     base_summary = {k: {"acc": stats([b["acc"] for b in bases if b["model"] == k]),
                         "errors": stats([b["errors"] for b in bases if b["model"] == k]),
                         "trigger_acc": stats([b["trigger_acc"] for b in bases if b["model"] == k])}
-                    for k in ("clean", "wm", "dual")}
-    for k in ("wm", "dual"):
+                    for k in kinds}
+    for k in cfg["models"]:
         base_summary[k]["acc_cost_pp"] = stats([
             (next(b["acc"] for b in bases if b["seed"] == s and b["model"] == "clean")
              - next(b["acc"] for b in bases if b["seed"] == s and b["model"] == k)) * 100 for s in seeds])
