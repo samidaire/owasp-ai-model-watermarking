@@ -44,3 +44,6 @@ htmlcov/
 sdk/build/
 sdk/dist/
 backend/.env
+
+# throwaway test venv used by automation agents
+.venv-agent/
