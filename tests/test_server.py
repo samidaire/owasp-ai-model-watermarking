@@ -322,6 +322,21 @@ def test_live_job_success_and_failure_codes(port, live, monkeypatch):
     assert "ok" in final["output"] and "never runs" not in final["output"]
 
 
+def test_absolute_paths_are_scrubbed_from_output_and_log(port, live, monkeypatch, tmp_path):
+    monkeypatch.setitem(server.STEPS, "forgery", [["-c", "import os; print('cwd', os.getcwd())"]])
+    status, _, job = run(port)
+    final = wait_done(port, job["id"])
+    assert final["code"] == 0 and "cwd demo" in final["output"]
+    log = (tmp_path / "web_job_log.txt").read_text(encoding="utf-8")
+    assert "cwd demo" in log and str(server.ROOT) not in log
+
+
+def test_simulated_replay_hides_recorded_personal_paths(port):
+    status, _, job = run(port, step="zk")
+    detail = wait_for_line(port, job["id"], "  Saved demo", timeout=15)
+    assert not any("Users" in line for line in detail["output"])
+
+
 def test_live_job_crash_in_log_writer_still_finishes(port, live, monkeypatch, tmp_path):
     (tmp_path / "web_job_log.txt").mkdir()                # open() for append fails -> exception in run()
     status, _, job = run(port)

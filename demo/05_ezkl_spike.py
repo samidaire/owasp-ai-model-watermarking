@@ -216,4 +216,4 @@ if args.vis == "hashed":
 print(f"  prove {times['prove']:.2f}s | verify {times['verify'] * 1000:.0f} ms | proof {summary['proof_bytes'] / 1024:.1f} KB "
       f"| vk {summary['vk_bytes'] / 1024:.1f} KB | pk {summary['pk_bytes'] / 2**20:.1f} MB "
       f"| peak RAM {summary['peak_rss_bytes'] / 2**30:.2f} GiB")
-print(f"  Saved {OUT / 'summary.json'}")
+print(f"  Saved {(OUT / 'summary.json').relative_to(RESULTS.parent.parent).as_posix()}")   # repo-relative (FIX-15)

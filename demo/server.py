@@ -31,7 +31,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from demo_common import RESULTS, ROOT, child_env, current_commitment, is_noise
+from demo_common import RESULTS, ROOT, child_env, current_commitment, is_noise, scrub_paths
 
 API_VERSION = 1
 DIST = ROOT.parent / "frontend" / "dist"
@@ -146,6 +146,7 @@ class Job:
         self.proc = None                   # the child process currently running, if any
 
     def push(self, line):
+        line = scrub_paths(line)           # tracebacks/warnings print absolute paths (FIX-15)
         with self.cond:
             self.lines.append(line)
             self.cond.notify_all()
@@ -231,7 +232,7 @@ class Job:
                     self.kill()
                 with self.proc.stdout:
                     for line in self.proc.stdout:
-                        log.write(line)
+                        log.write(scrub_paths(line))   # web_job_log.txt is served under /results/
                         if not is_noise(line):
                             self.push(line.rstrip("\n"))
                 code = self.proc.wait()
@@ -298,7 +299,8 @@ def probe_env():
         ENV["status"] = "ok"
     except Exception as e:  # noqa: BLE001 - surfaced in the UI, never fatal (e.g. no torch installed)
         ENV.clear()
-        ENV.update({"status": "error", "error": f"torch not available to {rel(PY)}: {e.__class__.__name__}: {e}"})
+        ENV.update({"status": "error",
+                    "error": scrub_paths(f"torch not available to {rel(PY)}: {e.__class__.__name__}: {e}")})
 
 
 def read_json(p: Path):

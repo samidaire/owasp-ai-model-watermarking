@@ -139,7 +139,7 @@
   DEMO E: EZKL proof  (params=private, prover=owner)
 ==============================================================================
   Plain PyTorch score : 64/64   (min signed margin 24.12)
-demo\05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+demo/05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
   torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
   ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
   gen_settings           0.03s   -> True
@@ -180,13 +180,13 @@ forward pass failed: "failed to forward: [halo2] General synthesis error"
   verified=True  logrows=15  SRS=public (get_srs)
   public output (score)  : [['64']]
   prove 0.68s | verify 20 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.61 GiB
-  Saved demo\results\ezkl_private_owner\summary.json
+  Saved demo/results/ezkl_private_owner/summary.json
 
 ==============================================================================
   DEMO E: EZKL proof  (params=private, prover=thief)
 ==============================================================================
   Plain PyTorch score : 64/64   (min signed margin 1.61)
-demo\05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+demo/05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
   torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
   ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
   gen_settings           0.03s   -> True
@@ -227,7 +227,7 @@ forward pass failed: "failed to forward: [halo2] General synthesis error"
   verified=True  logrows=15  SRS=public (get_srs)
   public output (score)  : [['64']]
   prove 0.67s | verify 22 ms | proof 60.3 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.62 GiB
-  Saved demo\results\ezkl_private_thief\summary.json
+  Saved demo/results/ezkl_private_thief/summary.json
 
 ==============================================================================
   DEMO E2: thief's forged proof checked against the OWNER's verification key

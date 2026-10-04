@@ -2,11 +2,13 @@
 the demo scripts the same way. Keep this free of torch/ezkl imports."""
 import json
 import os
+import re
 import tempfile
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parent
 RESULTS = ROOT / "results"
 
 # EZKL/ONNX chatter that is harmless but confusing on screen (still written to logs)
@@ -22,6 +24,32 @@ def child_env():
 
 def is_noise(line: str) -> bool:
     return any(n in line for n in NOISE)
+
+
+# ---------------------------------------------------------------- no absolute user paths in logs (FIX-15)
+def _prefix_re(path: Path):
+    """This checkout's absolute path, either slash style (case-insensitive on Windows), plus a separator."""
+    parts = [re.escape(p) for p in re.split(r"[\\/]+", str(path)) if p]
+    head = "/" if str(path).startswith("/") else ""
+    return re.compile(head + r"[\\/]+".join(parts) + r"[\\/]+", re.IGNORECASE if os.name == "nt" else 0)
+
+
+_THIS_REPO = _prefix_re(REPO)
+# 'C:\Users\x', 'C:/Users/x', '/home/x', '/Users/x', Git Bash '/c/Users/x'
+_HOME = r"(?:\b[A-Za-z]:[\\/]|(?<![\w.~])/(?:[A-Za-z]/)?)(?:Users|home|Documents and Settings)[\\/][^\\/\r\n]+"
+# Someone else's checkout (e.g. a recorded log): cut everything before its demo/ folder.
+_OTHER_REPO = re.compile(_HOME + r"[\\/](?:[^\\/\r\n]+[\\/])*?(?=demo[\\/])", re.IGNORECASE)
+# Any other home folder: hide the user name.
+_HOME_DIR = re.compile(_HOME + r"(?=[\\/]|$)", re.IGNORECASE)
+
+
+def scrub_paths(line: str) -> str:
+    """Make absolute paths in a log line relative to the repo root ('C:\\Users\\me\\...\\demo\\x.py'
+    -> 'demo\\x.py'), and replace any other home folder with '~'. Used for everything logged or
+    streamed (run_all.py, server.py), since tracebacks and warnings print absolute paths."""
+    line = _THIS_REPO.sub("", line)
+    line = _OTHER_REPO.sub("", line)
+    return _HOME_DIR.sub("~", line)
 
 
 # ---------------------------------------------------------------- atomic result writes

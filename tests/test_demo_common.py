@@ -1,5 +1,9 @@
-"""demo/demo_common.py: atomic result writes and a commitment reader that never raises (FIX-11)."""
+"""demo/demo_common.py: atomic result writes and a commitment reader that never raises (FIX-11),
+and log scrubbing of absolute user paths (FIX-15)."""
 import json
+import os
+
+import pytest
 
 import demo_common
 
@@ -29,6 +33,43 @@ def test_failed_write_keeps_the_old_file(tmp_path, monkeypatch):
         pass
     assert json.loads(target.read_text(encoding="utf-8")) == {"old": True}
     assert [p.name for p in tmp_path.iterdir()] == ["r.json"]                   # temp file cleaned up
+
+
+def test_scrub_paths_makes_this_checkout_relative():
+    rel = os.path.join("demo", "05_ezkl_spike.py")
+    assert demo_common.scrub_paths(f"{demo_common.REPO / rel}:100: DeprecationWarning") == f"{rel}:100: DeprecationWarning"
+    assert demo_common.scrub_paths(f"Saved {demo_common.REPO.as_posix()}/demo/results/a.json") == "Saved demo/results/a.json"
+
+
+@pytest.mark.parametrize("line, expected", [
+    (r"  Saved C:\Users\alice\Documents\Projects\OWASP AI Model Watermarking\demo\results\ezkl_private_owner\summary.json",
+     r"  Saved demo\results\ezkl_private_owner\summary.json"),
+    (r"C:\Users\alice\Documents\Projects\OWASP AI Model Watermarking\demo\05_ezkl_spike.py:100: DeprecationWarning: x",
+     r"demo\05_ezkl_spike.py:100: DeprecationWarning: x"),
+    ('  File "/home/alice/src/owasp/demo/run_all.py", line 3', '  File "demo/run_all.py", line 3'),
+    (r"HOME=C:\Users\Yash\AppData\Local", r"HOME=~\AppData\Local"),
+    ("cache at /Users/bob/.cache/x and /c/Users/carol/y", "cache at ~/.cache/x and ~/y"),
+    ("python C:/Users/dave/venv/Scripts/python.exe", "python ~/venv/Scripts/python.exe"),
+])
+def test_scrub_paths_hides_other_users(line, expected):
+    assert demo_common.scrub_paths(line) == expected
+
+
+@pytest.mark.parametrize("line", ["  Search time : 2.1s (9,381 seeds/s)", "owner:yash", "results/attacks.png",
+                                  "http://127.0.0.1:8765/api/state", "https://example.com/home/page", "$ python 02_attacks.py",
+                                  "x = a/home/b"])
+def test_scrub_paths_leaves_other_lines_alone(line):
+    assert demo_common.scrub_paths(line) == line
+
+
+def test_served_run_log_has_no_personal_paths():
+    text = (demo_common.RESULTS / "run_log.txt").read_text(encoding="utf-8")
+    assert scrub_all(text) == text
+    assert "Users\\" not in text and "/home/" not in text
+
+
+def scrub_all(text):
+    return "\n".join(demo_common.scrub_paths(line) for line in text.split("\n"))
 
 
 def test_current_commitment_never_raises(tmp_path):
