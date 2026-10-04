@@ -204,8 +204,11 @@ def fig_extraction(mm, cm, k_ts_mnist, n_ts):
     axs[2].text(1000, k_ts_mnist / n_ts * 100, f" acceptance ({k_ts_mnist}/{n_ts})", color=INK2, va="bottom", fontsize=8)
     axs[2].axhline(10, color=MUTED, lw=1, ls=":")
     axs[2].text(1000, 10, " chance (10%)", color=MUTED, va="bottom", fontsize=8)
+    budgets = sorted({b for _, summ, _ in series for b, _ in extraction_rows(summ)})
     for ax in axs:
         ax.set_xscale("log")
+        ax.set_xticks(budgets, [f"{b // 1000}k" for b in budgets])
+        ax.minorticks_off()
         ax.set_xlabel("queries to the victim (probabilities)")
     axs[0].legend(loc="lower right")
     fig.suptitle("ROB-03: black-box extraction of the dual-mark model", color=INK)
@@ -225,10 +228,10 @@ def fig_nulls(mn):
             label="Bin(64, 1/2) expectation")
     me = mn["configs"]["T64"]["protocol_config"]["max_err"]
     ax.axvline(me + 0.5, color=INK2, lw=1, ls="--")
-    ax.text(me + 0.7, ax.get_ylim()[1] * 0.9, f"accept ≤ {me}", color=INK2, fontsize=8)
+    ax.text(me + 0.9, ax.get_ylim()[1] * 0.45, f"accept iff\nerrors ≤ {me}", color=INK2, fontsize=8)
     ax.set(xlabel="bit errors against the key's signature (of 64)", ylabel="pairs",
            title=f"WM-07: {mn['config']['null_models']} MNIST null models × {mn['config']['pooled_keys']} independent keys")
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper right")
     fig.tight_layout()
     return save(fig, "m5_mnist_nulls.svg")
 
