@@ -57,7 +57,8 @@ STEPS = {
            ["05_ezkl_spike.py", "--vis", "private", "--who", "thief"],
            ["06_vk_crosscheck.py"]],
     "zk_hashed": [["05_ezkl_spike.py", "--vis", "hashed", "--who", "owner"],
-                  ["05_ezkl_spike.py", "--vis", "hashed", "--who", "thief"]],
+                  ["05_ezkl_spike.py", "--vis", "hashed", "--who", "thief"],
+                  ["07_commitment_summary.py"]],      # E3 verdict + public-signal checks into the summaries
 }
 STEPS["all"] = STEPS["evaluate"] + STEPS["attacks"] + STEPS["forgery"] + STEPS["committed"] + STEPS["zk"]
 
