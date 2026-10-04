@@ -23,11 +23,11 @@ const STEPS: { key: Key; title: string; sub: string; Panel: (p: PanelProps) => R
   { key: "E", title: "Zero-knowledge proofs", sub: "EZKL on this machine", Panel: PanelE },
 ];
 const PANEL_OF: Record<ServerStep, Key | "*"> = {
-  evaluate: "A", retrain: "A", attacks: "B", forgery: "C", committed: "D", zk: "E", zk_hashed: "E", all: "*",
+  evaluate: "A", retrain: "A", attacks: "B", forgery: "C", committed: "D", zk: "E", zk_hashed: "E", protocol_v2: "*", all: "*",
 };
 const TITLE_OF: Record<ServerStep, string> = {
   evaluate: "Demo A (re-verify)", retrain: "Demo A (retrain)", attacks: "Demo B", forgery: "Demo C",
-  committed: "Demo D", zk: "Demo E1 + E2", zk_hashed: "Demo E3", all: "All demos",
+  committed: "Demo D", zk: "Demo E1 + E2", zk_hashed: "Demo E3", protocol_v2: "Demo F (protocol v2)", all: "All demos",
 };
 const SERVER_CMD = "Double-click Start-Demo-UI.cmd in the project folder, or run: python demo/server.py";
 

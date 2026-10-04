@@ -1,0 +1,49 @@
+$ python 08_protocol_v2.py
+
+
+==============================================================================
+  DEMO F1: owner identity, committed seed, watermark, signed registration
+==============================================================================
+  owner public key   : e28b7f9e9f75ce21â€¦   commitment C = 14475661460362725281â€¦
+  registry receipt   : 2026-10-04T21:43:18Z
+  accuracy           : watermarked 0.9857
+  owner detection    : 0/64 bits wrong -> ACCEPT
+
+==============================================================================
+  DEMO F2: verifier opens a claim; owner proves in zero knowledge; verifier checks everything
+==============================================================================
+  witness 0.58 s, prove 8.41 s  ->  ACCEPTED
+
+==============================================================================
+  DEMO F3: the thief holds the stolen weights but not the seed
+==============================================================================
+  own seed and key on the stolen model : no proof possible: 27/64 bits wrong (> 8)
+  owner's commitment, thief's seed     : no proof possible: the thief can't open the owner's commitment
+
+==============================================================================
+  DEMO F4: a valid proof used the wrong way is rejected, with the reason
+==============================================================================
+  replayed for another claim          : REJECTED: proof was made for a different claim (nonce mismatch: replay?)
+  checked against a different model   : REJECTED: proof is about a different model (w_hash mismatch)
+  tampered proof bytes                : REJECTED: the zk-SNARK does not verify
+  receipt from an untrusted registry  : REJECTED: registry receipt invalid: receipt is not from a trusted registry
+
+==============================================================================
+  DEMO F5: does the proof survive removal attacks?
+==============================================================================
+  prune 65%                        acc=0.5026  errors= 0/64  proof: ACCEPTED
+  prune 90%                        acc=0.0201  errors= 1/64  proof: ACCEPTED
+  fine-tune all layers, 5 epochs   acc=0.9886  errors= 0/64  proof: ACCEPTED
+  feature permutation              acc=0.9857  errors=39/64  proof: none â€” no proof possible: 39/64 bits wrong (> 8)
+
+==============================================================================
+  DEMO F6: the thief overwrites with their own mark and registers it later
+==============================================================================
+  owner  registered 2026-10-04T21:43:18Z  errors= 0/64  proof ACCEPTED
+  thief  registered 2026-10-04T21:46:55Z  errors= 0/64  proof ACCEPTED
+  dispute rule (earliest valid registration wins): owner
+
+==============================================================================
+  DEMO F RESULT
+==============================================================================
+  owner proof accepted: True | thief proof possible: False | misuse rejected: 4/4 | dispute winner: owner

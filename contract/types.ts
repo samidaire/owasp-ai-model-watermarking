@@ -11,12 +11,12 @@
 export type Bits = number[]; // 64 entries, each 0 or 1
 
 /** GET /api/steps  ·  POST /api/run {step} */
-export type ServerStep = "evaluate" | "retrain" | "attacks" | "forgery" | "committed" | "zk" | "zk_hashed" | "all";
+export type ServerStep = "evaluate" | "retrain" | "attacks" | "forgery" | "committed" | "zk" | "zk_hashed" | "protocol_v2" | "all";
 
 export interface StepInfo {
   id: ServerStep;
   /** Which demo panel the step belongs to; "*" = all panels. */
-  panel: "A" | "B" | "C" | "D" | "E" | "*";
+  panel: "A" | "B" | "C" | "D" | "E" | "F" | "*";
   label: string;
   /** Typical wall-clock duration on the RTX 5080 machine. */
   seconds: number;
@@ -169,6 +169,33 @@ export interface VkCross {
 }
 
 /** GET /api/state: everything a UI needs to render every panel. Any result may be null if never run. */
+/** Demo F · results/protocol_v2.json (step: protocol_v2): sigil SDK + Circom/SnarkJS, docs/protocol.md */
+export interface ProtocolV2Verdict { accepted: boolean; reasons: string[] }
+export interface ProtocolV2Result {
+  protocol: 2;
+  config: { protocol: 2; T: number; M: number; layer: string; scale_bits: number; w_bits: number; max_err: number; norm: string; prg_bits: number };
+  circuit: string;
+  owner_public_key: string;          // Ed25519, hex
+  commitment: string;                // Poseidon commitment, decimal field element
+  registration_sha256: string;
+  registered_at: string;             // registry receipt time (UTC)
+  registry_public_key: string;
+  accuracy: { watermarked_v2: number };
+  owner_detection: { errors: number; ber: number; max_err: number; accepted: boolean };
+  owner_proof: {
+    accepted: boolean;
+    checks: Record<string, boolean>; // registration_valid, receipt_valid, ..., public_w_hash, public_nonce, snark_valid
+    timing: { witness_s: number; prove_s: number };
+    public_signals: Record<"pk_hash" | "config_hash" | "commitment" | "w_hash" | "nonce", string>;
+    proof_json_bytes: number;
+  };
+  thief: { own_key: string; owner_commitment: string; own_key_errors: number };
+  misuse: Record<string, ProtocolV2Verdict>;   // replay, different model, tampered proof, untrusted registry
+  robustness: { attack: string; accuracy: number; errors: number; proof_accepted: boolean; reason: string | null }[];
+  overwrite_dispute: { parties: { party: "owner" | "thief"; registered_at: string; errors: number; proof_accepted: boolean }[];
+                       winner: "owner" | "thief" | null };
+}
+
 export interface DemoState {
   api_version: number;
   /** "simulate" = runs replay recorded logs (server started with --simulate). Show this prominently. */
@@ -183,6 +210,8 @@ export interface DemoState {
     committed_seed: CommittedResult | null;
     vk_crosscheck: VkCross | null;
     ezkl: Record<"private_owner" | "private_thief" | "hashed_owner" | "hashed_thief", EzklSummary | null>;
+    /** Demo F; absent on servers older than protocol v2. */
+    protocol_v2?: ProtocolV2Result | null;
   };
   job: JobInfo | null;
 }

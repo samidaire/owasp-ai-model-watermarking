@@ -42,6 +42,11 @@ export const FALLBACK_STEPS: StepCatalogue = {
       "Takes about 3 minutes and writes a ~10 GB temporary proving key per proof (deleted afterwards). " +
       "The precomputed results are shown otherwise.\n\nContinue?",
   },
+  protocol_v2: {
+    id: "protocol_v2", panel: "F", label: "Run demo F live", seconds: 80, confirm: null,
+    writes: ["protocol_v2.json", "protocol_v2/proof.json", "protocol_v2/public.json"],
+    description: "Protocol v2 end to end: registration, Groth16 proof, verifier checks, thief, misuse, attacks and the overwrite dispute.",
+  },
   all: {
     id: "all", panel: "*", label: "Run all live", seconds: 30, confirm: null, writes: [],
     description: "evaluate, attacks, forgery, committed, zk (E3 stays precomputed).",
@@ -58,7 +63,7 @@ export function toCatalogue(r: StepsResponse): StepCatalogue {
 /** What a running step is doing, for "Running forgery…" button texts (their accessible names). */
 export const RUNNING_NAME: Record<ServerStep, string> = {
   evaluate: "re-verification", retrain: "retraining", attacks: "attacks", forgery: "forgery",
-  committed: "seed search", zk: "E1 + E2 proofs", zk_hashed: "E3 proofs", all: "all demos",
+  committed: "seed search", zk: "E1 + E2 proofs", zk_hashed: "E3 proofs", protocol_v2: "demo F", all: "all demos",
 };
 
 /** "~10 s", "~3 min". */

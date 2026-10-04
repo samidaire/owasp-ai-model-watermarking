@@ -59,6 +59,7 @@ STEPS = {
     "zk_hashed": [["05_ezkl_spike.py", "--vis", "hashed", "--who", "owner"],
                   ["05_ezkl_spike.py", "--vis", "hashed", "--who", "thief"],
                   ["07_commitment_summary.py"]],      # E3 verdict + public-signal checks into the summaries
+    "protocol_v2": [["08_protocol_v2.py"]],           # demo F: sigil SDK + Circom/SnarkJS end to end
 }
 STEPS["all"] = STEPS["evaluate"] + STEPS["attacks"] + STEPS["forgery"] + STEPS["committed"] + STEPS["zk"]
 
@@ -83,6 +84,10 @@ STEP_INFO = {
                   "confirm": "Re-run the Poseidon-committed proofs? ~3 minutes and a ~10 GB temporary proving key per proof.",
                   "writes": ["ezkl_hashed_owner/summary.json", "ezkl_hashed_thief/summary.json"],
                   "description": "EZKL proofs with a Poseidon commitment to the private parameters."},
+    "protocol_v2": {"panel": "F", "label": "Run demo F live", "seconds": 80, "confirm": None,
+                    "writes": ["protocol_v2.json", "protocol_v2/proof.json", "protocol_v2/public.json"],
+                    "description": "Protocol v2 end to end: registration, Groth16 proof, verifier checks, "
+                                   "thief, misuse, attacks and the overwrite dispute."},
     "all": {"panel": "*", "label": "Run all live", "seconds": 30, "confirm": None, "writes": [],
             "description": "evaluate, attacks, forgery, committed, zk (E3 stays precomputed)."},
 }
@@ -327,6 +332,7 @@ def state():
             "vk_crosscheck": read_json(RESULTS / "vk_crosscheck.json"),
             "ezkl": {f"{v}_{w}": read_json(RESULTS / f"ezkl_{v}_{w}" / "summary.json")
                      for v in ("private", "hashed") for w in ("owner", "thief")},
+            "protocol_v2": read_json(RESULTS / "protocol_v2.json"),     # demo F (may be null)
         },
         "job": job.info() if job else None,
     }
