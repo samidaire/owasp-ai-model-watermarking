@@ -12,12 +12,12 @@
 
 | # | Outcome | Evidence you show |
 |---|---|---|
-| 1 | Scope agreed: OWASP's ZK-ownership project, not output watermarking | OWASP project page and the verbatim AI Exchange requirements R1/R2 (§1, §2) |
-| 2 | The gap accepted as real and backed by citations | §3.2 comparison table and the forward-citation sweep (§3.3) |
+| 1 | Scope agreed: OWASP's ZK-ownership project, not output watermarking | OWASP project page, and the AI Exchange #MODEL WATERMARKING text quoted verbatim. Our project requirements R1/R2 are derived from that text; the labels are ours, not OWASP's (§1, §2) |
+| 2 | The gap accepted as real, backed by citations, and stated no wider than the prior work allows | §3.2 comparison table, the forward-citation sweep (§3.3), and the prior-work positioning (§3.4) |
 | 3 | The core problem *and* the fix seen running on your PC | Demos A–E (below) |
 | 4 | Scope approved, and possibly a nod to contribute upstream to OWASP | §7 plan, RQ1–RQ3 |
 
-**One-line pitch:** *"ZK proofs let you prove you own a model without revealing your watermark key. The current method (ZKROWNN) assumes the person proving ownership is honest and never commits to the key. Drop that assumption and a thief can fit a key to a stolen model, and on my machine the thief's proof verifies under the owner's own verification key. I'll show that live, then fix it with a committed seed, in line with OWASP's requirement to 'avoid ambiguity where multiple parties could plausibly claim ownership.'"*
+**One-line pitch:** *"ZK proofs let you prove you own a model without revealing your watermark key. The current method (ZKROWNN) assumes the person proving ownership is honest and never commits to the key. Drop that assumption and a thief can fit a key to a stolen model, and on my machine the thief's proof verifies under the owner's own verification key. I'll show that live, then fix it with a committed seed. Committing to a key isn't new in itself (Adi et al. did it for trigger sets in 2018). What I'm building is a proof of the weight extraction itself, with the key and signature derived from that seed inside the circuit. All of this is in line with the OWASP AI Exchange's wording that watermarks should 'avoid ambiguity where multiple parties could plausibly claim ownership.'"*
 
 ---
 
@@ -25,8 +25,8 @@
 
 | Time | Segment | Content | Source |
 |---|---|---|---|
-| 0:00–2:00 | Problem | Model theft. OWASP ML05, LLM10, AI Exchange #MODEL WATERMARKING; R1 and R2 quoted verbatim | §1, §2 |
-| 2:00–6:00 | Literature | Taxonomy; SoK verdict ("none … robust in practice"); the three ZK systems compared | §3, §4 |
+| 0:00–2:00 | Problem | Model theft. OWASP ML05, LLM10, AI Exchange #MODEL WATERMARKING quoted verbatim, and the project requirements R1 and R2 we derive from it | §1, §2 |
+| 2:00–6:00 | Literature | Taxonomy; SoK verdict ("none … robust in practice"); the three ZK systems compared; prior work on committed and hash-derived keys (Adi, Li, NeuralMark, FedZKP) | §3, §3.4, §4 |
 | 6:00–8:00 | Gaps | G1 forgery (core), G2 robustness × ZK, G5 no licence-clean tool; the citation sweep as method | §3.3, §5 |
 | 8:00–16:00 | **Live demo** | Web UI: panels A → E, pressing **Run live** on each (narration in §3). CLI fallback: `run_all.py --ezkl --pause` | demo/ |
 | 16:00–18:00 | Feasibility + plan | Measured costs (§4 below), 16-week phases, RQ1–RQ3 | §6, §7 |
@@ -47,10 +47,10 @@
 
 ## 3. Live demo: what to say at each pause
 
-**Primary: the web UI.** Double-click `Start-Demo-UI.cmd` in the project folder. It starts the local server and opens http://127.0.0.1:8765 in your browser; keep its window open. Or run this in PowerShell (paths are for Yash's machine; elsewhere run `python demo\server.py --open` from the project folder):
+**Primary: the web UI.** Double-click `Start-Demo-UI.cmd` in the project folder. It starts the local server and opens http://127.0.0.1:8765 in your browser; keep its window open. Or run this in PowerShell from the project folder (without the ML venv, `python demo\server.py --open` also works):
 
 ```powershell
-& "demo\.venv\Scripts\python.exe" "demo\server.py" --open
+& ".\demo\.venv\Scripts\python.exe" ".\demo\server.py" --open
 ```
 
 How to drive it:
@@ -60,21 +60,21 @@ How to drive it:
 - Use **Theme: light** on a projector.
 - **Don't press "Retrain with a new seed…" or "Re-run E3…" in the meeting.** Both ask for confirmation. Retraining makes B–E stale, and E3 takes ~3 minutes.
 
-**Fallback: the CLI.** This exact command was tested end-to-end in PowerShell on Yash's machine (exit 0, ~26 s); elsewhere run `.\.venv\Scripts\python.exe run_all.py --ezkl --pause` from the `demo` folder:
+**Fallback: the CLI.** This command was tested end-to-end in PowerShell on Yash's machine (exit 0, ~26 s). Run it from the `demo` folder:
 
 ```powershell
-& "demo\.venv\Scripts\python.exe" "demo\run_all.py" --ezkl --pause
+.\.venv\Scripts\python.exe run_all.py --ezkl --pause
 ```
 
 | Demo | What appears (dry-run values) | What to say |
 |---|---|---|
 | **A. Commit & embed** | Commitment hash with a UTC timestamp. Clean vs watermarked accuracy **98.69% vs 98.66%**. Owner BER **0.000**; clean model **0.531**. | "Before anything is released, I publish a hash of a secret seed. The key *and* the signature are both derived from that seed. The watermark costs no accuracy." |
-| **B. Removal attacks** | Pruning: the watermark survives to 95%, but accuracy is **65.7% at 65%** and **9% at 90%**. FTAL, RTAL, int8 and int4: BER 0. **Overwrite:** owner 0.047 *and* the thief's own mark both valid. **Feature permutation:** accuracy unchanged, **BER 0.438, removed**. Owner realignment brings it back to 0.000. | "On this scheme the watermark outlives the model under pruning. But a functionally identical model with channels reordered erases it for free; that's the SoK's point (OWASP R1, gap G2). The owner can undo it here because they hold the original. Making that work inside a ZK proof is Phase 4. And overwriting leaves *two* valid watermarks, which is the ambiguity problem again." |
+| **B. Removal attacks** | Pruning: the watermark survives to 95%, but accuracy is **65.7% at 65%** and **9.4% at 90%**. FTAL, RTAL, int8 and int4: BER 0. **Overwrite:** owner 0.047 *and* the thief's own mark both valid. **Feature permutation:** accuracy unchanged, **BER 0.438, removed**. Owner realignment brings it back to 0.000. | "On this scheme the watermark outlives the model under pruning. But a functionally identical model with channels reordered erases it for free; that's the SoK's point (our requirement R1, from the OWASP robustness wording; gap G2). The owner can undo it here because they hold the original. Making that work inside a ZK proof is Phase 4. And overwriting leaves *two* valid watermarks, which is the ambiguity problem again." |
 | **C. Forgery** | Thief's counterfeit key: **BER 0.000, "MALLORY!"**. Entry-distribution KS **D = 0.0104 < 0.0142**. Margin table: the naive forgery has small margins; a large-margin forgery matches the owner (minimum 1.43 vs 1.42). The forgery "proves" ownership of the clean and null models too. ZKROWNN Alg. 1 relation is **satisfied on every model**. | "The thief fits a key to *my* weights in one line per bit. Its entries look like a real key's, and with rejection sampling even its margins match; under ZK the verifier sees neither. The same construction satisfies the relation ZKROWNN's circuit checks, here evaluated in PyTorch, not their code. ZKROWNN assumes an honest prover, so this is outside its threat model. But in a dispute the accuser is the one with a motive to cheat, which is exactly what the USENIX '24 false-claims paper shows. *This is my analysis; the demo is the evidence.*" |
-| **D. Committed seed** | D0: commitment **MATCHES**, owner verified. **D1 (free signature): 1000/1000** (true by construction). **D2 (derived signature): 0/20,000 accepted**, best thief BER **0.250**. Work factor **~2³²** (~71 single-core hours); the target at T=256 is **~2¹²⁰**. Null models: BER 0.41–0.59. | "If only the key is derived, the thief just sets the signature to whatever their key extracts. That wins by construction, not by luck. Derive the signature from the seed too, and the thief has to search. But at 64 bits that's only about 2³² work, feasible on a GPU. That's why timestamp ordering still matters, and why RQ1 sets T and θ; at Uchida's 256 bits it would be about 2¹²⁰. The null models are an indicative check, not a calibrated false-positive rate." |
-| **E1. ZK proof** | EZKL/Halo2: **verified, score 64/64**, prove **0.63 s**, verify **20 ms**, proof **60 KB**, peak RAM **0.6 GiB** | "This is a real zero-knowledge proof on my 32 GB machine. The key and signature are private; the suspect's weights are public." |
+| **D. Committed seed** | D0: commitment **MATCHES**, owner verified. **D1 (free signature): 1000/1000** (true by construction). **D2 (derived signature): 0/20,000 accepted**, best thief BER **0.250**. Work factor **~2³²** (~71 single-core hours at the measured 9,680 seeds/s). Until FIX-01 lands, the UI wrongly shows "257,463 core-hours"; that figure is seconds. The target at T=256 is **~2¹²⁰**. Null models: BER 0.41–0.59. | "If only the key is derived, the thief just sets the signature to whatever their key extracts. That wins by construction, not by luck. Derive the signature from the seed too, and the thief has to search. But at 64 bits that's only about 2³² work, feasible on a GPU. That's why timestamp ordering still matters, and why RQ1 sets T and θ; at Uchida's 256 bits it would be about 2¹²⁰. The null models are an indicative check, not a calibrated false-positive rate." |
+| **E1. ZK proof** | EZKL/Halo2: **verified, score 64/64**, prove **0.66–0.67 s**, verify **21 ms**, proof **60 KiB**, peak RAM **0.6 GiB** | "This is a real zero-knowledge proof on my 32 GB machine. The key and signature are private; the suspect's weights are public." |
 | **E2. Thief's proof** | Thief's forged proof **verified = True under the owner's VK** (identical VK hash) | "Without a commitment, the verifier literally cannot tell my proof from the thief's. This is gap G1 demonstrated cryptographically." |
-| **E3. Committed proof** | Poseidon hash of the private params is public: owner **ACCEPT**, thief **REJECT**. The "owner's commitment" here is taken from the owner's own run; in the protocol it is published at embedding time. Cost: logrows **20**, prove **~36 s**, verify **~0.6 s**, pk **9.8 GiB**, sampled peak RAM **2.6 GiB**. | "Commit inside the proof and the thief is rejected. Honest scope: this commits to the key directly, which is the D1 level plus a timestamp. It isn't yet linked to the SHA-256 seed commitment from demo A, and a real commitment must also pin the circuit's quantisation settings. Deriving the key from the seed *inside* the circuit, the D2 level, is my Phase 3. The cost jump from logrows 15 to 20 is the RQ3 trade-off I'll optimise." |
+| **E3. Committed proof** | Poseidon hash of the private params is public: owner **ACCEPT**, thief **REJECT**. The "owner's commitment" here is taken from the owner's own run; in the protocol it is published at embedding time. Cost: logrows **20**, prove **39–47 s** (thief 39.1 s, owner 46.9 s), verify **0.56–0.58 s**, pk **9.8 GiB**, sampled peak RAM **2.6 GiB**. | "Commit inside the proof and the thief is rejected. Honest scope: this commits to the key directly, which is the D1 level plus a timestamp. It isn't yet linked to the SHA-256 seed commitment from demo A, and a real commitment must also pin the circuit's quantisation settings. Deriving the key from the seed *inside* the circuit, the D2 level, is my Phase 3. The cost jump from logrows 15 to 20 is the RQ3 trade-off I'll optimise." |
 
 **Fallbacks:**
 - **Live run fails:** show slides 7–8, or `demo/results/run_log.txt`.
@@ -86,12 +86,12 @@ How to drive it:
 
 | Workload (this machine) | Prove | Verify | Proof | Proving key | Peak RAM |
 |---|---|---|---|---|---|
-| Uchida extraction, params private (logrows 15) | 0.63 s | 20 ms | 60 KB | 132 MB | 0.6 GiB |
-| Same + Poseidon commitment (logrows 20) | ~36 s | ~0.5–0.6 s | 65 KB | 9.8 GiB | 2.6 GiB (sampled) |
+| Uchida extraction, params private (logrows 15) | 0.66–0.67 s | 21 ms | 60 KiB | 132 MiB | 0.6 GiB |
+| Same + Poseidon commitment (logrows 20) | 39–47 s | 0.56–0.58 s | 64.5 KiB | 9.8 GiB | 2.6 GiB (sampled) |
 | *Literature: ZKROWNN CIFAR-10 CNN (128 GB box)* | *11.2 s* | *1 ms* | *127 B* | *117 MB* | *n/a* |
 | *Literature: RoSeMary decoder* | *7.15 s* | *118.6 ms* | *17.1 KB* | *n/a* | *2.6 GB* |
 
-These aren't like-for-like comparisons: different circuits, proof systems (Groth16 vs Halo2/KZG) and hardware. Present them as orders of magnitude only.
+Our rows come from `demo/results/ezkl_*/summary.json` (owner and thief runs; ranges where they differ). These aren't like-for-like comparisons: different circuits, proof systems (Groth16 vs Halo2/KZG) and hardware. Present them as orders of magnitude only.
 
 ---
 
@@ -106,7 +106,7 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 | T-30 min | Rehearse the §3 lines once, especially C, D1 vs D2, and E2 |
 
 **Optional, only if you want fresh numbers:**
-- `run_all.py --retrain --ezkl` (~1 min). The seed and numbers change slightly. **If you retrain, also add `--hashed`** (~2 min, ~20 GB of temporary disk), or skip E3. E3 reads precomputed proofs made with the current owner key.
+- `run_all.py --retrain --ezkl` (~1 min). The seed and numbers change slightly. **If you retrain, also add `--hashed`** (~3 min: two runs of ~1.5–1.7 min; ~20 GB of temporary disk), or skip E3. E3 reads precomputed proofs made with the current owner key.
 - Add `--hashed` only if you have about 4 minutes and 20 GB of free disk.
 
 ---
@@ -121,7 +121,7 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 | On-screen noise from EZKL | Low | The UI and `run_all.py` share one noise filter; the full output is in `results/web_job_log.txt` and `run_log.txt` |
 | UI won't load | Low | Use the CLI fallback command in §3. The UI only needs the Python server: no npm, no internet. |
 | Accidental retrain in the UI | Low | It asks for confirmation first. If it happens, B–E show "Stale": press **Run all live**, and skip E3 or run **Re-run E3…** (~3 min). |
-| Overclaiming | Med | Use the caveats in demo/README.md: indicative θ; relation not their code; E3 is D1-level |
+| Overclaiming | Med | Use the caveats in demo/README.md: indicative θ; relation not their code; E3 is D1-level. State novelty only as narrowly as 01 §3.4 does: commitments, hash-derived keys and ZK ownership proofs all have prior work. |
 
 ---
 
@@ -130,11 +130,12 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 | Question | Answer |
 |---|---|
 | "Why zero-knowledge at all?" | Revealing the key lets anyone remove or forge the watermark. That's ZKROWNN's own motivation (§3.2). |
-| "What's novel? ZKROWNN exists." | ZKROWNN assumes an honest prover, commits nothing, and has no attack evaluation. I showed that its relation is forgeable and that a forged proof verifies under the owner's VK. I then add a committed seed, with key *and* signature derived, and test under SoK attacks. The sweep found nothing doing this (§3.3, §5). |
+| "What's novel? ZKROWNN exists." | ZKROWNN assumes an honest prover, commits nothing, and has no attack evaluation. I showed that its relation is forgeable and that a forged proof verifies under the owner's VK. The pieces of my fix are **not new on their own**:<br>• Adi et al. (USENIX Sec '18) commit to the trigger set on a time-stamped bulletin board and sketch a ZK argument.<br>• Li et al. (2019) and NeuralMark (AAAI '26) derive the watermark from a signature or a hash.<br>• FedZKP (2023) proves ownership in ZK.<br>What I add is narrower: a SNARK that proves Uchida-style extraction from the weights. Both the key and the signature are derived inside the circuit from a committed seed bound to an authenticated owner key. θ is enforced in-circuit, and the proof is bound to the suspect model. On top of that come the measured forgery, robustness × ZK and cost results (RQ1–RQ3; §3.4, §5, §7). Today's E3 is only the D1 level of that. |
+| "Isn't that FedZKP, or Adi et al.?" | No. FedZKP's ZK proof shows knowledge of a credential (an xLPN secret); the watermark extraction and the Hamming check happen in the clear, in a federated setting. Adi's ZK argument covers a black-box trigger set, and the paper leaves an efficient proof open. My circuit is meant to prove the white-box extraction itself, from a committed seed (§3.4). |
 | "You attacked Uchida, not DeepSigns." | Demo C part 2 runs the same sign-fit against ZKROWNN's DeepSigns-style Alg. 1 relation, and it's satisfied on every model. |
 | "Can't the thief just commit after stealing?" | With a free signature, yes: D1 wins by construction. With a derived signature they must search seeds: ~2³² work at T=64, feasible on a GPU, so timestamps remain necessary. At T=256 it's ~2¹²⁰ (RQ1). |
 | "Is E3 the full fix?" | No. It's the D1 level inside ZK. Deriving the key in-circuit (D2) is Phase 3, and the logrows-20 cost shows why it needs optimisation. |
-| "Feature permutation broke it. So the scheme is useless?" | It shows OWASP R1 isn't met by Uchida alone. Realignment restores it when the owner has the original model. Doing that verifiably is Phase 4 (G2). |
+| "Feature permutation broke it. So the scheme is useless?" | It shows that project requirement R1 (from the OWASP robustness wording) isn't met by Uchida alone. Realignment restores it when the owner has the original model. Doing that verifiably is Phase 4 (G2). |
 | "Does it stop API theft?" | No, and OWASP says so (limitation L1). Entangled watermarks are the extension path (G4). |
 | "Why MNIST?" | For live speed. Phases 1–4 move to CIFAR-10 / ResNet-18 and benchmark against ZKROWNN's CIFAR-10 CNN. |
 | "Which ZK library, and is it open source?" | EZKL for research. It has no open-source licence file, so an OWASP contribution needs a licence-clean backend (G5). |
@@ -143,7 +144,7 @@ These aren't like-for-like comparisons: different circuits, proof systems (Groth
 
 ## 8. Asks for the professor
 
-1. Approve the scope: **committed-seed ZK ownership verification for NN watermarks, aligned with OWASP AI Exchange R1/R2.**
+1. Approve the scope: **committed-seed ZK ownership verification for NN watermarks, against project requirements R1/R2, which are derived from the OWASP AI Exchange #MODEL WATERMARKING text.**
 2. Agree on success metrics:
    - forgery success with vs without commitment (RQ1);
    - attack matrix with proof verified yes/no (RQ2);

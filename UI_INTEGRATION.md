@@ -316,10 +316,17 @@ These statements are what the project defends in front of examiners. A new UI ma
 3. **"Entry distributions match a real key; under ZK the verifier sees neither."** Don't say "statistically indistinguishable" without that qualifier.
 4. **D1's 1000/1000 holds by construction,** not as a measured rate.
 5. **D2 is only about 2³² work at T = 64.** That's feasible on a GPU, so timestamps still matter. The target is about 2¹²⁰ at T = 256.
-6. **E3 is the D1 level of the fix.** It commits to (key, signature) directly. Its "owner's commitment" is taken from the owner's run (in the protocol it's published at embedding time), and it is **not yet linked** to the SHA-256 seed commitment from demo A. Deriving the key in-circuit is Phase 3.
+6. **E3 is the D1 level of the fix.** It commits to (key, signature) directly. Its "owner's commitment" is taken from the owner's run (in the protocol it's published at embedding time), and it is **not yet linked** to the SHA-256 seed commitment from demo A. Deriving the key *and* the signature from the seed in-circuit is still to be built (ZK-01 in `REQUIREMENTS.md`); once it lands, state exactly what the circuit proves.
 7. **Peak RAM figures are sampled.**
 8. **Literature cost rows (ZKROWNN, RoSeMary) are orders of magnitude only.** They use different circuits, proof systems and hardware.
 9. **EZKL has no open-source licence file.** Research and demo use only.
+
+**The maintained, extended list is [REQUIREMENTS.md §15](REQUIREMENTS.md#15-statements-that-must-stay-true-on-screen).** It adds statements 10–12:
+- white-box marks do not survive model extraction (OWASP limitation L1);
+- Groth16 relies on a trusted setup;
+- the contribution is positioned against prior work (Adi 2018, Li 2019, NeuralMark 2026, FedZKP).
+
+When the two lists differ, follow §15.
 
 The current wording lives in each panel's "Presenter notes" and callouts (`frontend/src/panels/*.tsx`) and in `02_Demo_Plan_Tomorrow.md` §3.
 
