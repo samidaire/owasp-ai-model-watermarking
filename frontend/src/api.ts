@@ -36,6 +36,45 @@ export async function runStep(step: ServerStep, tries?: number): Promise<JobInfo
   return body as JobInfo;
 }
 
+export type CancelResult =
+  /** 202: the server is stopping the job; its "done" event follows (code -2, cancelled: true). */
+  | { kind: "cancelling"; job: JobInfo }
+  /** 409: the job had already ended; `job` is its final JobInfo. */
+  | { kind: "not_running"; job?: JobInfo }
+  /** 404 from a server that has the endpoint: it doesn't know the job (restarted). */
+  | { kind: "unknown_job" }
+  /** 404/405 from an older server without POST /api/jobs/{id}/cancel. */
+  | { kind: "unsupported" };
+
+/**
+ * Asks the server to stop a job. Older servers have no cancel endpoint and answer 404 ("not found") or 405.
+ * A server that has it always sends `cancelled` in its JobInfo, so `serverHasCancel` tells a 404 for an unknown
+ * job apart from a missing endpoint.
+ */
+export async function cancelJob(id: string, serverHasCancel: boolean): Promise<CancelResult> {
+  const r = await fetch(`${API}/api/jobs/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  const body = await r.json().catch(() => ({}));
+  if (r.ok) return { kind: "cancelling", job: body as JobInfo };
+  if (r.status === 409) return { kind: "not_running", job: body.job };
+  if (r.status === 405) return { kind: "unsupported" };
+  if (r.status === 404) return serverHasCancel || body.error === "unknown job" ? { kind: "unknown_job" } : { kind: "unsupported" };
+  throw new ApiError(r.status, body, `cancel: HTTP ${r.status}`);
+}
+
+export type JobOutcome = "running" | "ok" | "cancelled" | "timed_out" | "failed";
+
+/** How a job ended. Older servers send no `cancelled` / `timed_out`; then the exit codes -2 / -3 decide. */
+export function jobOutcome(info: JobInfo): JobOutcome {
+  if (info.running) return "running";
+  if (info.cancelled ?? info.code === -2) return "cancelled";
+  if (info.timed_out ?? info.code === -3) return "timed_out";
+  return info.code === 0 ? "ok" : "failed";
+}
+
 export interface JobFollower {
   /** One new output line from the live stream. */
   onLine: (line: string) => void;

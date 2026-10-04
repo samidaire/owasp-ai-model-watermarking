@@ -263,6 +263,16 @@ details.tableview summary { cursor: pointer; color: var(--text-secondary); }
 .console .bar { display: flex; align-items: center; gap: 12px; padding: 8px 18px; cursor: pointer; user-select: none; }
 .console .bar .last { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b5b3aa; }
 .console .bar .st { font-family: var(--sans); font-weight: 650; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; }
+.console .dim { color: #898781; }
+.console .cbtn {
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600; padding: 3px 10px; border-radius: 7px; cursor: pointer;
+  border: 1px solid #3a3a37; background: transparent; color: #c9c7bf; white-space: nowrap;
+}
+.console .cbtn:hover:not(:disabled) { background: #232321; }
+.console .cbtn:disabled { opacity: 0.6; cursor: progress; }
+.console .cbtn:focus-visible { outline: 2px solid #86b6ef; outline-offset: 2px; }
+.console .cbtn.stop { color: #ffb4a8; border-color: #6b3a33; }
+.console .cancel { color: #d6d4cc; }
 .console pre { margin: 0; padding: 4px 18px 14px; height: 300px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
 .console .ok { color: #5fd35f; }
 .console .err { color: #ff8a8a; }

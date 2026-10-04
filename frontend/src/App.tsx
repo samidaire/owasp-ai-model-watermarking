@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, followJob, getJob, getState, isStale, runStep, type DemoState, type JobInfo, type ServerStep } from "./api";
+import {
+  ApiError, cancelJob, followJob, getJob, getState, isStale, runStep, type DemoState, type JobInfo, type ServerStep,
+} from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
 import { Callout } from "./components/ui";
 import { short } from "./format";
@@ -52,6 +54,10 @@ export default function App() {
   const [job, setJob] = useState<ConsoleJob | null>(null);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [theme, setTheme] = useState(() => readPref("demo.theme", "auto"));
+  /** Id of the job a cancel was requested for (until it ends). */
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  /** The server has no cancel endpoint (older server): hide the Cancel button. */
+  const [cancelUnsupported, setCancelUnsupported] = useState(false);
   /** The job whose output the console follows, and how to stop following it. */
   const follow = useRef<{ id: string; stop: () => void } | null>(null);
   const jobRef = useRef<ConsoleJob | null>(null);
@@ -199,6 +205,33 @@ export default function App() {
     }
   }, [attach, refresh]);
 
+  const cancel = useCallback(async () => {
+    const cur = jobRef.current;
+    if (!cur?.info.running) return;
+    const id = cur.info.id;
+    setCancelling(id);
+    try {
+      const r = await cancelJob(id, "cancelled" in cur.info);
+      if (r.kind === "cancelling") {
+        // The "done" event (code -2, cancelled) ends it; if the server already stopped it, end it now.
+        if (!r.job.running) settle(id, r.job);
+        return;
+      }
+      setCancelling(null);
+      if (r.kind === "unsupported") {
+        setCancelUnsupported(true);
+        setNotice("This server version can't cancel a run. It ends by itself; the other Run buttons unlock then.");
+      } else {
+        // Already ended (409) or unknown to the server (404): settle it from what the server says.
+        settle(id, r.kind === "not_running" ? r.job ?? null : null);
+        refresh();
+      }
+    } catch (e) {
+      setCancelling(null);
+      setNotice(`Cancel failed: ${(e as Error).message}`);
+    }
+  }, [settle, refresh]);
+
   const running: ServerStep | null = job?.info.running ? job.info.step : s?.job?.running ? s.job.step : null;
   const step = STEPS[idx];
   const env = s?.env;
@@ -281,7 +314,9 @@ export default function App() {
         </main>
       </div>
 
-      <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)} />
+      <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)}
+        onCancel={job?.info.running && !job.lost && !cancelUnsupported ? cancel : undefined}
+        cancelling={Boolean(job?.info.running && cancelling === job.info.id)} />
     </div>
   );
 }
