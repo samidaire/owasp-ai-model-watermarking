@@ -4,11 +4,6 @@ import { Card, Empty, Notes, Stat, Verdict } from "../components/ui";
 import { ber3, bitsWrong, pct, when } from "../format";
 import { PanelShell, RunButton, type PanelProps } from "./Shell";
 
-const RETRAIN_WARNING =
-  "Retraining creates a NEW owner seed and key.\n\n" +
-  "Every other result (B–E) becomes stale, and E3's precomputed Poseidon proofs must be re-run " +
-  "(about 3 minutes and ~10 GB of temporary disk).\n\nContinue?";
-
 export function PanelA({ s, ctl, refreshing }: PanelProps) {
   const t = s.results.train;
   return (
@@ -17,8 +12,8 @@ export function PanelA({ s, ctl, refreshing }: PanelProps) {
       claim="Before release, the owner publishes a hash of a secret seed. The watermark key and the 64-bit signature are both derived from that seed, then embedded into the model's weights (Uchida-style). The watermark costs essentially no accuracy."
       stale={panelStale("A", s)} refreshing={refreshing}
       actions={<>
-        <RunButton ctl={ctl} step="evaluate" label="Re-verify live" primary hint="Re-checks the saved models (~5 s). Does not retrain." />
-        <RunButton ctl={ctl} step="retrain" label="Retrain with a new seed…" confirm={RETRAIN_WARNING} />
+        <RunButton ctl={ctl} step="evaluate" primary />
+        <RunButton ctl={ctl} step="retrain" />
       </>}
       notes={<Notes
         say={[

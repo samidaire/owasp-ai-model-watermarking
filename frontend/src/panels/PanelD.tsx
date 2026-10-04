@@ -3,11 +3,14 @@ import { panelStale } from "../stale";
 import { Histogram } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
 import { ber3, bitsWrong, int, sci, secs } from "../format";
+import { about } from "../steps";
 import { PanelShell, RunButton, type PanelProps } from "./Shell";
 
 export function PanelD({ s, ctl, refreshing }: PanelProps) {
   const c = s.results.committed_seed;
-  const [tries, setTries] = useState(20000);
+  const step = ctl.steps.committed;
+  const budgets = step.options?.tries?.length ? step.options.tries : [20000, 100000];
+  const [tries, setTries] = useState(budgets[0]);
   const T = c?.signature_bits_T ?? 64;
   return (
     <PanelShell
@@ -18,11 +21,11 @@ export function PanelD({ s, ctl, refreshing }: PanelProps) {
         <label className="actions" style={{ gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
           Thief's budget
           <select className="sel" value={tries} onChange={(e) => setTries(Number(e.target.value))} disabled={ctl.running !== null}>
-            <option value={20000}>20,000 seeds (~2 s)</option>
-            <option value={100000}>100,000 seeds (~10 s)</option>
+            {/* The catalogue's duration is for the smallest budget; larger ones scale with the number of seeds. */}
+            {budgets.map((t) => <option key={t} value={t}>{int(t)} seeds ({about((step.seconds * t) / budgets[0])})</option>)}
           </select>
         </label>
-        <RunButton ctl={ctl} step="committed" label="Run live" primary tries={tries} />
+        <RunButton ctl={ctl} step="committed" primary tries={tries} />
       </>}
       notes={<Notes
         say={[

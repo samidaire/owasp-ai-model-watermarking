@@ -25,7 +25,7 @@ export function PanelB({ s, ctl, refreshing }: PanelProps) {
       letter="B" title="Removal attacks" reqs={["OWASP R1: remain detectable after modification", "Gap G2"]}
       claim="The thief tries to strip the watermark from the stolen model using the attack suite from Lukas et al. (SoK, IEEE S&P 2022), with 10,000 samples of their own data the owner never used."
       stale={panelStale("B", s)} refreshing={refreshing}
-      actions={<RunButton ctl={ctl} step="attacks" label="Run attacks live" primary hint="~10 s on the GPU" />}
+      actions={<RunButton ctl={ctl} step="attacks" primary />}
       notes={<Notes
         say={[
           "Under pruning, this watermark outlives the model: accuracy has collapsed long before the watermark breaks.",

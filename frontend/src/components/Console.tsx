@@ -20,7 +20,7 @@ function useElapsed(info: JobInfo | undefined) {
   return (info.ended ?? now) - info.started;
 }
 
-function statusOf(job: ConsoleJob | null, cancelling: boolean): ReactNode {
+function statusOf(job: ConsoleJob | null, cancelling: boolean, timeout?: number): ReactNode {
   if (!job) return <span className="st">Idle</span>;
   const { info, title } = job;
   if (job.lost) return <span className="st warn">? {title}: the server no longer knows this run (restarted?). Saved results reloaded.</span>;
@@ -32,7 +32,11 @@ function statusOf(job: ConsoleJob | null, cancelling: boolean): ReactNode {
     case "cancelled":
       return <span className="st cancel">■ {title} cancelled. Results from before the run are kept.</span>;
     case "timed_out":
-      return <span className="st warn">⏱ {title} timed out: stopped by the server's time limit. Results from before the run are kept.</span>;
+      return (
+        <span className="st warn">
+          ⏱ {title} timed out: stopped by the server's {timeout ? `${timeout} s ` : ""}time limit. Results from before the run are kept.
+        </span>
+      );
     default:
       return <span className="st err">✕ {title} failed (exit {info.code})</span>;
   }
@@ -42,8 +46,10 @@ function statusOf(job: ConsoleJob | null, cancelling: boolean): ReactNode {
  * Live output of the most recent demo run, pinned to the bottom of the page.
  * `onCancel` is set only while a job runs on a server that supports cancelling.
  */
-export function Console({ job, open, onToggle, onCancel, cancelling }: {
+export function Console({ job, open, onToggle, onCancel, cancelling, timeout }: {
   job: ConsoleJob | null; open: boolean; onToggle: () => void; onCancel?: () => void; cancelling: boolean;
+  /** The job's step time limit in seconds (StepInfo.timeout), for the "timed out" status. */
+  timeout?: number;
 }) {
   const root = useRef<HTMLElement>(null);
   const pre = useRef<HTMLPreElement>(null);
@@ -74,7 +80,7 @@ export function Console({ job, open, onToggle, onCancel, cancelling }: {
     <section className="console" aria-label="Demo console" ref={root}>
       {/* The whole bar toggles on click (a big target for a presenter); the buttons are the keyboard path. */}
       <div className="bar" onClick={(e) => { if (!(e.target as HTMLElement).closest("button")) onToggle(); }}>
-        {statusOf(job, cancelling)}
+        {statusOf(job, cancelling, timeout)}
         {info && <span className="dim">{elapsed.toFixed(1)} s</span>}
         <span className="last">{last}</span>
         {onCancel && (

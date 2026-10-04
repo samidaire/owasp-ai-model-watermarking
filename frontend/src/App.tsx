@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ApiError, cancelJob, followJob, getJob, getState, runStep, type DemoState, type JobInfo, type ServerStep,
+  ApiError, cancelJob, followJob, getJob, getState, getSteps, runStep, type DemoState, type JobInfo, type ServerStep,
 } from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -11,8 +11,9 @@ import { PanelB } from "./panels/PanelB";
 import { PanelC } from "./panels/PanelC";
 import { PanelD } from "./panels/PanelD";
 import { PanelE } from "./panels/PanelE";
-import type { PanelProps } from "./panels/Shell";
+import { RunButton, type PanelProps } from "./panels/Shell";
 import { panelStatus, type PanelKey as Key, type PanelStatus } from "./stale";
+import { FALLBACK_STEPS, toCatalogue, type StepCatalogue } from "./steps";
 
 const STEPS: { key: Key; title: string; sub: string; Panel: (p: PanelProps) => React.JSX.Element }[] = [
   { key: "A", title: "Commit & embed", sub: "Seed, key and watermark", Panel: PanelA },
@@ -53,6 +54,9 @@ export default function App() {
   const [job, setJob] = useState<ConsoleJob | null>(null);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [theme, setTheme] = useState(() => readPref("demo.theme", "auto"));
+  /** Step catalogue from GET /api/steps; the fallback (src/steps.ts) until it loads, or if it fails. */
+  const [steps, setSteps] = useState<StepCatalogue>(FALLBACK_STEPS);
+  const [stepsLoaded, setStepsLoaded] = useState(false);
   /** Id of the job a cancel was requested for (until it ends). */
   const [cancelling, setCancelling] = useState<string | null>(null);
   /** The server has no cancel endpoint (older server): hide the Cancel button. */
@@ -132,6 +136,16 @@ export default function App() {
     return () => unfollow();
   }, [refresh, attach, unfollow]);
 
+  // Step catalogue: fetched once on load (again only if the server was unreachable then).
+  useEffect(() => {
+    if (stepsLoaded || offline) return;
+    let live = true;
+    getSteps()
+      .then((r) => { if (live) { setSteps(toCatalogue(r)); setStepsLoaded(true); } })
+      .catch(() => { /* keep the fallback catalogue */ });
+    return () => { live = false; };
+  }, [stepsLoaded, offline]);
+
   // The server probes the GPU in the background; poll until it reports.
   useEffect(() => {
     if (s?.env.status !== "probing" && !offline) return;
@@ -183,8 +197,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [idx, go]);
 
-  const run = useCallback(async (step: ServerStep, opts?: { tries?: number; confirm?: string }) => {
-    if (opts?.confirm && !window.confirm(opts.confirm)) return;
+  const run = useCallback(async (step: ServerStep, opts?: { tries?: number }) => {
+    // Destructive or slow steps (retrain, zk_hashed) carry a confirmation text in the catalogue.
+    const confirmText = steps[step]?.confirm;
+    if (confirmText && !window.confirm(confirmText)) return;
     setNotice(null);
     try {
       const info = await runStep(step, opts?.tries);
@@ -202,7 +218,7 @@ export default function App() {
       }
       refresh();
     }
-  }, [attach, refresh]);
+  }, [attach, refresh, steps]);
 
   const cancel = useCallback(async () => {
     const cur = jobRef.current;
@@ -232,6 +248,7 @@ export default function App() {
   }, [settle, refresh]);
 
   const running: ServerStep | null = job?.info.running ? job.info.step : s?.job?.running ? s.job.step : null;
+  const ctl = useMemo(() => ({ running, run, steps }), [running, run, steps]);
   const step = STEPS[idx];
   const env = s?.env;
   let envLabel = "Connecting…";
@@ -253,11 +270,8 @@ export default function App() {
             {env?.status === "ok" && <span className="ic" aria-hidden>{env.gpu ? "✓" : "!"}</span>}{envLabel}
           </span>
           <span className="chip" title={s?.commitment ?? ""}>Owner commitment <span className="mono">{short(s?.commitment)}</span></span>
-          <button className="btn primary" disabled={running !== null || !s} onClick={() => run("all")} aria-label="Run all demos live"
-            title="Re-verify A, then run B, C, D and E1 + E2 live (~30 s). E3 stays precomputed.">
-            {running === "all" ? <span className="spinner" aria-hidden /> : <span aria-hidden>▶</span>}
-            {running === "all" ? "Running all…" : "Run all live"}
-          </button>
+          <RunButton ctl={ctl} step="all" primary disabled={!s}
+            hint="Re-verify A, then run B, C, D and E1 + E2 live. E3 stays precomputed." />
           <select className="sel" value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Colour theme">
             <option value="auto">Theme: auto</option>
             <option value="light">Theme: light</option>
@@ -309,7 +323,7 @@ export default function App() {
             // One boundary per panel (keyed, so moving to another panel starts clean): a render error in one
             // panel shows an error card there, and the other panels, the sidebar and the console keep working.
             <ErrorBoundary key={step.key} name={`Demo ${step.key} (${step.title})`} onReload={refresh} resetKey={s}>
-              <step.Panel s={s} ctl={{ running, run }}
+              <step.Panel s={s} ctl={ctl}
                 refreshing={Boolean(running && (PANEL_OF[running] === step.key || PANEL_OF[running] === "*"))} />
             </ErrorBoundary>
           ) : !offline && <p style={{ color: "var(--text-secondary)" }}>Loading saved results…</p>}
@@ -318,6 +332,7 @@ export default function App() {
 
       <ErrorBoundary name="The console" onReload={() => setConsoleOpen(true)}>
         <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)}
+          timeout={job ? steps[job.info.step]?.timeout : undefined}
           onCancel={job?.info.running && !job.lost && !cancelUnsupported ? cancel : undefined}
           cancelling={Boolean(job?.info.running && cancelling === job.info.id)} />
       </ErrorBoundary>

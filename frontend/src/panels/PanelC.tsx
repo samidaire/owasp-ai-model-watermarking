@@ -11,7 +11,7 @@ export function PanelC({ s, ctl, refreshing }: PanelProps) {
       letter="C" title="Ownership forgery" reqs={["OWASP R2: avoid ambiguous ownership", "Gap G1"]}
       claim="Without a key commitment, the thief needs only the stolen weights. They choose their own signature and fit a counterfeit key to the owner's weights, one sign flip per bit."
       stale={panelStale("C", s)} refreshing={refreshing}
-      actions={<RunButton ctl={ctl} step="forgery" label="Run forgery live" primary hint="~3 s" />}
+      actions={<RunButton ctl={ctl} step="forgery" primary />}
       notes={<Notes
         say={[
           "The thief has the weights but not my key. They pick their own signature, 'MALLORY!', and fit a key to my weights in one line per bit.",

@@ -1,6 +1,6 @@
 // Client for the demo backend (demo/server.py). The response types are the shared contract in
 // ../../contract/types.ts; see ../../UI_INTEGRATION.md for every endpoint.
-import type { DemoState, ErrorBody, JobDetail, JobInfo, ServerStep } from "../../contract/types";
+import type { DemoState, ErrorBody, JobDetail, JobInfo, ServerStep, StepsResponse } from "../../contract/types";
 
 export type * from "../../contract/types";
 
@@ -22,6 +22,7 @@ async function getJson<T>(path: string, what: string): Promise<T> {
 }
 
 export const getState = () => getJson<DemoState>("/api/state", "state");
+export const getSteps = () => getJson<StepsResponse>("/api/steps", "steps");
 export const getJob = (id: string) => getJson<JobDetail>(`/api/jobs/${encodeURIComponent(id)}`, "job");
 
 /** Starts a step. A 409 throws an ApiError whose `body.job` is the job that is already running. */
