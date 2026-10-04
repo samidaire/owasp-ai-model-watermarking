@@ -78,7 +78,7 @@ try:
     X = torch.from_numpy(derive_key(seed)).to(dev)
     b = torch.from_numpy(derive_signature(seed, OWNER_ID)).to(dev)
     print(f"  Derived key X        : {tuple(X.shape)} Gaussian projection")
-    print(f"  Derived signature b  : {''.join(map(str, b.tolist()))}")
+    print(f"  Derived signature b  : {''.join(map(str, b.tolist()[:8]))}... ({len(b.tolist())} bits; full value kept out of logs)")
 
     banner("STEP 2: Train clean baseline and watermarked model (same init seed)")
     torch.manual_seed(1)
