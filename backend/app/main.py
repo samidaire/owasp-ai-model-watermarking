@@ -21,6 +21,7 @@ from .logs import configure as configure_logging
 from .logs import log
 from .registry import Registry
 from .security import SecurityMiddleware
+from .v2 import api_router
 
 DESCRIPTION = """
 **Sigil** backend: model registration with registry timestamps, ownership verification history,
@@ -107,6 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     problems.install(app)
     app.include_router(v1.router)
+    app.include_router(api_router, prefix="/api/v2")
     app.include_router(static.router)          # last: the UI route catches every other GET
     app.add_middleware(SecurityMiddleware, settings=settings)
     return app
