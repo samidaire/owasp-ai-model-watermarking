@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { jobOutcome, type JobInfo } from "../api";
 
 export interface ConsoleJob {
@@ -45,17 +45,33 @@ function statusOf(job: ConsoleJob | null, cancelling: boolean): ReactNode {
 export function Console({ job, open, onToggle, onCancel, cancelling }: {
   job: ConsoleJob | null; open: boolean; onToggle: () => void; onCancel?: () => void; cancelling: boolean;
 }) {
+  const root = useRef<HTMLElement>(null);
   const pre = useRef<HTMLPreElement>(null);
   const elapsed = useElapsed(job?.info);
   useEffect(() => {
     if (open && pre.current) pre.current.scrollTop = pre.current.scrollHeight;
   }, [job?.lines.length, open]);
 
+  // The console is fixed over the bottom of the page. Publish its real height (open or closed, wrapped bar or
+  // not) as --console-h, so the page reserves exactly that much space and no panel content is ever hidden.
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty("--console-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--console-h");
+    };
+  }, []);
+
   const info = job?.info;
   const last = job?.lines.filter((l) => l.trim()).at(-1) ?? "No demo run yet in this session. Saved results are shown.";
 
   return (
-    <section className="console" aria-label="Demo console">
+    <section className="console" aria-label="Demo console" ref={root}>
       {/* The whole bar toggles on click (a big target for a presenter); the buttons are the keyboard path. */}
       <div className="bar" onClick={(e) => { if (!(e.target as HTMLElement).closest("button")) onToggle(); }}>
         {statusOf(job, cancelling)}

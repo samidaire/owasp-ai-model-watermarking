@@ -74,6 +74,9 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* --console-h = live height of the fixed console drawer (set by Console.tsx). Keyboard focus and in-page
+   scrolling keep targets clear of the sticky top bar and of the console. */
+html { scroll-padding-top: 76px; scroll-padding-bottom: calc(var(--console-h, 40px) + 12px); }
 body {
   background: var(--page);
   color: var(--text-primary);
@@ -99,6 +102,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 .layout { display: grid; grid-template-columns: 248px minmax(0, 1fr); align-items: start; }
 .sidenav {
   position: sticky; top: 64px; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px;
+  max-height: calc(100vh - 64px - var(--console-h, 40px)); overflow-y: auto;
 }
 .sidenav .navlabel { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 12px 6px; }
 .navitem {
@@ -116,7 +120,9 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 .navitem .s { display: block; color: var(--text-muted); font-size: 12px; font-weight: 400; }
 .navhint { color: var(--text-muted); font-size: 12px; padding: 14px 12px 0; }
 
-main { padding: 24px 32px 140px; min-width: 0; }
+/* Bottom padding = the console's real height (open ~330 px, closed ~40 px) plus a gap, so the end of every
+   panel (presenter notes, D's null table, E's cost table) can always be scrolled above the console. */
+main { padding: 24px 32px calc(var(--console-h, 140px) + 32px); min-width: 0; }
 .panel { max-width: 1120px; display: flex; flex-direction: column; gap: 20px; }
 .panel.refreshing .results { opacity: 0.55; transition: opacity 0.2s; }
 
@@ -273,7 +279,7 @@ details.tableview summary { cursor: pointer; color: var(--text-secondary); }
 .console .cbtn:focus-visible { outline: 2px solid #86b6ef; outline-offset: 2px; }
 .console .cbtn.stop { color: #ffb4a8; border-color: #6b3a33; }
 .console .cancel { color: #d6d4cc; }
-.console pre { margin: 0; padding: 4px 18px 14px; height: 300px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+.console pre { margin: 0; padding: 4px 18px 14px; height: min(300px, 38vh); overflow: auto; white-space: pre-wrap; word-break: break-word; }
 .console .ok { color: #5fd35f; }
 .console .err { color: #ff8a8a; }
 .console .run { color: #86b6ef; }
@@ -289,10 +295,10 @@ details.tableview summary { cursor: pointer; color: var(--text-secondary); }
 }
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
-  .sidenav { position: static; flex-direction: row; overflow-x: auto; padding: 12px 16px 0; }
+  .sidenav { position: static; flex-direction: row; overflow-x: auto; padding: 12px 16px 0; max-height: none; }
   .sidenav .navlabel, .navhint, .navitem .s { display: none; }
   .navitem { grid-template-columns: 28px auto auto; }
-  main { padding: 16px 16px 140px; }
+  main { padding: 16px 16px calc(var(--console-h, 140px) + 24px); }
   .grid2 { grid-template-columns: 1fr; }
   .bitgrid { grid-template-columns: repeat(16, minmax(0, 1fr)); }
   .topbar { padding: 10px 16px; }
