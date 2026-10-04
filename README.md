@@ -37,6 +37,8 @@ The demo is evaluated against **project requirements R1 (robustness) and R2 (non
 
 ## Quick start on a new machine
 
+**Presenting the demo?** See **[DEMO.md](DEMO.md)**: setup on a new machine in minutes, plus a presentation runbook.
+
 | You want | Do this | Time (≈50 Mbps) |
 |---|---|---|
 | The demo UI with every saved result (Run buttons replay recorded runs) | Only Python is needed: `python demo/server.py --simulate`, then open http://127.0.0.1:8765 | ~1 min |
