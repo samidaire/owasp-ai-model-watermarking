@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ApiError, cancelJob, followJob, getJob, getState, isStale, runStep, type DemoState, type JobInfo, type ServerStep,
+  ApiError, cancelJob, followJob, getJob, getState, runStep, type DemoState, type JobInfo, type ServerStep,
 } from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -12,8 +12,8 @@ import { PanelC } from "./panels/PanelC";
 import { PanelD } from "./panels/PanelD";
 import { PanelE } from "./panels/PanelE";
 import type { PanelProps } from "./panels/Shell";
+import { panelStatus, type PanelKey as Key, type PanelStatus } from "./stale";
 
-type Key = "A" | "B" | "C" | "D" | "E";
 const STEPS: { key: Key; title: string; sub: string; Panel: (p: PanelProps) => React.JSX.Element }[] = [
   { key: "A", title: "Commit & embed", sub: "Seed, key and watermark", Panel: PanelA },
   { key: "B", title: "Removal attacks", sub: "OWASP R1 · gap G2", Panel: PanelB },
@@ -37,15 +37,13 @@ function writePref(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* private window: preference just isn't kept */ }
 }
 
-function stepStatus(k: Key, s: DemoState | null): "ok" | "stale" | "missing" {
-  if (!s) return "missing";
-  const r = s.results;
-  const c = { A: r.train?.commitment, B: r.attacks?.commitment, C: r.forgery?.commitment,
-    D: r.committed_seed?.commitment, E: r.ezkl.private_owner?.commitment }[k];
-  const present = { A: r.train, B: r.attacks, C: r.forgery, D: r.committed_seed, E: r.ezkl.private_owner }[k];
-  if (!present) return "missing";
-  return isStale(c, s.commitment) ? "stale" : "ok";
-}
+/** Sidebar marker per panel status (stale.ts decides the status for the sidebar and the panels alike). */
+const MARK: Record<PanelStatus, { say: string; title: string; icon: string; color: string }> = {
+  fresh: { say: "up to date", title: "Results up to date", icon: "✓", color: "var(--good-text)" },
+  stale: { say: "stale", title: "Stale: made with an older owner key", icon: "!", color: "var(--warning-text)" },
+  unknown: { say: "freshness unknown", title: "Results shown; freshness unknown (no current owner commitment to compare)", icon: "–", color: "var(--text-secondary)" },
+  missing: { say: "no results", title: "No results yet", icon: "○", color: "var(--text-muted)" },
+};
 
 export default function App() {
   const [s, setS] = useState<DemoState | null>(null);
@@ -290,18 +288,16 @@ export default function App() {
         <nav className="sidenav" aria-label="Demo steps">
           <div className="navlabel">Demo storyline</div>
           {STEPS.map((x, i) => {
-            const st = stepStatus(x.key, s);
+            const mark = MARK[panelStatus(x.key, s)];
             const busy = running && (PANEL_OF[running] === x.key || PANEL_OF[running] === "*");
             return (
               <button key={x.key} className="navitem" aria-current={i === idx ? "step" : undefined} onClick={() => go(i)}
-                aria-label={`Demo ${x.key}: ${x.title} (${busy ? "running" : { ok: "up to date", stale: "stale", missing: "no results" }[st]})`}>
+                aria-label={`Demo ${x.key}: ${x.title} (${busy ? "running" : mark.say})`}>
                 <span className="letter">{x.key}</span>
                 <span className="t">{x.title}<span className="s">{x.sub}</span></span>
-                <span aria-label={busy ? "running" : st} title={busy ? "Running" : { ok: "Results up to date", stale: "Stale: older owner key", missing: "No results yet" }[st]}>
+                <span aria-hidden title={busy ? "Running" : mark.title}>
                   {busy ? <span className="spinner" style={{ color: "var(--series-1)" }} />
-                    : st === "ok" ? <span style={{ color: "var(--good-text)", fontWeight: 800 }}>✓</span>
-                      : st === "stale" ? <span style={{ color: "var(--warning-text)", fontWeight: 800 }}>!</span>
-                        : <span style={{ color: "var(--text-muted)" }}>○</span>}
+                    : <span style={{ color: mark.color, fontWeight: 800 }}>{mark.icon}</span>}
                 </span>
               </button>
             );

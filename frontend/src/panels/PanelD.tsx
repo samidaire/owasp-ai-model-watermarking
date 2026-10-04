@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isStale } from "../api";
+import { panelStale } from "../stale";
 import { Histogram } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
 import { ber3, bitsWrong, int, sci, secs } from "../format";
@@ -13,7 +13,7 @@ export function PanelD({ s, ctl, refreshing }: PanelProps) {
     <PanelShell
       letter="D" title="Committed seed" reqs={["OWASP R2: the fix", "RQ1"]}
       claim="Commit at embedding time to a secret seed, and derive both the key and the signature from it. Then the thief can no longer choose a signature after seeing the model."
-      stale={isStale(c?.commitment, s.commitment)} refreshing={refreshing}
+      stale={panelStale("D", s)} refreshing={refreshing}
       actions={<>
         <label className="actions" style={{ gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
           Thief's budget

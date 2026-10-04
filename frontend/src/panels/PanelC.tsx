@@ -1,4 +1,4 @@
-import { isStale } from "../api";
+import { panelStale } from "../stale";
 import { BitGrid, BitLegend } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
 import { ber3, bitsWrong } from "../format";
@@ -10,7 +10,7 @@ export function PanelC({ s, ctl, refreshing }: PanelProps) {
     <PanelShell
       letter="C" title="Ownership forgery" reqs={["OWASP R2: avoid ambiguous ownership", "Gap G1"]}
       claim="Without a key commitment, the thief needs only the stolen weights. They choose their own signature and fit a counterfeit key to the owner's weights, one sign flip per bit."
-      stale={isStale(f?.commitment, s.commitment)} refreshing={refreshing}
+      stale={panelStale("C", s)} refreshing={refreshing}
       actions={<RunButton ctl={ctl} step="forgery" label="Run forgery live" primary hint="~3 s" />}
       notes={<Notes
         say={[

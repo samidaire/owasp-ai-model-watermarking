@@ -155,8 +155,3 @@ export function followJob(id: string, h: JobFollower): () => void {
   };
   return stop;
 }
-
-/** True when a result was produced with an older owner key than the one currently published. */
-export function isStale(resultCommitment: string | undefined | null, current: string | null): boolean {
-  return Boolean(resultCommitment && current && resultCommitment !== current);
-}

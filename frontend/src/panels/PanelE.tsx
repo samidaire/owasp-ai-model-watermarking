@@ -1,4 +1,5 @@
-import { isStale, type EzklSummary } from "../api";
+import type { EzklSummary } from "../api";
+import { panelStale } from "../stale";
 import { Callout, Card, Empty, Notes, Verdict } from "../components/ui";
 import { bytes, secs, short } from "../format";
 import { PanelShell, RunButton, type PanelProps } from "./Shell";
@@ -34,8 +35,6 @@ export function PanelE({ s, ctl, refreshing }: PanelProps) {
   const z = s.results.ezkl;
   const vk = s.results.vk_crosscheck;
   const po = poseidon(z.hashed_owner);
-  const staleE = [z.private_owner?.commitment, z.private_thief?.commitment, vk?.commitment, z.hashed_owner?.commitment]
-    .some((c) => isStale(c, s.commitment));
   const literature = [
     { name: "ZKROWNN, CIFAR-10 CNN (128 GB machine)", prove: "11.2 s", verify: "1 ms", proof: "127 B", pk: "117 MB", ram: "n/a" },
     { name: "RoSeMary decoder", prove: "7.15 s", verify: "118.6 ms", proof: "17.1 KB", pk: "n/a", ram: "2.6 GB" },
@@ -45,7 +44,7 @@ export function PanelE({ s, ctl, refreshing }: PanelProps) {
     <PanelShell
       letter="E" title="Zero-knowledge proofs" reqs={["OWASP project objective: ZK ownership verification", "Gap G1 · RQ3"]}
       claim="EZKL (Halo2/KZG) proves the watermark-extraction statement with the key and signature kept private and the suspect model's weights public: 'I know a key and signature such that all 64 bits agree.'"
-      stale={staleE} refreshing={refreshing}
+      stale={panelStale("E", s)} refreshing={refreshing}
       actions={<>
         <RunButton ctl={ctl} step="zk" label="Run E1 + E2 live" primary hint="Owner proof, thief proof, VK cross-check (~10 s)" />
         <RunButton ctl={ctl} step="zk_hashed" label="Re-run E3…" confirm={HASHED_WARNING} />
