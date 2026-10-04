@@ -19,7 +19,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from wm_core import (RESULTS, T_BITS, THETA, THIEF_ID, banner, ber, binom_tail_le, commitment,
+from d2_math import binom_tail_le, d2_work_estimate
+from wm_core import (RESULTS, T_BITS, THETA, THIEF_ID, banner, ber, commitment,
                      derive_key, derive_signature, device, extract_bits, load_model, load_owner,
                      null_model_names, utc_now, wm_vector)
 
@@ -64,13 +65,14 @@ for i in range(args.tries):
 dt = time.time() - t0
 hits = int(np.sum(bers <= THETA))
 p = binom_tail_le(T_BITS, k)
-print(f"  Search time              : {dt:.1f}s ({args.tries / dt:,.0f} seeds/s)")
+est = d2_work_estimate(p, args.tries, dt)                 # pure maths, unit-tested (tests/test_d2_math.py)
+print(f"  Search time              : {dt:.1f}s ({est['seeds_per_s']:,.0f} seeds/s)")
 print(f"  Best BER the thief found : {bers.min():.3f}   (mean {bers.mean():.3f})")
 print(f"  Forgeries accepted       : {hits}/{args.tries:,}  at threshold BER <= {THETA:.3f}")
 print(f"  Theory, per try          : P[Bin({T_BITS},0.5) <= {k}] = {p:.2e}  -> expected {args.tries * p:.2e} hits")
-need = math.log(2) / p
-print(f"  Work factor              : ~2^{math.log2(1 / p):.1f} seeds (~{need:.1e} for a 50% chance)")
-print(f"                             = ~{need / (args.tries / dt) / 3600:,.0f} single-core hours at this rate:")
+need = est["seeds_for_half"]
+print(f"  Work factor              : ~2^{est['log2_work']:.1f} seeds (~{need:.1e} for a 50% chance)")
+print(f"                             = ~{est['single_core_hours']:,.0f} single-core hours at this rate:")
 print("                             feasible on a GPU or cluster. Hence timestamps still matter,")
 print("                             and RQ1 must set signature length T and threshold theta.")
 p256 = binom_tail_le(256, 32)
@@ -101,9 +103,10 @@ write_json("committed_seed.json", {
     "d0": {"commitment_matches": bool(ok_commit), "owner_ber": e_owner, "verified": bool(ok_commit and e_owner <= THETA),
            "timestamp_utc": public["timestamp_utc"]},
     "d1": {"wins": wins, "trials": args.d1},
-    "d2": {"tries": args.tries, "seconds": dt, "seeds_per_s": args.tries / dt, "min_ber": float(bers.min()),
-           "mean_ber": float(bers.mean()), "accepted": hits, "p_per_try": p, "log2_work": math.log2(1 / p),
-           "seeds_for_half": need, "single_core_hours": need / (args.tries / dt), "log2_work_T256": math.log2(1 / p256),
+    "d2": {"tries": args.tries, "seconds": dt, "seeds_per_s": est["seeds_per_s"], "min_ber": float(bers.min()),
+           "mean_ber": float(bers.mean()), "accepted": hits, "p_per_try": p, "log2_work": est["log2_work"],
+           "seeds_for_half": need, "single_core_hours": est["single_core_hours"],      # hours (FIX-01; was seconds)
+           "log2_work_T256": math.log2(1 / p256),
            "histogram": [{"ber": i / T_BITS, "count": int(c)} for i, c in enumerate(counts)]},
     "nulls": [{"model": n, "owner_ber": ber(extract_bits(load_model(n, dev), X), b)} for n in null_model_names()],
 })
