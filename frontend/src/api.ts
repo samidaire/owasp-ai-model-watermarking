@@ -1,18 +1,30 @@
 // Client for the demo backend (demo/server.py). The response types are the shared contract in
 // ../../contract/types.ts; see ../../UI_INTEGRATION.md for every endpoint.
-import type { DemoState, JobInfo, ServerStep } from "../../contract/types";
+import type { DemoState, ErrorBody, JobDetail, JobInfo, ServerStep } from "../../contract/types";
 
 export type * from "../../contract/types";
 
 /** Base URL of the backend. Empty = same origin (built UI served by server.py, or the Vite dev proxy). */
 const API = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_API_BASE ?? "";
 
-export async function getState(): Promise<DemoState> {
-  const r = await fetch(`${API}/api/state`, { cache: "no-store" });
-  if (!r.ok) throw new Error(`state: HTTP ${r.status}`);
-  return r.json();
+/** A non-2xx answer from the server. `body` is the parsed JSON error body when there is one. */
+export class ApiError extends Error {
+  constructor(readonly status: number, readonly body: Partial<ErrorBody>, fallback: string) {
+    super(body.error ?? fallback);
+  }
 }
 
+async function getJson<T>(path: string, what: string): Promise<T> {
+  const r = await fetch(`${API}${path}`, { cache: "no-store" });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new ApiError(r.status, body, `${what}: HTTP ${r.status}`);
+  return body as T;
+}
+
+export const getState = () => getJson<DemoState>("/api/state", "state");
+export const getJob = (id: string) => getJson<JobDetail>(`/api/jobs/${encodeURIComponent(id)}`, "job");
+
+/** Starts a step. A 409 throws an ApiError whose `body.job` is the job that is already running. */
 export async function runStep(step: ServerStep, tries?: number): Promise<JobInfo> {
   const r = await fetch(`${API}/api/run`, {
     method: "POST",
@@ -20,21 +32,89 @@ export async function runStep(step: ServerStep, tries?: number): Promise<JobInfo
     body: JSON.stringify({ step, ...(tries ? { tries } : {}) }),
   });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.error ?? `run: HTTP ${r.status}`);
+  if (!r.ok) throw new ApiError(r.status, body, `run: HTTP ${r.status}`);
   return body as JobInfo;
 }
 
-/** Follows a job's output. Returns a function that stops listening (the job keeps running). */
-export function streamJob(id: string, onLine: (line: string) => void, onDone: (info: JobInfo) => void): () => void {
-  const es = new EventSource(`${API}/api/jobs/${id}/stream`);
-  es.onmessage = (e) => onLine(JSON.parse(e.data));
-  es.addEventListener("done", (e) => {
+export interface JobFollower {
+  /** One new output line from the live stream. */
+  onLine: (line: string) => void;
+  /** The full output so far (from GET /api/jobs/{id}); replaces what was streamed. Used after the stream broke. */
+  onOutput: (lines: string[]) => void;
+  /** The job ended; `info` is its final JobInfo. */
+  onDone: (info: JobInfo) => void;
+  /** The server no longer knows the job (404: it was restarted). The caller should reload /api/state. */
+  onLost: () => void;
+}
+
+/**
+ * Follows a job's output until it ends. Returns a function that stops listening (the job keeps running).
+ *
+ * The SSE stream is the normal path; on a dropped connection EventSource reconnects by itself and sends
+ * Last-Event-ID, so the server resumes after the last line received. When the browser gives up on the stream
+ * (e.g. a 404 after a server restart), this falls back to polling GET /api/jobs/{id} until the job ends, and
+ * reports a job the server no longer knows through `onLost`, so the UI never stays on "Running".
+ */
+export function followJob(id: string, h: JobFollower): () => void {
+  let stopped = false;
+  let polling = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const es = new EventSource(`${API}/api/jobs/${encodeURIComponent(id)}/stream`);
+
+  const stop = () => {
+    stopped = true;
     es.close();
-    onDone(JSON.parse((e as MessageEvent).data));
-  });
-  // On a dropped connection EventSource reconnects by itself and sends Last-Event-ID,
-  // so the server resumes after the last line received (no duplicates).
-  return () => es.close();
+    clearTimeout(timer);
+  };
+  const finish = (info: JobInfo) => {
+    if (stopped) return;
+    stop();
+    h.onDone(info);
+  };
+
+  /** Asks the server directly. Returns true when it settled the job (ended or unknown). */
+  const check = async (): Promise<boolean> => {
+    try {
+      const d = await getJob(id);
+      if (stopped) return true;
+      if (!d.running) {
+        h.onOutput(d.output);
+        finish(d);
+        return true;
+      }
+      if (polling) h.onOutput(d.output);
+      return false;
+    } catch (e) {
+      if (stopped) return true;
+      if (e instanceof ApiError && e.status === 404) {
+        stop();
+        h.onLost();
+        return true;
+      }
+      return false; // server unreachable: keep trying
+    }
+  };
+  const poll = async () => {
+    if (stopped || (await check())) return;
+    timer = setTimeout(poll, 2000);
+  };
+
+  es.onmessage = (e) => { if (!stopped) h.onLine(JSON.parse(e.data)); };
+  es.addEventListener("done", (e) => finish(JSON.parse((e as MessageEvent).data)));
+  es.onerror = () => {
+    if (stopped) return;
+    if (es.readyState === EventSource.CLOSED) {
+      // The browser will not reconnect (non-200 answer, e.g. unknown job): poll instead.
+      if (!polling) {
+        polling = true;
+        poll();
+      }
+    } else {
+      // EventSource is reconnecting by itself. Check once that the job still exists on this server.
+      check();
+    }
+  };
+  return stop;
 }
 
 /** True when a result was produced with an older owner key than the one currently published. */

@@ -267,6 +267,7 @@ details.tableview summary { cursor: pointer; color: var(--text-secondary); }
 .console .ok { color: #5fd35f; }
 .console .err { color: #ff8a8a; }
 .console .run { color: #86b6ef; }
+.console .warn { color: #fab219; }
 
 .banner { margin: 16px 32px 0; }
 .stale { margin-left: 4px; }

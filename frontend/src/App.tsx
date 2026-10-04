@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getState, isStale, runStep, streamJob, type DemoState, type JobInfo, type ServerStep } from "./api";
+import { ApiError, followJob, getJob, getState, isStale, runStep, type DemoState, type JobInfo, type ServerStep } from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
 import { Callout } from "./components/ui";
 import { short } from "./format";
@@ -52,7 +52,10 @@ export default function App() {
   const [job, setJob] = useState<ConsoleJob | null>(null);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [theme, setTheme] = useState(() => readPref("demo.theme", "auto"));
-  const stop = useRef<(() => void) | null>(null);
+  /** The job whose output the console follows, and how to stop following it. */
+  const follow = useRef<{ id: string; stop: () => void } | null>(null);
+  const jobRef = useRef<ConsoleJob | null>(null);
+  jobRef.current = job;
 
   const refresh = useCallback(async () => {
     try {
@@ -66,24 +69,63 @@ export default function App() {
     }
   }, []);
 
+  const unfollow = useCallback((id?: string) => {
+    if (follow.current && (id === undefined || follow.current.id === id)) {
+      follow.current.stop();
+      follow.current = null;
+    }
+  }, []);
+
+  /**
+   * The server says job `id` is no longer running (or no longer exists): end it in the console, with its final
+   * JobInfo when the server still has it, otherwise as "lost" (e.g. the server was restarted mid-run).
+   */
+  const settle = useCallback(async (id: string, fromState: JobInfo | null) => {
+    let final: JobInfo | null = fromState?.id === id && !fromState.running ? fromState : null;
+    if (!final) {
+      try {
+        const d = await getJob(id);
+        if (!d.running) final = d;
+      } catch { /* unknown job or unreachable server: ends as "lost" */ }
+    }
+    unfollow(id);
+    setJob((j) => {
+      if (!j || j.info.id !== id || !j.info.running) return j;
+      if (final) return { ...j, info: final };
+      return { ...j, lost: true, info: { ...j.info, running: false, ended: j.info.ended ?? Date.now() / 1000 } };
+    });
+  }, [unfollow]);
+
   const attach = useCallback((info: JobInfo) => {
-    stop.current?.();
-    setJob({ info, lines: [], title: TITLE_OF[info.step] });
-    stop.current = streamJob(
-      info.id,
-      (line) => setJob((j) => (j && j.info.id === info.id ? { ...j, lines: [...j.lines, line] } : j)),
-      (done) => {
-        setJob((j) => (j && j.info.id === info.id ? { ...j, info: done } : j));
+    unfollow();
+    const id = info.id;
+    const update = (f: (j: ConsoleJob) => ConsoleJob) => setJob((j) => (j && j.info.id === id ? f(j) : j));
+    setJob({ info, lines: [], title: TITLE_OF[info.step] ?? info.step });
+    const stop = followJob(id, {
+      onLine: (line) => update((j) => ({ ...j, lines: [...j.lines, line] })),
+      onOutput: (lines) => update((j) => ({ ...j, lines })),
+      onDone: (done) => {
+        if (follow.current?.id === id) follow.current = null;
+        update((j) => ({ ...j, info: done }));
+        setNotice(null);
         refresh();
       },
-    );
-  }, [refresh]);
+      onLost: async () => {
+        // The server no longer knows this job (restarted): trust /api/state from now on. If another job runs
+        // there, the safety-net poll below attaches to it.
+        if (follow.current?.id === id) follow.current = null;
+        const st = await refresh();
+        settle(id, st?.job ?? null);
+      },
+    });
+    follow.current = { id, stop };
+  }, [refresh, settle, unfollow]);
 
   // Initial load: saved results populate every panel before anything runs; re-attach to a running job.
   useEffect(() => {
     refresh().then((st) => { if (st?.job?.running) attach(st.job); });
-    return () => stop.current?.();
-  }, [refresh, attach]);
+    return () => unfollow();
+  }, [refresh, attach, unfollow]);
 
   // The server probes the GPU in the background; poll until it reports.
   useEffect(() => {
@@ -92,17 +134,22 @@ export default function App() {
     return () => clearTimeout(t);
   }, [s, offline, refresh]);
 
-  // Safety net if the event stream drops: keep job state fresh while running.
+  // Safety net while anything runs (the stream can drop behind a proxy, or the server can restart):
+  // poll /api/state every 5 s. Whenever no job is running there, nothing is running here either.
+  const runningId = job?.info.running ? job.info.id : s?.job?.running ? s.job.id : null;
   useEffect(() => {
-    if (!job?.info.running) return;
+    if (!runningId) return;
     const t = setInterval(async () => {
       const st = await refresh();
-      if (st?.job && st.job.id === job.info.id && !st.job.running) {
-        setJob((j) => (j && j.info.id === st.job!.id ? { ...j, info: st.job! } : j));
-      }
+      if (!st) return; // server unreachable: the offline banner shows; keep polling
+      const sj = st.job;
+      const cur = jobRef.current;
+      if (cur?.info.running && (!sj || !sj.running || sj.id !== cur.info.id)) settle(cur.info.id, sj);
+      // A run this tab isn't following (started elsewhere, or after a missed "done"): follow it.
+      if (sj?.running && sj.id !== cur?.info.id) attach(sj);
     }, 5000);
     return () => clearInterval(t);
-  }, [job?.info.running, job?.info.id, refresh]);
+  }, [runningId, refresh, settle, attach]);
 
   useEffect(() => {
     if (theme === "auto") delete document.documentElement.dataset.theme;
@@ -139,7 +186,15 @@ export default function App() {
       attach(info);
       setConsoleOpen(true);
     } catch (e) {
-      setNotice((e as Error).message);
+      const busy = e instanceof ApiError && e.status === 409 ? e.body.job : undefined;
+      if (busy) {
+        // Only one job runs at a time: show the one that is running instead of just an error.
+        if (jobRef.current?.info.id !== busy.id || !follow.current) attach(busy);
+        setConsoleOpen(true);
+        setNotice(`Another demo is already running (${TITLE_OF[busy.step] ?? busy.step}). Its live output is in the console; Run buttons unlock when it ends.`);
+      } else {
+        setNotice((e as Error).message);
+      }
       refresh();
     }
   }, [attach, refresh]);

@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { JobInfo } from "../api";
 
-export interface ConsoleJob { info: JobInfo; lines: string[]; title: string }
+export interface ConsoleJob {
+  info: JobInfo;
+  lines: string[];
+  title: string;
+  /** The server no longer knows this job (e.g. it was restarted mid-run), so how it ended is unknown. */
+  lost?: boolean;
+}
 
 function useElapsed(info: JobInfo | undefined) {
   const [now, setNow] = useState(Date.now() / 1000);
@@ -26,6 +32,7 @@ export function Console({ job, open, onToggle }: { job: ConsoleJob | null; open:
   const last = job?.lines.filter((l) => l.trim()).at(-1) ?? "No demo run yet in this session. Saved results are shown.";
   let status = <span className="st">Idle</span>;
   if (info?.running) status = <span className="st run"><span className="spinner" /> Running {job!.title}</span>;
+  else if (job?.lost) status = <span className="st warn">? {job.title}: the server no longer knows this run (restarted?). Saved results reloaded.</span>;
   else if (info && info.code === 0) status = <span className="st ok">✓ {job!.title} finished</span>;
   else if (info) status = <span className="st err">✕ {job!.title} failed (exit {info.code})</span>;
 
