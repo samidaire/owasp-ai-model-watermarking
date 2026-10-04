@@ -47,3 +47,6 @@ backend/.env
 
 # throwaway test venv used by automation agents
 .venv-agent/
+# retrain (FIX-12): backups of previous owner secrets, and the staging area of a running retrain
+demo/ckpt/backup/
+demo/ckpt/.staging/

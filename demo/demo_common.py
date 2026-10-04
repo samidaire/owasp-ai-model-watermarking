@@ -25,6 +25,17 @@ def is_noise(line: str) -> bool:
 
 
 # ---------------------------------------------------------------- atomic result writes
+def replace_file(src, dst, attempts=20):
+    """os.replace(src, dst), retrying briefly: on Windows it fails while a reader has dst open."""
+    for attempt in range(attempts):
+        try:
+            return os.replace(src, dst)
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.05)
+
+
 def atomic_write_bytes(path, data: bytes):
     """Write to a temp file in the same directory, then os.replace() it over `path`.
     Readers (the web server, the UI) see either the old file or the new one, never a partial one."""
@@ -36,14 +47,7 @@ def atomic_write_bytes(path, data: bytes):
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-        for attempt in range(20):
-            try:
-                os.replace(tmp, path)
-                break
-            except PermissionError:   # Windows: the target is briefly open in a reader; retry
-                if attempt == 19:
-                    raise
-                time.sleep(0.05)
+        replace_file(tmp, path)
     except BaseException:
         try:
             os.unlink(tmp)
