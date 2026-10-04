@@ -2,7 +2,7 @@ import { useState } from "react";
 import { panelStale } from "../stale";
 import { Histogram } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
-import { ber3, bitsWrong, int, sci, secs } from "../format";
+import { amount, ber3, bitsWrong, int, sci, secs } from "../format";
 import { about } from "../steps";
 import { PanelShell, RunButton, type PanelProps } from "./Shell";
 
@@ -71,7 +71,7 @@ export function PanelD({ s, ctl, refreshing }: PanelProps) {
         <div className="grid4">
           <Card><Stat label="Success chance per try" value={sci(c.d2.p_per_try)} caption={`P[Bin(${T}, 0.5) ≤ ${Math.floor(c.threshold * T)}]`} /></Card>
           <Card><Stat label="Work factor" value={<>2<sup>{c.d2.log2_work.toFixed(1)}</sup></>} caption={`${sci(c.d2.seeds_for_half)} seeds for a 50% chance`} /></Card>
-          <Card><Stat label="At this machine's rate" value={int(c.d2.single_core_hours)} unit="core-hours" caption={`${int(c.d2.seeds_per_s)} seeds/s on one core`} /></Card>
+          <Card><Stat label="At this machine's rate" value={amount(c.d2.single_core_hours)} unit="core-hours" caption={`${int(c.d2.seeds_per_s)} seeds/s on one core`} /></Card>
           <Card><Stat label="Target at T = 256 bits" value={<>2<sup>{Math.round(c.d2.log2_work_T256)}</sup></>} caption="Uchida's signature length, same θ = 1/8" /></Card>
         </div>
         <Callout tone="warn">
