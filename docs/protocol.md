@@ -73,6 +73,10 @@ vector of the layer. The WM-02 parity study ([reports/wm02_parity.md](reports/wm
 4. **Accept** iff #{i : bit_i ≠ b_i} ≤ max_err.
 5. **w_hash** (binds a proof to the suspect): with *v_j* = *w_q*[j] + 2^w_bits, absorb 15 values per call:
    h₀ = W; h_{c+1} = H(h_c, v_{15c}, …, v_{15c+14}) (zero-padded); w_hash = H(h_last, M).
+6. **BatchNorm folding (caveat):** ONNX exporters (both PyTorch exporters and tf2onnx) fold a BatchNorm into the
+   convolution before it, which changes that layer's weights and so its Uchida vector. Verify from the original
+   `.pt`/`.keras` file, export PyTorch models with `optimize=False` / `do_constant_folding=False`, or watermark a
+   layer that isn't followed by BatchNorm. See [reports/m4_adapters.md](reports/m4_adapters.md).
 
 ## 6. Records
 

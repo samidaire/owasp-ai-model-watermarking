@@ -148,7 +148,10 @@ def uchida_vector(kernel, layout: str) -> np.ndarray:
         k = k.T                                # -> OI
     if (k.ndim, layout in ("OIHW", "HWIO")) not in ((4, True), (2, False)):
         raise ValueError(f"kernel shape {np.shape(kernel)} does not match layout {layout}")
-    return k.mean(axis=0).reshape(-1)
+    # Same memory layout for every framework, so the float64 reduction runs in the same order and the
+    # vector is bit-identical whether the kernel arrived as OIHW, HWIO, OI or IO.
+    k = np.ascontiguousarray(k)
+    return (np.add.reduce(k, axis=0) / k.shape[0]).reshape(-1)
 
 
 def quantize(w, cfg: Config) -> np.ndarray:
