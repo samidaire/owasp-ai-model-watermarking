@@ -107,11 +107,14 @@ def uchida_vector(weight: Tensor) -> Tensor:
 
 def uchida_regularizer(layer: str, X, b, lam: float) -> Callable[[nn.Module], Tensor]:
     """Uchida et al. 2017 embedding loss: ``lam * mean BCE(sigmoid(X @ w), b)`` on ``layer``'s vector."""
+    cache: dict = {}
+
     def reg(model: nn.Module) -> Tensor:
         w = uchida_vector(get_module(model, layer).weight).float()
-        Xt = torch.as_tensor(X, dtype=torch.float32, device=w.device)
-        bt = torch.as_tensor(b, dtype=torch.float32, device=w.device)
-        return lam * F.binary_cross_entropy_with_logits(Xt @ w, bt)
+        if cache.get("dev") != w.device:      # move the key to the model's device once
+            cache.update(dev=w.device, X=torch.as_tensor(np.asarray(X), dtype=torch.float32, device=w.device),
+                         b=torch.as_tensor(np.asarray(b), dtype=torch.float32, device=w.device))
+        return lam * F.binary_cross_entropy_with_logits(cache["X"] @ w, cache["b"])
     return reg
 
 
@@ -327,25 +330,26 @@ def prune_finetune(model: nn.Module, ratio: float, x: Tensor, y: Tensor, recipe:
 def fine_prune(model: nn.Module, layer: str, ratio: float, x: Tensor, y: Tensor, recipe: Fit, *,
                augment=None, batch_size: int = 500) -> nn.Module:
     """Fine-pruning (Liu, Dolan-Gavitt and Garg 2018): measure each output channel's mean ReLU activation
-    of ``layer`` on the attacker's clean data, zero the ``ratio`` least active channels, then fine-tune
-    with those channels kept at zero."""
+    of ``layer`` (after its BatchNorm, if it has one) on the attacker's clean data, zero the ``ratio``
+    least active channels, then fine-tune with those channels kept at zero."""
     m = clone(model)
     mod = get_module(m, layer)
+    norm = paired_norm(m, layer) if isinstance(mod, nn.Conv2d) else None
     acts = []
-    h = mod.register_forward_hook(lambda _m, _i, o: acts.append(F.relu(o).float().transpose(0, 1).flatten(1).mean(1)))
+    probe = get_module(m, norm) if norm is not None else mod
+    h = probe.register_forward_hook(lambda _m, _i, o: acts.append(F.relu(o).float().transpose(0, 1).flatten(1).mean(1)))
     predict(m, x, batch_size)
     h.remove()
     mean_act = torch.stack(acts).mean(0)
     k = int(round(ratio * mean_act.numel()))
     ch = torch.argsort(mean_act, stable=True)[:k]
     with torch.no_grad():
-        _zero_channels(m, layer, ch, paired_norm(m, layer) if isinstance(mod, nn.Conv2d) else None)
+        _zero_channels(m, layer, ch, norm)
     keep = torch.ones(mod.weight.shape[0], device=mod.weight.device)
     keep[ch] = 0
     masks = {f"{layer}.weight": keep.view(-1, *([1] * (mod.weight.dim() - 1))).expand_as(mod.weight).clone()}
     if mod.bias is not None:
         masks[f"{layer}.bias"] = keep.clone()
-    norm = paired_norm(m, layer) if isinstance(mod, nn.Conv2d) else None
     if norm is not None:
         masks[f"{norm}.weight"] = keep.clone()
         masks[f"{norm}.bias"] = keep.clone()
