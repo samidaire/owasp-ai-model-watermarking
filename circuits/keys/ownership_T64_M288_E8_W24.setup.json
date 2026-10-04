@@ -1,0 +1,25 @@
+{
+  "circuit": "ownership_T64_M288_E8_W24",
+  "config": {
+    "protocol": 2,
+    "T": 64,
+    "M": 288,
+    "layer": "conv2",
+    "scale_bits": 16,
+    "w_bits": 24,
+    "max_err": 8,
+    "norm": "none",
+    "prg_bits": 200
+  },
+  "constraints": 116822,
+  "ptau": "ppot_0080_17.ptau",
+  "ptau_blake2b": "3010cec42bdd1583bb4477dfa1b11853a67e8611feaa39cd7b3311a353b3e1d8b3f318509d75208078dc6887500b61f3f46bc72c61abbb624bec3bad5ef16012",
+  "r1cs_sha256": "829760ecf6b0135ce4a6b6ee7a2a8cd0c1960e81070fb8692afd0f4a605d534e",
+  "zkey_sha256": "3d715596e5d7498e9d151f95fce7accb5ee6dc5e9a8dbb8cab79eb1e3ba6bcc5",
+  "vkey_sha256": "79ef6b9d53c1a65f4c3e31cf972397c3108b8e0145dbeb33722c5869e9585423",
+  "phase2_contributor": "sigil project setup",
+  "phase2_contribution_hash": "7971c47746c1718e6c3358d2501a9ac710659df8b3f9da3b98df2e69b1062a7532b3f7b0fcf8c545a30afafb8e827315906003ed99ef3f2b6922a641d8389741",
+  "setup_seconds": 151.9,
+  "trust": "Groth16: secure if at least one Powers of Tau contributor and the phase-2 contributor destroyed their randomness. Phase-2 entropy was generated in memory and not stored.",
+  "ptau_transcript_verification": "pending"
+}

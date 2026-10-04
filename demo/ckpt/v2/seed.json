@@ -1,0 +1,13 @@
+{
+  "schema": "sigil.secret/v1",
+  "kind": "seed",
+  "kdf": {
+    "name": "scrypt",
+    "n": 32768,
+    "r": 8,
+    "p": 1
+  },
+  "salt": "CSnGMmPJ8WpltGGvHm0Mkg==",
+  "nonce": "lQquxLMG08nJQ8k2",
+  "ciphertext": "G316UKU7/F6S3cY9PU0jbbOKcSjmEF0FY69PGLqCwpHZeeDAlFaiiPyHPnWyNpNElzIi1ZZvQ1DPsPZrUlPhFkJ+iMHGwNC+nycjMCxDZjkSKJuhMSFO8FtJtnOAS/Qz2m35a3SZHa2h/cygJ9d4BpsrLVjI1ovLdPLox7CippmtW1tIVy5C952ftPbEsC8rLZp5jeGnWP61pqS+1AIw9nhQTnHJYgu4gDi3t3Uxw//95+rEwun0LuQ4RsKtHzUmUsGwZi0bnDDUtnSm9b3RdcD965eL1iH84LnyRI/7dfs78zHjGypgVD7MPlV6GKIEmecR3Q=="
+}

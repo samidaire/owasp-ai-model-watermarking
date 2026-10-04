@@ -168,7 +168,7 @@ def setup(cfg: Config, entropy: str | None = None, contributor: str = "sigil pro
         raise ZkError("zkey verification failed:\n" + verify_out[-1500:])
     a.vkey.parent.mkdir(parents=True, exist_ok=True)
     _run([*_snarkjs(), "zkey", "export", "verificationkey", str(a.zkey), str(a.vkey)])
-    contribution = next((ln.split(":", 1)[1].strip() for ln in out.splitlines() if "Contribution Hash" in ln), None)
+    contribution = _contribution_hash(verify_out)
     transcript = {
         "circuit": a.name, "config": cfg.to_dict(), "constraints": info["of_constraints"],
         "ptau": ptau.name, "ptau_blake2b": None, "r1cs_sha256": sha256_file(a.r1cs),
@@ -178,10 +178,27 @@ def setup(cfg: Config, entropy: str | None = None, contributor: str = "sigil pro
         "trust": "Groth16: secure if at least one Powers of Tau contributor and the phase-2 contributor "
                  "destroyed their randomness. Phase-2 entropy was generated in memory and not stored.",
     }
-    from .ptau import blake2b_file
+    from .ptau import blake2b_file, verification_status
     transcript["ptau_blake2b"] = blake2b_file(ptau)
+    transcript["ptau_transcript_verification"] = verification_status(ptau)
     a.transcript.write_text(json.dumps(transcript, indent=2))
     return transcript
+
+
+def _contribution_hash(zkey_verify_output: str) -> str | None:
+    """The phase-2 contribution hash, from `snarkjs zkey verify` output (four lines of hex groups)."""
+    import re
+    lines = zkey_verify_output.splitlines()
+    for i, ln in enumerate(lines):
+        if re.search(r"contribution #\d+", ln):
+            groups = []
+            for nxt in lines[i + 1:]:
+                found = re.findall(r"\b[0-9a-f]{8}\b", nxt)
+                if not found or "---" in nxt:
+                    break
+                groups += found
+            return "".join(groups) or None
+    return None
 
 
 def prove(cfg: Config, circuit_input: dict, workdir: Path | None = None) -> tuple[dict, list[str], dict]:

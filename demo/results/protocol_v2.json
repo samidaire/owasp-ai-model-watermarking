@@ -1,0 +1,137 @@
+{
+  "protocol": 2,
+  "config": {
+    "protocol": 2,
+    "T": 64,
+    "M": 288,
+    "layer": "conv2",
+    "scale_bits": 16,
+    "w_bits": 24,
+    "max_err": 8,
+    "norm": "none",
+    "prg_bits": 200
+  },
+  "circuit": "ownership_T64_M288_E8_W24",
+  "owner_public_key": "e28b7f9e9f75ce21223703774ee3ffb8bbade011bb674521c9658dc1786677b9",
+  "commitment": "14475661460362725281066963650847473165930083274232007953091326006909907545690",
+  "registration_sha256": "574eb4e8fa4e679b23a4f6efa4e7590697b71778627fa3a5980ce37badb0b830",
+  "registered_at": "2026-10-04T21:43:18Z",
+  "registry_public_key": "e563b2dec65bf8cda38a88fd355691f3940d6ef7b553e98ad1376e9a75402130",
+  "accuracy": {
+    "watermarked_v2": 0.9857
+  },
+  "owner_detection": {
+    "errors": 0,
+    "ber": 0.0,
+    "max_err": 8,
+    "accepted": true
+  },
+  "owner_proof": {
+    "accepted": true,
+    "checks": {
+      "registration_valid": true,
+      "receipt_valid": true,
+      "registered_before_claim": true,
+      "claim_matches_registration": true,
+      "claim_matches_suspect": true,
+      "public_signal_count": true,
+      "public_pk_hash": true,
+      "public_config_hash": true,
+      "public_commitment": true,
+      "public_w_hash": true,
+      "public_nonce": true,
+      "snark_valid": true
+    },
+    "timing": {
+      "witness_s": 0.521,
+      "prove_s": 3.848
+    },
+    "public_signals": {
+      "pk_hash": "10557720968573965342392388716199003360260180289581770851761209578987792373887",
+      "config_hash": "15271129699624883643617381122826526107408270685721458958957380929102354020351",
+      "commitment": "14475661460362725281066963650847473165930083274232007953091326006909907545690",
+      "w_hash": "14028469963850227125800069942685689831239945386145919137286332054046889652829",
+      "nonce": "2148401321591379022363267603855253560518369591947262569439446192403121883367"
+    },
+    "proof_json_bytes": 878
+  },
+  "thief": {
+    "own_key": "no proof possible: 30/64 bits wrong (> 8)",
+    "owner_commitment": "no proof possible: the thief can't open the owner's commitment",
+    "own_key_errors": 30
+  },
+  "misuse": {
+    "replayed for another claim": {
+      "accepted": false,
+      "reasons": [
+        "proof was made for a different claim (nonce mismatch: replay?)"
+      ]
+    },
+    "checked against a different model": {
+      "accepted": false,
+      "reasons": [
+        "proof is about a different model (w_hash mismatch)"
+      ]
+    },
+    "tampered proof bytes": {
+      "accepted": false,
+      "reasons": [
+        "the zk-SNARK does not verify"
+      ]
+    },
+    "receipt from an untrusted registry": {
+      "accepted": false,
+      "reasons": [
+        "registry receipt invalid: receipt is not from a trusted registry",
+        "registration is not earlier than the claim"
+      ]
+    }
+  },
+  "robustness": [
+    {
+      "attack": "prune 65%",
+      "accuracy": 0.5026,
+      "errors": 0,
+      "proof_accepted": true,
+      "reason": null
+    },
+    {
+      "attack": "prune 90%",
+      "accuracy": 0.0201,
+      "errors": 1,
+      "proof_accepted": true,
+      "reason": null
+    },
+    {
+      "attack": "fine-tune all layers, 5 epochs",
+      "accuracy": 0.9888,
+      "errors": 0,
+      "proof_accepted": true,
+      "reason": null
+    },
+    {
+      "attack": "feature permutation",
+      "accuracy": 0.9857,
+      "errors": 39,
+      "proof_accepted": false,
+      "reason": "no proof possible: 39/64 bits wrong (> 8)"
+    }
+  ],
+  "overwrite_dispute": {
+    "parties": [
+      {
+        "party": "owner",
+        "registered_at": "2026-10-04T21:43:18Z",
+        "errors": 1,
+        "proof_accepted": true
+      },
+      {
+        "party": "thief",
+        "registered_at": "2026-10-04T21:43:55Z",
+        "errors": 0,
+        "proof_accepted": true
+      }
+    ],
+    "winner": "owner"
+  }
+}

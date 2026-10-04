@@ -64,9 +64,20 @@ def get_ptau(k: int, download: bool = True) -> Path:
             bad = path.with_suffix(".bad")
             path.replace(bad)
             raise ValueError(f"{path.name}: BLAKE2b mismatch with the pinned value (moved to {bad.name})")
-    else:
-        marker = path.with_suffix(".verified")
-        if not marker.exists() or marker.read_text().strip() != blake2b_file(path):
+    elif verification_status(path) != "verified":
+        if os.environ.get("SIGIL_PTAU_ALLOW_UNVERIFIED") != "1":
             raise ValueError(f"{path.name} has no pinned hash and has not been verified: run "
-                             f"`snarkjs powersoftau verify {path}`, then write its BLAKE2b to {marker.name}")
+                             f"`snarkjs powersoftau verify {path}`, then write its BLAKE2b to "
+                             f"{path.with_suffix('.verified').name} (or set SIGIL_PTAU_ALLOW_UNVERIFIED=1 "
+                             "to proceed and record the setup as pending verification)")
+        print(f"WARNING: using {path.name} before its transcript verification has finished")
     return path
+
+
+def verification_status(path: Path) -> str:
+    """'verified' (pinned or transcript-verified), else 'pending'."""
+    k = next((k for k in SUPPORTED if path.name == FILENAME.format(k=k)), None)
+    if k in PINNED:
+        return "verified" if blake2b_file(path) == PINNED[k] else "mismatch"
+    marker = path.with_suffix(".verified")
+    return "verified" if marker.exists() and marker.read_text().strip() == blake2b_file(path) else "pending"
