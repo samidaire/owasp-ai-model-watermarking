@@ -6,6 +6,7 @@ import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "@fontsource-variable/jetbrains-mono";
 import "./styles.css";
+import "./design.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

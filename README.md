@@ -22,8 +22,8 @@ The demo is evaluated against **project requirements R1 (robustness) and R2 (non
 |---|---|
 | `01_Literature_Gap_Analysis.md` | Literature review and gap analysis (every source verified) |
 | `02_Demo_Plan_Tomorrow.md` | Review-meeting demo plan and narration |
-| `demo/` | Demos A–E (PyTorch + EZKL) and `server.py`, the local API and UI server. See `demo/README.md`. |
-| `frontend/` | React + TypeScript web UI (the reference implementation). See `frontend/README.md`. |
+| `demo/` | Demos A–F (PyTorch, EZKL, and protocol v2 with Circom + Groth16) and `server.py`, the local API and UI server. See `demo/README.md`. |
+| `frontend/` | React + TypeScript web UI: a home page at `/`, the dashboard at `/app` (overview, embed, verify, robustness lab, research demos A–F). See `frontend/README.md`. |
 | `contract/` | API types, captured fixtures, recorded logs, and a minimal example UI |
 | `sdk/` | **`sigil` Python SDK and CLI**: protocol v2, Poseidon, Ed25519 identities, PyTorch/Keras/ONNX adapters, ZK prove/verify. See `sdk/README.md`. |
 | `circuits/` | Circom circuit (`ownership.circom`), verification keys and setup transcripts (`keys/`), on-chain verifier (`onchain/`) |

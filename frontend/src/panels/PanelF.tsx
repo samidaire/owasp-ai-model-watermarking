@@ -17,7 +17,7 @@ const CHECKS: [string, string][] = [
   ["snark_valid", "Groth16 proof verifies"],
 ];
 
-function Stamp({ ok }: { ok: boolean }) {
+export function Stamp({ ok }: { ok: boolean }) {
   const id = ok ? "f-ring-ok" : "f-ring-bad";
   const text = ok ? "ownership verified · zero bits revealed · groth16 · " : "proof rejected · checks failed · rejected · ";
   return (

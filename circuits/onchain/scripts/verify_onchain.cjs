@@ -32,6 +32,7 @@ async function main() {
     verifier: name, chain_id: Number((await hre.ethers.provider.getNetwork()).chainId),
     verified: ok, tampered_public_signal_verified: tamperedOk,
     verify_gas: gas.toString(), deploy_gas: receipt.gasUsed.toString(),
+    proof_pi_a0: String(proof.pi_a[0]),   // which proof was checked (the UI compares it with the current one)
   }));
 }
 

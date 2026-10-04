@@ -1,0 +1,188 @@
+import { useEffect, useState } from "react";
+import type { PageProps } from "../App";
+import { Icon } from "../components/icons";
+import { Callout, Empty, Verdict } from "../components/ui";
+import { bytes, secs, short, when } from "../format";
+import { Stamp } from "../panels/PanelF";
+import { RunButton } from "../panels/Shell";
+import { Link } from "../router";
+
+/** The verifier's checks, in order (sdk/src/sigil/verify.py). */
+const CHECKS: [string, string][] = [
+  ["registration_valid", "Registration signed by the owner"],
+  ["receipt_valid", "Registry receipt from a trusted registry"],
+  ["registered_before_claim", "Registered before the claim"],
+  ["claim_matches_registration", "Claim refers to this registration"],
+  ["claim_matches_suspect", "Claim refers to this suspect file"],
+  ["public_pk_hash", "Proof is for the owner's key"],
+  ["public_config_hash", "Same watermark configuration"],
+  ["public_commitment", "Opens the published commitment"],
+  ["public_w_hash", "About this exact model (w_hash)"],
+  ["public_nonce", "Made for this claim (nonce)"],
+  ["snark_valid", "Groth16 proof verifies"],
+];
+/** Which check a recorded misuse trips, judged from its reason text. */
+function failedCheck(reason: string): string | null {
+  if (/nonce/i.test(reason)) return "public_nonce";
+  if (/w_hash|different model/i.test(reason)) return "public_w_hash";
+  if (/snark/i.test(reason)) return "snark_valid";
+  if (/registry|receipt/i.test(reason)) return "receipt_valid";
+  return null;
+}
+
+interface Proof { pi_a: string[]; pi_b: string[][]; pi_c: string[]; protocol: string; curve: string }
+interface Onchain { verified: boolean; tampered_public_signal_verified: boolean; verify_gas: string; deploy_gas: string; chain_id: number; proof_pi_a0?: string }
+const SIGNALS = ["pk_hash", "config_hash", "commitment", "w_hash", "nonce"];
+const cut = (v: string) => (v.length > 16 ? `${v.slice(0, 7)}…${v.slice(-6)}` : v);
+
+export function Verify({ s, ctl }: PageProps) {
+  const f = s.results.protocol_v2;
+  const [proof, setProof] = useState<Proof | null>(null);
+  const [pub, setPub] = useState<string[] | null>(null);
+  const [onchain, setOnchain] = useState<Onchain | null>(null);
+  const [mode, setMode] = useState<"off" | "on">("off");
+  const [misuse, setMisuse] = useState<string | null>(null);
+
+  // The real proof files from the last demo F run (served by the demo server under /results).
+  const stamp = f?.registered_at + (f?.owner_proof.public_signals.nonce ?? "");
+  useEffect(() => {
+    let live = true;
+    const get = (p: string) => fetch(`/results/protocol_v2/${p}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    Promise.all([get("proof.json"), get("public.json"), get("onchain.json")]).then(([a, b, c]) => {
+      if (live) { setProof(a); setPub(b); setOnchain(c); }
+    });
+    return () => { live = false; };
+  }, [stamp]);
+
+  if (!f) return <Empty what="demo F (protocol v2)" />;
+  const shown = misuse ? f.misuse[misuse] : null;
+  const ok = shown ? shown.accepted : f.owner_proof.accepted;
+  const tripped = shown ? failedCheck(shown.reasons[0] ?? "") : null;
+  const onchainCurrent = onchain && proof && onchain.proof_pi_a0 === proof.pi_a[0];
+
+  return (
+    <>
+      <div className="pagehead">
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <span className="chip in" style={{ ["--i" as string]: 0, alignSelf: "flex-start" }}>Verify ownership · demo F</span>
+          <h1 className="display in" style={{ ["--i" as string]: 1, margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>
+            Check the <span className="jw hlw">claim.</span>
+          </h1>
+          <p className="muted in" style={{ ["--i" as string]: 2, margin: 0, fontSize: 16, maxWidth: 640 }}>
+            Anyone can run this check with the public verification key. The watermark itself never leaves the owner.
+          </p>
+        </div>
+        <div className="segbar" role="group" aria-label="Where to verify" style={{ flex: "0 1 320px" }}>
+          <button type="button" aria-pressed={mode === "off"} onClick={() => setMode("off")}>Off-chain</button>
+          <button type="button" aria-pressed={mode === "on"} onClick={() => setMode("on")}>On-chain</button>
+        </div>
+      </div>
+
+      <div className="cols">
+        <div style={{ flex: "1 1 520px", minWidth: 0, display: "flex", flexDirection: "column", gap: 22 }}>
+          <section className="box" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+            <h2 className="h-sm">The claim</h2>
+            <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 14 }}>
+              {[
+                ["Model", "watermarked_v2.pt", "PyTorch · MNIST CNN"],
+                ["Claimed owner", short(f.owner_public_key, 14), "Ed25519 public key"],
+                ["Watermark commitment", short(f.commitment, 14), "Poseidon hash of the seed"],
+                ["Registered", when(f.registered_at), "registry receipt"],
+              ].map(([k, v, sub]) => (
+                <div key={k} style={{ display: "flex", flexDirection: "column", gap: 5, padding: 14, border: "1.5px dashed color-mix(in oklab, var(--espresso) 28%, transparent)", borderRadius: 16 }}>
+                  <dt className="eyebrow">{k}</dt>
+                  <dd className="mono" style={{ margin: 0, fontWeight: 600, fontSize: 13.5, wordBreak: "break-all" }}>{v}</dd>
+                  <dd className="muted" style={{ margin: 0, fontSize: 12.5 }}>{sub}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="codebox">
+            <div className="bar"><i /><i /><i /><span className="mono" style={{ marginLeft: 10, fontSize: 13, color: "var(--latte)" }}>proof.json · public.json</span>
+              <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}><span className="chip" style={{ minHeight: 26, background: "var(--caramel)" }}>groth16</span><span className="chip" style={{ minHeight: 26 }}>bn128</span></span>
+            </div>
+            <div className="body" style={{ fontSize: 12.5 }}>
+              {proof ? <>
+                <div>{"{"}</div>
+                <div>  <span className="tk-s">"pi_a"</span>: [<span className="tk-k">"{cut(proof.pi_a[0])}"</span>, <span className="tk-k">"{cut(proof.pi_a[1])}"</span>],</div>
+                <div>  <span className="tk-s">"pi_b"</span>: [[<span className="tk-k">"{cut(proof.pi_b[0][0])}"</span>, <span className="tk-k">"{cut(proof.pi_b[0][1])}"</span>], …],</div>
+                <div>  <span className="tk-s">"pi_c"</span>: [<span className="tk-k">"{cut(proof.pi_c[0])}"</span>, <span className="tk-k">"{cut(proof.pi_c[1])}"</span>],</div>
+                <div>  <span className="tk-s">"publicSignals"</span>: [</div>
+                {(pub ?? []).map((v, i) => (
+                  <div key={i}>    <span className="tk-k">"{cut(String(v))}"</span>{i < (pub?.length ?? 0) - 1 ? "," : " "}  <span className="tk-c">// {SIGNALS[i]}</span></div>
+                ))}
+                <div>  ]</div>
+                <div>{"}"}</div>
+              </> : <div className="tk-c">// loading the proof files…</div>}
+            </div>
+          </section>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+            Proof {bytes(f.owner_proof.proof_json_bytes)} as JSON (3 curve points) · witness {secs(f.owner_proof.timing.witness_s)} · prove {secs(f.owner_proof.timing.prove_s)} · circuit <span className="mono">{f.circuit}</span>
+          </p>
+          <section className="box" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 12 }}>
+            <h2 className="h-sm">What gets checked</h2>
+            <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              {CHECKS.filter(([k]) => k in f.owner_proof.checks).map(([k, label]) => {
+                const pass = tripped ? k !== tripped : f.owner_proof.checks[k];
+                return (
+                  <li key={k} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <span className={`stp ${pass ? "ok" : "fail"}`} aria-hidden><Icon name={pass ? "check" : "x"} size={16} /></span>
+                    <span style={{ fontWeight: 600, fontSize: 14.5 }}>{label}<span className="sr-only">: {pass ? "passed" : "failed"}</span></span>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        </div>
+
+        <div style={{ flex: "1 1 440px", minWidth: 0, display: "flex", flexDirection: "column", gap: 22 }}>
+          <section className="box" aria-live="polite" style={{ padding: 26, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center",
+            background: ok ? "var(--caramel-soft)" : "color-mix(in oklab, var(--rust) 10%, var(--paper))" }}>
+            <div key={misuse ?? "honest"} className={ok ? undefined : "shake"}><Stamp ok={ok} /></div>
+            <h2 className="h-lg" style={{ fontSize: "clamp(30px, 3vw, 42px)" }}>{ok ? "Ownership verified" : "Proof rejected"}</h2>
+            <p className="muted" style={{ margin: 0, maxWidth: 440 }}>
+              {ok ? "The owner of watermarked_v2.pt is proven without revealing a single watermark bit."
+                : `${misuse}: ${shown?.reasons[0] ?? ""}.`}
+            </p>
+            {ok && (mode === "off"
+              ? <div className="actions" style={{ justifyContent: "center" }}><Verdict tone="good">0 of {f.config.T} bits revealed</Verdict><Verdict tone="neutral">SnarkJS, off-chain</Verdict></div>
+              : onchain && <div className="actions" style={{ justifyContent: "center" }}>
+                  <Verdict tone={onchain.verified ? "good" : "bad"}>{onchain.verified ? "Verified on a local EVM" : "Not verified on-chain"}</Verdict>
+                  <Verdict tone="neutral">{Number(onchain.verify_gas).toLocaleString("en-US")} gas</Verdict>
+                </div>)}
+            {!ok && <div className="actions" style={{ justifyContent: "center" }}><Verdict tone="neutral">Recorded by demo F's verifier (SnarkJS, off-chain)</Verdict></div>}
+            {ok && mode === "on" && onchain && (
+              <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+                Solidity verifier exported by SnarkJS, deployed on Hardhat's in-process chain {onchain.chain_id}: deploy {Number(onchain.deploy_gas).toLocaleString("en-US")} gas;
+                a tampered public signal {onchain.tampered_public_signal_verified ? "verified (!)" : "is rejected"}.
+                {!onchainCurrent && " This on-chain check was made for an earlier proof; re-run it after demo F."}
+              </p>
+            )}
+            <div className="actions" style={{ justifyContent: "center", paddingTop: 4 }}>
+              <RunButton ctl={ctl} step="protocol_v2" primary hint="Re-run demo F: a fresh claim, proof and verification" />
+              {misuse && <button type="button" className="btn" onClick={() => setMisuse(null)}>Back to the honest proof</button>}
+            </div>
+          </section>
+
+          <section className="box" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
+            <h2 className="h-sm">Try a misuse</h2>
+            <p className="muted" style={{ margin: "-6px 0 0", fontSize: 13.5 }}>Each was actually attempted in the last demo F run; this shows what the verifier said.</p>
+            <div className="actions">
+              {Object.keys(f.misuse).map((k) => (
+                <button key={k} type="button" className="btn" aria-pressed={misuse === k}
+                  style={misuse === k ? { background: "var(--espresso)", color: "var(--paper)" } : undefined}
+                  onClick={() => setMisuse(misuse === k ? null : k)}>{k}</button>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <Callout tone="good">
+        <p><strong>A valid zk-SNARK alone is never enough.</strong> The verifier recomputes the suspect model's hash from its own copy of the file,
+          checks the owner's signature and the registry timestamp, and insists on its own fresh nonce. <Link to="/app/demo/F">See demo F</Link> for the thief and the overwrite dispute.</p>
+      </Callout>
+    </>
+  );
+}

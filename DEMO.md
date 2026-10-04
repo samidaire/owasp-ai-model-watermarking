@@ -25,8 +25,21 @@ python demo/server.py --simulate
 
 Then open <http://127.0.0.1:8765>. On Windows you can double-click `Start-Demo-UI-Simulate.cmd` instead.
 
-Every panel shows the saved results, and the Run buttons replay recorded runs. Use this as the fallback during
+Every page shows the saved results, and the Run buttons replay recorded runs. Use this as the fallback during
 the presentation.
+
+### The pages
+
+| Address | Page | What it shows |
+|---|---|---|
+| `/` | Home | The project pitch: how it works, robustness, the SDK, the team |
+| `/app` | Overview | Headline numbers, the models, the proof pipeline and an audit log |
+| `/app/embed` | Embed watermark | How the models were watermarked, protocol v1 (demo A) or v2 (demo F) |
+| `/app/verify` | Verify ownership | The claim, the real proof, the verdict (off-chain or on-chain) and the recorded misuse attempts |
+| `/app/robustness` | Robustness lab | Every removal attack and the pruning sweep (demo B) |
+| `/app/demo/A` … `/app/demo/F` | Research demos | The full research storyline, one demo per page |
+
+Every address works as a link or after a reload.
 
 ### Option 2: everything live (about 5–15 minutes, mostly downloading)
 
@@ -44,18 +57,20 @@ Then start the app: double-click `Start-Demo-UI.cmd` (Windows), or run `.venv/bi
 ## Presenting
 
 **Before you start:**
-1. Start the server and open <http://127.0.0.1:8765>.
-2. The top bar shows the GPU, or "CPU only · torch …". If it shows "Environment probe failed", the live
-   packages aren't installed: use Option 1.
+1. Start the server and open <http://127.0.0.1:8765>. That's the home page; **Open dashboard** goes to the app.
+2. The sidebar shows the GPU, or "CPU only". If it shows "No ML stack: replay only", the live packages
+   aren't installed: use Option 1.
 3. Keep a second terminal ready with `python demo/server.py --simulate --port 8766` in case anything goes wrong.
 
 **During:**
-- **Navigate** with ← → (or a presentation clicker's PageUp / PageDown).
-- **Run** with the caramel button on each panel. The console at the bottom streams the run live; **Cancel run**
-  stops it.
-- **Say** what's in each panel's **Presenter notes**. The caveats there are the honest limits examiners will
+- **Suggested route:** Home → Overview → Embed watermark → Verify ownership (try a misuse) → Robustness lab,
+  then the research demos A–F for the full story.
+- **Navigate** with the sidebar. Inside the research demos, ← → (or a presentation clicker's PageUp /
+  PageDown) moves between A–F.
+- **Run** with the caramel buttons. The console at the bottom streams the run live; **Cancel run** stops it.
+- **Say** what's in each demo's **Presenter notes**. The caveats there are the honest limits examiners will
   ask about.
-- **Motion:** the toggle in the top bar turns the animations off if the projector machine is slow.
+- **Motion:** the toggle in the sidebar turns the animations off if the projector machine is slow.
 
 **What not to run live:**
 - **Retrain:** it replaces the owner key and makes B–E stale.
@@ -68,7 +83,7 @@ Both ask for confirmation first.
 | Symptom | Fix |
 |---|---|
 | "Can't reach the demo server" | The server isn't running, or port 8765 is taken: `python demo/server.py --port 8770` |
-| "Environment probe failed" | No PyTorch in that Python: run the setup (Option 2), or present in simulate mode |
+| "No ML stack: replay only" | No PyTorch in that Python: run the setup (Option 2), or present in simulate mode |
 | Demo F says the circuit isn't set up | Re-run the setup (it installs `dist/sigil-proving-keys-t64.zip`), or `.venv\Scripts\python -m sigil.cli zk-setup` (~3 min) |
 | Antivirus blocks `tools/bin/circom.exe` | It's the official circom 2.2.3 release from github.com/iden3/circom; allow it, or present demo F in simulate mode |
 | Fonts look plain | They're bundled; a hard refresh (Ctrl+F5) fixes a cached old build |

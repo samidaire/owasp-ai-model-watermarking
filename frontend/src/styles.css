@@ -208,7 +208,7 @@ select.sel { min-height: 40px; padding: 0 12px; border-radius: 12px; border: var
 .kv dd { margin: 0; min-width: 0; }
 
 /* ---------------------------------------------------------------- tables */
-.tablewrap { overflow-x: auto; }
+.tablewrap { position: relative; overflow-x: auto; }  /* positioned: keeps .sr-only cells inside the scroll box */
 table.data { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 table.data th { text-align: left; font-weight: 700; color: var(--text-secondary); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 12px; border-bottom: var(--line); white-space: nowrap; }
 table.data td { padding: 10px 12px; border-bottom: 1.5px dashed color-mix(in oklab, var(--espresso) 22%, transparent); vertical-align: middle; }
