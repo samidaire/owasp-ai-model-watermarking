@@ -1,0 +1,687 @@
+{
+  "config": {
+    "protocol": 2,
+    "T": 64,
+    "M": 288,
+    "layer": "conv2",
+    "scale_bits": 16,
+    "w_bits": 24,
+    "max_err": 8,
+    "norm": "none",
+    "prg_bits": 200
+  },
+  "seeds": 5,
+  "epochs": 3,
+  "device": "cuda",
+  "torch": "2.14.1+cu130",
+  "seconds": 110.1,
+  "runs": [
+    {
+      "seed": 0,
+      "key": "gaussian",
+      "clean_acc": 0.9865,
+      "acc": 0.985,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.515625,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8041,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1064,
+          "owner_ber": 0.03125
+        },
+        "int8": {
+          "acc": 0.9849,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9837,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9881,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9839,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9858,
+          "owner_ber": 0.015625
+        },
+        "permutation": {
+          "acc": 0.985,
+          "owner_ber": 0.46875
+        }
+      }
+    },
+    {
+      "seed": 0,
+      "key": "pm1",
+      "clean_acc": 0.9865,
+      "acc": 0.9866,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.484375,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8761,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.092,
+          "owner_ber": 0.0
+        },
+        "int8": {
+          "acc": 0.9866,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9842,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9859,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9848,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9867,
+          "owner_ber": 0.046875
+        },
+        "permutation": {
+          "acc": 0.9866,
+          "owner_ber": 0.625
+        }
+      },
+      "v2_detection": {
+        "errors": 0,
+        "ber": 0.0,
+        "max_err": 8,
+        "accepted": true
+      }
+    },
+    {
+      "seed": 1,
+      "key": "gaussian",
+      "clean_acc": 0.9869,
+      "acc": 0.9876,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.5625,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.5063,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1261,
+          "owner_ber": 0.015625
+        },
+        "int8": {
+          "acc": 0.9876,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9861,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9896,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9866,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9884,
+          "owner_ber": 0.015625
+        },
+        "permutation": {
+          "acc": 0.9876,
+          "owner_ber": 0.4375
+        }
+      }
+    },
+    {
+      "seed": 1,
+      "key": "pm1",
+      "clean_acc": 0.9869,
+      "acc": 0.9876,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.578125,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8633,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1053,
+          "owner_ber": 0.015625
+        },
+        "int8": {
+          "acc": 0.9878,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9847,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.987,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9848,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9859,
+          "owner_ber": 0.03125
+        },
+        "permutation": {
+          "acc": 0.9876,
+          "owner_ber": 0.578125
+        }
+      },
+      "v2_detection": {
+        "errors": 0,
+        "ber": 0.0,
+        "max_err": 8,
+        "accepted": true
+      }
+    },
+    {
+      "seed": 2,
+      "key": "gaussian",
+      "clean_acc": 0.9868,
+      "acc": 0.9859,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.328125,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8162,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.2529,
+          "owner_ber": 0.046875
+        },
+        "int8": {
+          "acc": 0.986,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9867,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.99,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9857,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9884,
+          "owner_ber": 0.015625
+        },
+        "permutation": {
+          "acc": 0.9859,
+          "owner_ber": 0.484375
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "key": "pm1",
+      "clean_acc": 0.9868,
+      "acc": 0.9873,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.4375,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8625,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1496,
+          "owner_ber": 0.046875
+        },
+        "int8": {
+          "acc": 0.987,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9876,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9878,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9846,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9856,
+          "owner_ber": 0.046875
+        },
+        "permutation": {
+          "acc": 0.9873,
+          "owner_ber": 0.46875
+        }
+      },
+      "v2_detection": {
+        "errors": 0,
+        "ber": 0.0,
+        "max_err": 8,
+        "accepted": true
+      }
+    },
+    {
+      "seed": 3,
+      "key": "gaussian",
+      "clean_acc": 0.9861,
+      "acc": 0.9876,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.65625,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.7506,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1305,
+          "owner_ber": 0.0
+        },
+        "int8": {
+          "acc": 0.9876,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9863,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9885,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9832,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9872,
+          "owner_ber": 0.015625
+        },
+        "permutation": {
+          "acc": 0.9876,
+          "owner_ber": 0.5
+        }
+      }
+    },
+    {
+      "seed": 3,
+      "key": "pm1",
+      "clean_acc": 0.9861,
+      "acc": 0.9869,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.59375,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8516,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.127,
+          "owner_ber": 0.0
+        },
+        "int8": {
+          "acc": 0.9868,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9857,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.988,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9841,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.987,
+          "owner_ber": 0.03125
+        },
+        "permutation": {
+          "acc": 0.9869,
+          "owner_ber": 0.453125
+        }
+      },
+      "v2_detection": {
+        "errors": 0,
+        "ber": 0.0,
+        "max_err": 8,
+        "accepted": true
+      }
+    },
+    {
+      "seed": 4,
+      "key": "gaussian",
+      "clean_acc": 0.9873,
+      "acc": 0.988,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.515625,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.9311,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.2226,
+          "owner_ber": 0.046875
+        },
+        "int8": {
+          "acc": 0.9878,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.985,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9898,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9847,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9873,
+          "owner_ber": 0.0
+        },
+        "permutation": {
+          "acc": 0.988,
+          "owner_ber": 0.390625
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "key": "pm1",
+      "clean_acc": 0.9873,
+      "acc": 0.9871,
+      "owner_ber": 0.0,
+      "clean_model_ber": 0.625,
+      "attacks": {
+        "prune 65%": {
+          "acc": 0.8975,
+          "owner_ber": 0.0
+        },
+        "prune 90%": {
+          "acc": 0.1347,
+          "owner_ber": 0.0
+        },
+        "int8": {
+          "acc": 0.9869,
+          "owner_ber": 0.0
+        },
+        "int4": {
+          "acc": 0.9861,
+          "owner_ber": 0.0
+        },
+        "FTAL 5": {
+          "acc": 0.9888,
+          "owner_ber": 0.0
+        },
+        "RTAL 5": {
+          "acc": 0.9841,
+          "owner_ber": 0.0
+        },
+        "overwrite 3": {
+          "acc": 0.9867,
+          "owner_ber": 0.015625
+        },
+        "permutation": {
+          "acc": 0.9871,
+          "owner_ber": 0.5
+        }
+      },
+      "v2_detection": {
+        "errors": 0,
+        "ber": 0.0,
+        "max_err": 8,
+        "accepted": true
+      }
+    }
+  ],
+  "summary": {
+    "gaussian": {
+      "acc_cost_pp": {
+        "mean": -0.010000000000001119,
+        "std": 0.12489995996797243
+      },
+      "owner_ber": {
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "clean_model_ber": {
+        "mean": 0.515625,
+        "std": 0.1195082698498309
+      },
+      "attacks": {
+        "prune 65%": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.76166,
+            "std": 0.15717564378745205
+          },
+          "survived": 5
+        },
+        "prune 90%": {
+          "owner_ber": {
+            "mean": 0.028125,
+            "std": 0.020372507516258277
+          },
+          "acc": {
+            "mean": 0.16770000000000002,
+            "std": 0.06546972582804972
+          },
+          "survived": 5
+        },
+        "int8": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.9867799999999999,
+            "std": 0.0012774975538137206
+          },
+          "survived": 5
+        },
+        "int4": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.9855600000000001,
+            "std": 0.0012157302332343207
+          },
+          "survived": 5
+        },
+        "FTAL 5": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.9892,
+            "std": 0.0008455767262643902
+          },
+          "survived": 5
+        },
+        "RTAL 5": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.98482,
+            "std": 0.0013627178724886777
+          },
+          "survived": 5
+        },
+        "overwrite 3": {
+          "owner_ber": {
+            "mean": 0.0125,
+            "std": 0.006987712429686843
+          },
+          "acc": {
+            "mean": 0.98742,
+            "std": 0.0010733126291998733
+          },
+          "survived": 5
+        },
+        "permutation": {
+          "owner_ber": {
+            "mean": 0.45625,
+            "std": 0.043357615392223776
+          },
+          "acc": {
+            "mean": 0.98682,
+            "std": 0.0013007690033207404
+          },
+          "survived": 0
+        }
+      }
+    },
+    "pm1": {
+      "acc_cost_pp": {
+        "mean": -0.038000000000000256,
+        "std": 0.04207136793592551
+      },
+      "owner_ber": {
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "clean_model_ber": {
+        "mean": 0.54375,
+        "std": 0.0792111990977286
+      },
+      "attacks": {
+        "prune 65%": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.8701999999999999,
+            "std": 0.017556765077883774
+          },
+          "survived": 5
+        },
+        "prune 90%": {
+          "owner_ber": {
+            "mean": 0.0125,
+            "std": 0.02037250751625828
+          },
+          "acc": {
+            "mean": 0.12172000000000001,
+            "std": 0.02305725482359077
+          },
+          "survived": 5
+        },
+        "int8": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.98702,
+            "std": 0.00046043457732884984
+          },
+          "survived": 5
+        },
+        "int4": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.98566,
+            "std": 0.0013240090634131039
+          },
+          "survived": 5
+        },
+        "FTAL 5": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.9875,
+            "std": 0.001100000000000005
+          },
+          "survived": 5
+        },
+        "RTAL 5": {
+          "owner_ber": {
+            "mean": 0.0,
+            "std": 0.0
+          },
+          "acc": {
+            "mean": 0.9844799999999999,
+            "std": 0.0003563705936241292
+          },
+          "survived": 5
+        },
+        "overwrite 3": {
+          "owner_ber": {
+            "mean": 0.034375,
+            "std": 0.01307281291459493
+          },
+          "acc": {
+            "mean": 0.9863799999999999,
+            "std": 0.0005974947698515789
+          },
+          "survived": 5
+        },
+        "permutation": {
+          "owner_ber": {
+            "mean": 0.525,
+            "std": 0.07378574345698496
+          },
+          "acc": {
+            "mean": 0.9871000000000001,
+            "std": 0.00038078865529318995
+          },
+          "survived": 0
+        }
+      },
+      "v2_detection_accepted": 5
+    },
+    "parity": {
+      "acc_cost": true,
+      "owner_ber": true,
+      "attacks": true,
+      "passed": true
+    }
+  }
+}
