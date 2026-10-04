@@ -1,0 +1,7 @@
+{
+  "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "owner_vk": "531e35d69b318658",
+  "thief_vk": "531e35d69b318658",
+  "identical": true,
+  "thief_verified_under_owner_vk": true
+}

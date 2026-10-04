@@ -1,0 +1,40 @@
+[HAND-MAINTAINED LOG] Not recorded through the server: running "retrain" would replace the owner key.
+[HAND-MAINTAINED LOG] Text below is the output of the CLI retrain (run_all.py --retrain, 2026-10-04 18:30 UTC) that created the current key.
+$ python 01_train.py
+
+==============================================================================
+  STEP 1: Owner commits to a secret seed (at embedding time)
+==============================================================================
+  Published commitment : 38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1
+  Timestamp (UTC)      : 2026-10-04T18:30:02+00:00
+  Secret seed          : kept private in ckpt/owner_secret.json
+  Derived key X        : (64, 288) Gaussian projection
+  Derived signature b  : 1001000101010101101011111100110110100011100101000000110011000100
+
+==============================================================================
+  STEP 2: Train clean baseline and watermarked model (same init seed)
+==============================================================================
+  [clean] epoch 1/3  loss=0.1713  (12.9s)
+  [clean] epoch 2/3  loss=0.0244  (0.5s)
+  [clean] epoch 3/3  loss=0.0128  (0.5s)
+  [watermarked] epoch 1/3  loss=0.2467  (3.5s)  BER=0.000
+  [watermarked] epoch 2/3  loss=0.0760  (0.5s)  BER=0.000
+  [watermarked] epoch 3/3  loss=0.0281  (0.6s)  BER=0.000
+
+==============================================================================
+  STEP 3: Train 4 independent null models (never watermarked)
+==============================================================================
+  [null_0] epoch 1/2  loss=0.0154  (0.5s)
+  [null_0] epoch 2/2  loss=0.0419  (0.5s)
+  [null_1] epoch 1/2  loss=0.0874  (0.5s)
+  [null_1] epoch 2/2  loss=0.0272  (0.5s)
+  [null_2] epoch 1/2  loss=0.0366  (0.5s)
+  [null_2] epoch 2/2  loss=0.1058  (0.5s)
+  [null_3] epoch 1/2  loss=0.0697  (0.5s)
+  [null_3] epoch 2/2  loss=0.0105  (0.5s)
+
+==============================================================================
+  RESULT
+==============================================================================
+  Clean       : acc=0.9869  BER(owner key)=0.531
+  Watermarked : acc=0.9866  BER(owner key)=0.000

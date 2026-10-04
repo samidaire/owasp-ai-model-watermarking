@@ -1,0 +1,257 @@
+
+==============================================================================
+  ENVIRONMENT CHECK
+==============================================================================
+  Python      : 3.14.0 (Windows 11)
+  PyTorch     : 2.14.1+cu130  (CUDA build: 13.0)
+  GPU         : NVIDIA GeForce RTX 5080  sm_120  15.9 GiB
+  CUDA matmul : OK (-16357.7)
+  MNIST data  : OK
+
+==============================================================================
+  DEMO B: Removal attacks on the stolen model  (acceptance threshold BER <= 0.125)
+==============================================================================
+  none (stolen as-is)          acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- weight pruning (per-layer magnitude) --
+  prune 20%                    acc=0.9860   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 40%                    acc=0.9728   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 65%                    acc=0.6573   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 80%                    acc=0.3335   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 90%                    acc=0.0941   owner BER=0.016   -> WATERMARK SURVIVES
+  prune 95%                    acc=0.0852   owner BER=0.016   -> WATERMARK SURVIVES
+
+  -- quantisation --
+  int8 quantisation            acc=0.9865   owner BER=0.000   -> WATERMARK SURVIVES
+  int4 quantisation            acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- fine-tuning on the thief's own 10k samples --
+  [FTAL-1] epoch 1/1  loss=0.0221  (0.3s)
+  FTAL 1 epoch                 acc=0.9859   owner BER=0.000   -> WATERMARK SURVIVES
+  [FTAL-5] epoch 1/5  loss=0.0221  (0.1s)
+  [FTAL-5] epoch 2/5  loss=0.0004  (0.1s)
+  [FTAL-5] epoch 3/5  loss=0.0286  (0.1s)
+  [FTAL-5] epoch 4/5  loss=0.0011  (0.1s)
+  [FTAL-5] epoch 5/5  loss=0.0007  (0.1s)
+  FTAL 5 epochs                acc=0.9891   owner BER=0.000   -> WATERMARK SURVIVES
+  [RTAL-5] epoch 1/5  loss=0.1934  (0.1s)
+  [RTAL-5] epoch 2/5  loss=0.0041  (0.1s)
+  [RTAL-5] epoch 3/5  loss=0.0065  (0.1s)
+  [RTAL-5] epoch 4/5  loss=0.0034  (0.1s)
+  [RTAL-5] epoch 5/5  loss=0.0009  (0.1s)
+  RTAL 5 epochs                acc=0.9830   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- overwriting: thief embeds their own Uchida watermark in the same layer --
+  [overwrite] epoch 1/3  loss=0.5265  (0.1s)  BER=0.266
+  [overwrite] epoch 2/3  loss=0.2148  (0.1s)  BER=0.000
+  [overwrite] epoch 3/3  loss=0.1190  (0.1s)  BER=0.000
+  overwrite 3 epochs           acc=0.9862   owner BER=0.047   -> WATERMARK SURVIVES
+
+  -- feature permutation (SoK, 'Feature Permutation (Ours)') --
+  feature permutation          acc=0.9866   owner BER=0.438   -> watermark REMOVED
+  permutation + owner realign  acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  Saved results/attacks.csv and results/attacks.png
+
+==============================================================================
+  DEMO C, part 1: Uchida ambiguity attack (thief has only the stolen weights)
+==============================================================================
+  Owner, real key        : BER = 0.000
+  Thief, counterfeit key : BER = 0.000   extracted message = 'MALLORY!'
+  -> Both parties 'prove' ownership of the same model.
+
+  Can a judge who SEES the key and weights tell the counterfeit apart?
+    key                         entry mean entry std    KS D  min margin  median margin
+    owner (real)                   +0.0041    1.0029  0.0000        1.42           1.82
+    forged, naive                  -0.0150    1.0050  0.0104        0.02           0.67
+    forged, large-margin rows      -0.0120    0.9980  0.0099        1.43           1.71
+    (KS 5% critical value 0.0142; margins in units of a random row's std)
+    Large-margin forgery BER = 0.000
+    -> Entry distributions match a real key. The naive forgery has smaller margins, which a
+       careful forger can raise by rejection sampling. Under ZK the verifier sees neither.
+
+  The same trick 'proves' ownership of models that were NEVER watermarked:
+    clean    thief BER = 0.000
+    null_0   thief BER = 0.000
+    null_1   thief BER = 0.000
+    null_2   thief BER = 0.000
+    null_3   thief BER = 0.000
+
+==============================================================================
+  DEMO C, part 2: same construction against ZKROWNN's Algorithm 1 relation
+==============================================================================
+  Private witness chosen by the thief AFTER seeing the model:
+    trigger key X_key : (100, 1, 28, 28) (thief's own images)
+    projection A      : fitted, 21632 x 64
+    watermark wm      : 'MALLORY!' (64 bits)
+
+    stolen   relation satisfied = True   BER = 0.000
+    clean    relation satisfied = True   BER = 0.000
+    null_0   relation satisfied = True   BER = 0.000
+    null_1   relation satisfied = True   BER = 0.000
+    null_2   relation satisfied = True   BER = 0.000
+    null_3   relation satisfied = True   BER = 0.000
+
+  -> Without a prior commitment, a valid witness exists for ANY model.
+     A zero-knowledge proof of this relation would verify, and would hide the fitted A.
+  Caveat: ZKROWNN assumes a semi-honest prover; this is outside its stated threat model.
+
+==============================================================================
+  DEMO D0: Owner opens the commitment published at embedding time
+==============================================================================
+  Published commitment : 38751689ba3ded505000bd60832b471c...  (2026-10-04T18:30:02+00:00)
+  H(seed || owner_id)  : MATCHES
+  BER on stolen model  : 0.000  -> OWNERSHIP VERIFIED
+
+==============================================================================
+  DEMO D1: Naive fix (only the key is derived; signature is a free choice)
+==============================================================================
+  Thief forgeries accepted : 1000/1000  (100%)
+  Example thief commitment : bfe8165fe814df487932911cb451e940...  (made 2026-10-04T19:30:57+00:00, after the theft)
+  -> Only timestamp ordering separates owner from thief. A theft before the owner
+     commits (e.g. a dev-time leak) would defeat even that.
+
+==============================================================================
+  DEMO D2: Real fix (key AND signature derived from the seed); thief searches 20,000 seeds
+==============================================================================
+  Search time              : 2.1s (9,381 seeds/s)
+  Best BER the thief found : 0.250   (mean 0.500)
+  Forgeries accepted       : 0/20,000  at threshold BER <= 0.125
+  Theory, per try          : P[Bin(64,0.5) <= 8] = 2.78e-10  -> expected 5.56e-06 hits
+  Work factor              : ~2^31.7 seeds (~2.5e+09 for a 50% chance)
+                             = ~74 single-core hours at this rate:
+                             feasible on a GPU or cluster. Hence timestamps still matter,
+                             and RQ1 must set signature length T and threshold theta.
+  Target level (T=256 bits, as in Uchida; same theta=1/8): ~2^120 per try
+
+==============================================================================
+  NULL CHECK: owner's key on models that were never watermarked (indicative only)
+==============================================================================
+  null_0   BER = 0.484
+  null_1   BER = 0.594
+  null_2   BER = 0.406
+  null_3   BER = 0.453
+  A handful of null models is not enough to state a false-positive rate; that is Phase 1 work.
+
+  Saved results/forgery_search.png
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=owner)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 24.12)
+demo\05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+[tensor] decomposition error: integer 252503164928 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 1103974412288 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 4393651970048 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 1988673265664 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 8958602584064 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 16842967711744 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+
+
+ <------------- Numerical Fidelity Report (input_scale: 13, param_scale: 13, scale_input_multiplier: 1) ------------->
+
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+| mean_error | median_error | max_error | min_error | mean_abs_error | median_abs_error | max_abs_error | min_abs_error | mean_squared_error | mean_percent_error | mean_abs_percent_error |
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+| 0          | 0            | 0         | 0         | 0              | 0                | 0             | 0             | 0                  | 0                  | 0                      |
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+
+
+  calibrate              0.68s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.00s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.68s   -> True
+  prove                  0.68s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.68s | verify 20 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.61 GiB
+  Saved demo\results\ezkl_private_owner\summary.json
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=thief)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 1.61)
+demo\05_ezkl_spike.py:100: DeprecationWarning: You are using the legacy TorchScript-based ONNX export. Starting in PyTorch 2.9, the new torch.export-based ONNX exporter has become the default. Learn more about the new export logic: https://docs.pytorch.org/docs/stable/onnx_export.html. For exporting control flow: https://pytorch.org/tutorials/beginner/onnx/export_control_flow_model_to_onnx_tutorial.html
+  torch.onnx.export(model, (w,), P["onnx"], input_names=["input"], output_names=["output"],
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+[tensor] decomposition error: integer 120944939008 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 281805688832 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 320788668416 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 2697245257728 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 2253051936768 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+[tensor] decomposition error: integer 4506719830016 is too large to be represented by base 16384 and n 2
+forward pass failed: "failed to forward: [halo2] General synthesis error"
+
+
+ <------------- Numerical Fidelity Report (input_scale: 13, param_scale: 13, scale_input_multiplier: 1) ------------->
+
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+| mean_error | median_error | max_error | min_error | mean_abs_error | median_abs_error | max_abs_error | min_abs_error | mean_squared_error | mean_percent_error | mean_abs_percent_error |
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+| 0          | 0            | 0         | 0         | 0              | 0                | 0             | 0             | 0                  | 0                  | 0                      |
++------------+--------------+-----------+-----------+----------------+------------------+---------------+---------------+--------------------+--------------------+------------------------+
+
+
+  calibrate              0.69s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.00s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.67s   -> True
+  prove                  0.67s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.67s | verify 22 ms | proof 60.3 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.62 GiB
+  Saved demo\results\ezkl_private_thief\summary.json
+
+==============================================================================
+  DEMO E2: thief's forged proof checked against the OWNER's verification key
+==============================================================================
+owner VK                  : 531e35d69b318658
+thief VK (owner settings) : 531e35d69b318658
+thief proof verified under OWNER's VK: True
+  -> Without a published commitment, the verifier cannot tell owner and thief apart.
+
+==============================================================================
+  DEMO E3: Poseidon-committed proofs (precomputed: 05_ezkl_spike.py --vis hashed)
+==============================================================================
+  Owner's Poseidon commitment : 0x2b2a85af6e5d5909e2d0ea795e31242e5c2004f4234d79e79010c91350d08c47
+    (in the protocol: published at embedding time; in this demo: taken from the owner's run)
+  owner proof verifies=True  score=64  hash=0x2b2a85af6e5d5909...  -> ACCEPT
+  thief proof verifies=True  score=64  hash=0x29fa15c85efd094a...  -> REJECT (hash != published commitment)
+
+  Scope: this commits to (X, s) directly, i.e. the D1 level. A thief who fits a key AFTER the
+  theft and publishes their own hash is stopped only by timestamp ordering. Reaching D2 inside
+  the proof (deriving X and s from the committed seed in-circuit) is Phase 3 work.
+  Not yet linked: the SHA-256 seed commitment (demos A/D) and this Poseidon (X, s) commitment.
+  The hash covers params quantised at the calibrated scale, so a real commitment must also pin
+  the circuit settings at embedding time.
+
+  Cost of committing (vs uncommitted, logrows 15): logrows 20, prove 35.8s, verify 643 ms, proof 64.6 KB, pk 9.8 GiB, sampled peak RAM 2.64 GiB
+
+All demos finished in 27s. Log: results/run_log.txt

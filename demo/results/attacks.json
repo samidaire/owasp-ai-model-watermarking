@@ -1,0 +1,111 @@
+{
+  "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "threshold": 0.125,
+  "rows": [
+    {
+      "attack": "none (stolen as-is)",
+      "family": "baseline",
+      "accuracy": 0.9866,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "prune 20%",
+      "family": "prune",
+      "accuracy": 0.986,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "prune 40%",
+      "family": "prune",
+      "accuracy": 0.9728,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "prune 65%",
+      "family": "prune",
+      "accuracy": 0.6573,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "prune 80%",
+      "family": "prune",
+      "accuracy": 0.3335,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "prune 90%",
+      "family": "prune",
+      "accuracy": 0.0941,
+      "owner_ber": 0.015625,
+      "survives": true
+    },
+    {
+      "attack": "prune 95%",
+      "family": "prune",
+      "accuracy": 0.0852,
+      "owner_ber": 0.015625,
+      "survives": true
+    },
+    {
+      "attack": "int8 quantisation",
+      "family": "quantise",
+      "accuracy": 0.9865,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "int4 quantisation",
+      "family": "quantise",
+      "accuracy": 0.9866,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "FTAL 1 epoch",
+      "family": "finetune",
+      "accuracy": 0.9859,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "FTAL 5 epochs",
+      "family": "finetune",
+      "accuracy": 0.9882,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "RTAL 5 epochs",
+      "family": "finetune",
+      "accuracy": 0.9834,
+      "owner_ber": 0.0,
+      "survives": true
+    },
+    {
+      "attack": "overwrite 3 epochs",
+      "family": "overwrite",
+      "accuracy": 0.9865,
+      "owner_ber": 0.046875,
+      "survives": true
+    },
+    {
+      "attack": "feature permutation",
+      "family": "permute",
+      "accuracy": 0.9866,
+      "owner_ber": 0.4375,
+      "survives": false
+    },
+    {
+      "attack": "permutation + owner realign",
+      "family": "permute",
+      "accuracy": 0.9866,
+      "owner_ber": 0.0,
+      "survives": true
+    }
+  ]
+}

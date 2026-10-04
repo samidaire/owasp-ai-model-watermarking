@@ -1,0 +1,40 @@
+{
+  "params_visibility": "hashed",
+  "prover": "thief",
+  "verified": true,
+  "logrows": 20,
+  "srs": "public (get_srs)",
+  "srs_file": "kzg.srs",
+  "plain_score": 64.0,
+  "public_outputs": [
+    [
+      "64"
+    ]
+  ],
+  "public_param_hashes": [
+    [
+      "0x29fa15c85efd094a56789d526b6e84270b31fe19b1f6db3a3c1138cc4502e6ed"
+    ]
+  ],
+  "proof_bytes": 66050,
+  "vk_bytes": 2492231,
+  "pk_bytes": 10538584611,
+  "seconds": {
+    "gen_settings": 0.03,
+    "calibrate": 16.032,
+    "compile": 0.009,
+    "srs": 0.232,
+    "gen_witness": 1.345,
+    "setup": 33.406,
+    "prove": 39.141,
+    "verify": 0.578
+  },
+  "peak_rss_bytes": 2832109568,
+  "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "min_margin": 1.6124792098999023,
+  "param_commitment_poseidon": [
+    [
+      "0x29fa15c85efd094a56789d526b6e84270b31fe19b1f6db3a3c1138cc4502e6ed"
+    ]
+  ]
+}

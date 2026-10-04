@@ -1,0 +1,116 @@
+<!doctype html>
+<!-- Minimal drop-in UI built only from UI_INTEGRATION.md. Run:
+     python demo/server.py --simulate --ui contract/examples/minimal-ui -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minimal Watermark UI</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #fcfcfb; --fg: #0b0b0b; --muted: #52514e; --line: #e1e0d9; --warn: #fab219; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #1a1a19; --fg: #fff; --muted: #c3c2b7; --line: #2c2c2a; } }
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+    h1 { font-size: 20px; margin: 0 0 4px; } .muted { color: var(--muted); }
+    .banner { border: 1px solid var(--warn); padding: 8px 12px; border-radius: 8px; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; max-width: 900px; margin: 12px 0; }
+    td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    button { margin: 0 8px 8px 0; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    pre { background: #111110; color: #e9e8e2; padding: 12px; border-radius: 8px; height: 260px; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Committed-seed ZK ownership: minimal UI</h1>
+  <div id="meta" class="muted">Loading…</div>
+  <div id="banner"></div>
+  <table><thead><tr><th>Result</th><th>Status</th><th>Headline</th></tr></thead><tbody id="rows"></tbody></table>
+  <div id="buttons"></div>
+  <div id="status" class="muted"></div>
+  <pre id="console"></pre>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let state = null, steps = [];
+
+  const stale = (c) => Boolean(c && state.commitment && c !== state.commitment);
+  const pct = (v) => (v * 100).toFixed(2) + "%";
+
+  async function load() {
+    state = await (await fetch("/api/state", { cache: "no-store" })).json();
+    render();
+    if (state.env.status === "probing") setTimeout(load, 2000);            // guide §4.1
+  }
+
+  function headline(key, r) {
+    if (key === "train") return `watermarked acc ${pct(r.models.watermarked.accuracy)}, owner BER ${r.models.watermarked.owner_ber.toFixed(3)}`;
+    if (key === "attacks") return `${r.rows.filter((x) => !x.survives).length} of ${r.rows.length} attacks remove the watermark`;
+    if (key === "forgery") return `thief extracts "${r.thief.message}" at BER ${r.thief.ber.toFixed(3)}`;
+    if (key === "committed_seed") return `D1 ${r.d1.wins}/${r.d1.trials} (by construction) · D2 ${r.d2.accepted}/${r.d2.tries} accepted · ~2^${r.d2.log2_work.toFixed(1)} work`;
+    if (key === "vk_crosscheck") return `thief proof verifies under owner's VK: ${r.thief_verified_under_owner_vk}`;
+    return "";
+  }
+
+  function render() {
+    const e = state.env;
+    $("meta").textContent = `mode ${state.mode} · env ${e.status}${e.gpu ? " · " + e.gpu : ""} · commitment ${String(state.commitment).slice(0, 12)}…`;
+    $("banner").innerHTML = "";
+    if (state.mode === "simulate") {
+      const b = document.createElement("div"); b.className = "banner";
+      b.textContent = "Simulate mode: runs replay recorded logs; nothing is executed.";
+      $("banner").append(b);
+    }
+    const rows = [["train", state.results.train], ["attacks", state.results.attacks], ["forgery", state.results.forgery],
+                  ["committed_seed", state.results.committed_seed], ["vk_crosscheck", state.results.vk_crosscheck]];
+    const z = state.results.ezkl, po = z.hashed_owner?.param_commitment_poseidon?.[0]?.[0];
+    $("rows").replaceChildren(...rows.map(([k, r]) => tr(k, r ? (stale(r.commitment) ? "stale" : "ok") : "missing", r ? headline(k, r) : "")),
+      ...["hashed_owner", "hashed_thief"].map((k) => {
+        const r = z[k], h = r?.param_commitment_poseidon?.[0]?.[0];
+        return tr("E3 " + k, r ? (stale(r.commitment) ? "stale" : "ok") : "missing",
+                  r ? (r.verified && h === po ? "ACCEPT" : "REJECT: hash ≠ owner's commitment") + " (E3 is D1-level)" : "");
+      }));
+    const busy = Boolean(state.job && state.job.running);
+    $("buttons").replaceChildren(...steps.map((s) => {
+      const b = document.createElement("button");
+      b.textContent = `${s.label} (${s.id}, ~${s.seconds}s)`;
+      b.disabled = busy;
+      b.onclick = () => run(s);
+      return b;
+    }));
+  }
+
+  function tr(...cells) {
+    const row = document.createElement("tr");
+    for (const c of cells) { const td = document.createElement("td"); td.textContent = c; row.append(td); }
+    return row;
+  }
+
+  async function run(step) {
+    if (step.confirm && !confirm(step.confirm)) return;                       // guide §4.2
+    const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({ step: step.id }) });
+    const body = await res.json();
+    if (res.status !== 202) { $("status").textContent = `Not started: ${body.error}`; return; }   // 409 etc.
+    follow(body);
+  }
+
+  function follow(job) {
+    $("console").textContent = "";
+    $("status").textContent = `Running ${job.step}…`;
+    state.job = job; render();
+    const es = new EventSource(`/api/jobs/${job.id}/stream`);                 // guide §4.4
+    es.onmessage = (e) => { $("console").textContent += JSON.parse(e.data) + "\n"; $("console").scrollTop = 1e9; };
+    es.addEventListener("done", async (e) => {
+      es.close();
+      const info = JSON.parse(e.data);
+      $("status").textContent = `${info.step} finished with code ${info.code}`;
+      await load();
+    });
+  }
+
+  (async () => {
+    steps = (await (await fetch("/api/steps")).json()).steps;
+    await load();
+    if (state.job && state.job.running) follow(state.job);                  // guide §4.1: re-attach
+  })();
+</script>
+</body>
+</html>

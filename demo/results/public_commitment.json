@@ -1,0 +1,7 @@
+{
+  "owner_id": "owner:yash",
+  "commitment_sha256": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "timestamp_utc": "2026-10-04T18:30:02+00:00",
+  "scheme": "C = SHA256('commit|' + seed + '|' + owner_id); b = SHA256('sig|' + seed + '|' + owner_id)[:64 bits]; X = PCG64(SHA256('key|' + seed)).normal(64 x 288)",
+  "note": "Demo stores this locally. In production: publish to a transparency log (e.g. Sigstore) so the timestamp is independently verifiable."
+}

@@ -1,0 +1,105 @@
+{
+  "api_version": 1,
+  "mode": "live",
+  "steps": [
+    {
+      "id": "evaluate",
+      "panel": "A",
+      "label": "Re-verify live",
+      "seconds": 5,
+      "confirm": null,
+      "writes": [
+        "train.json"
+      ],
+      "description": "Re-checks the saved owner models. Does not retrain."
+    },
+    {
+      "id": "retrain",
+      "panel": "A",
+      "label": "Retrain with a new seed",
+      "seconds": 35,
+      "confirm": "Creates a NEW owner seed and key. Every other result (B-E) becomes stale and E3's precomputed proofs must be re-run (~3 min, ~10 GB temporary disk). Continue?",
+      "writes": [
+        "public_commitment.json",
+        "train.json"
+      ],
+      "description": "Starts over with a new owner key."
+    },
+    {
+      "id": "attacks",
+      "panel": "B",
+      "label": "Run attacks live",
+      "seconds": 10,
+      "confirm": null,
+      "writes": [
+        "attacks.json",
+        "attacks.csv",
+        "attacks.png"
+      ],
+      "description": "Removal-attack suite."
+    },
+    {
+      "id": "forgery",
+      "panel": "C",
+      "label": "Run forgery live",
+      "seconds": 3,
+      "confirm": null,
+      "writes": [
+        "forgery.json"
+      ],
+      "description": "Counterfeit-key forgery and ZKROWNN relation check."
+    },
+    {
+      "id": "committed",
+      "panel": "D",
+      "label": "Run live",
+      "seconds": 3,
+      "confirm": null,
+      "options": {
+        "tries": [
+          20000,
+          100000
+        ]
+      },
+      "writes": [
+        "committed_seed.json",
+        "forgery_search.png"
+      ],
+      "description": "Committed-seed defence (D0-D2)."
+    },
+    {
+      "id": "zk",
+      "panel": "E",
+      "label": "Run E1 + E2 live",
+      "seconds": 10,
+      "confirm": null,
+      "writes": [
+        "ezkl_private_owner/summary.json",
+        "ezkl_private_thief/summary.json",
+        "vk_crosscheck.json"
+      ],
+      "description": "EZKL proofs without commitment (owner, thief) and the VK cross-check."
+    },
+    {
+      "id": "zk_hashed",
+      "panel": "E",
+      "label": "Re-run E3",
+      "seconds": 200,
+      "confirm": "Re-run the Poseidon-committed proofs? ~3 minutes and a ~10 GB temporary proving key per proof.",
+      "writes": [
+        "ezkl_hashed_owner/summary.json",
+        "ezkl_hashed_thief/summary.json"
+      ],
+      "description": "EZKL proofs with a Poseidon commitment to the private parameters."
+    },
+    {
+      "id": "all",
+      "panel": "*",
+      "label": "Run all live",
+      "seconds": 30,
+      "confirm": null,
+      "writes": [],
+      "description": "evaluate, attacks, forgery, committed, zk (E3 stays precomputed)."
+    }
+  ]
+}

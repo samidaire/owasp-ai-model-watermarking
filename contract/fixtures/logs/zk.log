@@ -1,0 +1,65 @@
+$ python 05_ezkl_spike.py --vis private --who owner
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=owner)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 24.12)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate              0.67s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.00s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.72s   -> True
+  prove                  0.68s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.68s | verify 21 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.61 GiB
+  Saved demo\results\ezkl_private_owner\summary.json
+$ python 05_ezkl_spike.py --vis private --who thief
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=thief)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 1.61)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate              0.65s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.00s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.67s   -> True
+  prove                  0.67s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.67s | verify 21 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.62 GiB
+  Saved demo\results\ezkl_private_thief\summary.json
+$ python 06_vk_crosscheck.py
+
+==============================================================================
+  DEMO E2: thief's forged proof checked against the OWNER's verification key
+==============================================================================
+owner VK                  : 531e35d69b318658
+thief VK (owner settings) : 531e35d69b318658
+thief proof verified under OWNER's VK: True
+  -> Without a published commitment, the verifier cannot tell owner and thief apart.

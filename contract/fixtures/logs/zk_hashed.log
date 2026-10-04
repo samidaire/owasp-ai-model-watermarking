@@ -1,0 +1,58 @@
+$ python 05_ezkl_spike.py --vis hashed --who owner
+
+==============================================================================
+  DEMO E: EZKL proof  (params=hashed, prover=owner)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 24.12)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate             16.01s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.23s   -> True
+  gen_witness            1.38s   -> ok
+  setup                 34.17s   -> True
+  prove                 46.90s   -> ok
+  verify                 0.56s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=20  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  public Poseidon commitment to private params: [['0x2b2a85af6e5d5909e2d0ea795e31242e5c2004f4234d79e79010c91350d08c47']]
+  prove 46.90s | verify 561 ms | proof 64.5 KB | vk 2433.8 KB | pk 10050.4 MB | peak RAM 2.64 GiB
+  Saved demo\results\ezkl_hashed_owner\summary.json
+$ python 05_ezkl_spike.py --vis hashed --who thief
+
+==============================================================================
+  DEMO E: EZKL proof  (params=hashed, prover=thief)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 1.61)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate             16.03s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.23s   -> True
+  gen_witness            1.35s   -> ok
+  setup                 33.41s   -> True
+  prove                 39.14s   -> ok
+  verify                 0.58s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=20  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  public Poseidon commitment to private params: [['0x29fa15c85efd094a56789d526b6e84270b31fe19b1f6db3a3c1138cc4502e6ed']]
+  prove 39.14s | verify 578 ms | proof 64.5 KB | vk 2433.8 KB | pk 10050.4 MB | peak RAM 2.64 GiB
+  Saved demo\results\ezkl_hashed_thief\summary.json

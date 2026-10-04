@@ -1,0 +1,16 @@
+attack,family,accuracy,owner_ber
+none (stolen as-is),baseline,0.9866,0.0
+prune 20%,prune,0.986,0.0
+prune 40%,prune,0.9728,0.0
+prune 65%,prune,0.6573,0.0
+prune 80%,prune,0.3335,0.0
+prune 90%,prune,0.0941,0.015625
+prune 95%,prune,0.0852,0.015625
+int8 quantisation,quantise,0.9865,0.0
+int4 quantisation,quantise,0.9866,0.0
+FTAL 1 epoch,finetune,0.9859,0.0
+FTAL 5 epochs,finetune,0.9882,0.0
+RTAL 5 epochs,finetune,0.9834,0.0
+overwrite 3 epochs,overwrite,0.9865,0.046875
+feature permutation,permute,0.9866,0.4375
+permutation + owner realign,permute,0.9866,0.0

@@ -1,0 +1,211 @@
+$ python evaluate_owner.py
+
+==============================================================================
+  DEMO A: Owner's committed seed, watermarked vs clean model (saved checkpoints)
+==============================================================================
+  Published commitment : 38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1
+  Timestamp (UTC)      : 2026-10-04T18:30:02+00:00
+  Derived signature b  : 1001000101010101101011111100110110100011100101000000110011000100
+  Clean       : acc=0.9869  BER(owner key)=0.531
+  Watermarked : acc=0.9866  BER(owner key)=0.000
+  null_0      : acc=0.9875  BER(owner key)=0.484
+  null_1      : acc=0.9879  BER(owner key)=0.594
+  null_2      : acc=0.9877  BER(owner key)=0.406
+  null_3      : acc=0.9880  BER(owner key)=0.453
+
+  Saved results/train.json
+$ python 02_attacks.py
+
+==============================================================================
+  DEMO B: Removal attacks on the stolen model  (acceptance threshold BER <= 0.125)
+==============================================================================
+  none (stolen as-is)          acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- weight pruning (per-layer magnitude) --
+  prune 20%                    acc=0.9860   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 40%                    acc=0.9728   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 65%                    acc=0.6573   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 80%                    acc=0.3335   owner BER=0.000   -> WATERMARK SURVIVES
+  prune 90%                    acc=0.0941   owner BER=0.016   -> WATERMARK SURVIVES
+  prune 95%                    acc=0.0852   owner BER=0.016   -> WATERMARK SURVIVES
+
+  -- quantisation --
+  int8 quantisation            acc=0.9865   owner BER=0.000   -> WATERMARK SURVIVES
+  int4 quantisation            acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- fine-tuning on the thief's own 10k samples --
+  [FTAL-1] epoch 1/1  loss=0.0221  (0.6s)
+  FTAL 1 epoch                 acc=0.9859   owner BER=0.000   -> WATERMARK SURVIVES
+  [FTAL-5] epoch 1/5  loss=0.0221  (0.1s)
+  [FTAL-5] epoch 2/5  loss=0.0004  (0.1s)
+  [FTAL-5] epoch 3/5  loss=0.0356  (0.1s)
+  [FTAL-5] epoch 4/5  loss=0.0010  (0.1s)
+  [FTAL-5] epoch 5/5  loss=0.0017  (0.1s)
+  FTAL 5 epochs                acc=0.9882   owner BER=0.000   -> WATERMARK SURVIVES
+  [RTAL-5] epoch 1/5  loss=0.2793  (0.1s)
+  [RTAL-5] epoch 2/5  loss=0.0044  (0.1s)
+  [RTAL-5] epoch 3/5  loss=0.0096  (0.1s)
+  [RTAL-5] epoch 4/5  loss=0.0164  (0.1s)
+  [RTAL-5] epoch 5/5  loss=0.0009  (0.1s)
+  RTAL 5 epochs                acc=0.9834   owner BER=0.000   -> WATERMARK SURVIVES
+
+  -- overwriting: thief embeds their own Uchida watermark in the same layer --
+  [overwrite] epoch 1/3  loss=0.5264  (0.2s)  BER=0.266
+  [overwrite] epoch 2/3  loss=0.2149  (0.1s)  BER=0.000
+  [overwrite] epoch 3/3  loss=0.1181  (0.1s)  BER=0.000
+  overwrite 3 epochs           acc=0.9865   owner BER=0.047   -> WATERMARK SURVIVES
+
+  -- feature permutation (SoK, 'Feature Permutation (Ours)') --
+  feature permutation          acc=0.9866   owner BER=0.438   -> watermark REMOVED
+  permutation + owner realign  acc=0.9866   owner BER=0.000   -> WATERMARK SURVIVES
+
+  Saved results/attacks.csv and results/attacks.png
+$ python 03_forgery.py
+
+==============================================================================
+  DEMO C, part 1: Uchida ambiguity attack (thief has only the stolen weights)
+==============================================================================
+  Owner, real key        : BER = 0.000
+  Thief, counterfeit key : BER = 0.000   extracted message = 'MALLORY!'
+  -> Both parties 'prove' ownership of the same model.
+
+  Can a judge who SEES the key and weights tell the counterfeit apart?
+    key                         entry mean entry std    KS D  min margin  median margin
+    owner (real)                   +0.0041    1.0029  0.0000        1.42           1.82
+    forged, naive                  -0.0150    1.0050  0.0104        0.02           0.67
+    forged, large-margin rows      -0.0120    0.9980  0.0099        1.43           1.71
+    (KS 5% critical value 0.0142; margins in units of a random row's std)
+    Large-margin forgery BER = 0.000
+    -> Entry distributions match a real key. The naive forgery has smaller margins, which a
+       careful forger can raise by rejection sampling. Under ZK the verifier sees neither.
+
+  The same trick 'proves' ownership of models that were NEVER watermarked:
+    clean    thief BER = 0.000
+    null_0   thief BER = 0.000
+    null_1   thief BER = 0.000
+    null_2   thief BER = 0.000
+    null_3   thief BER = 0.000
+
+==============================================================================
+  DEMO C, part 2: same construction against ZKROWNN's Algorithm 1 relation
+==============================================================================
+  Private witness chosen by the thief AFTER seeing the model:
+    trigger key X_key : (100, 1, 28, 28) (thief's own images)
+    projection A      : fitted, 21632 x 64
+    watermark wm      : 'MALLORY!' (64 bits)
+
+    stolen   relation satisfied = True   BER = 0.000
+    clean    relation satisfied = True   BER = 0.000
+    null_0   relation satisfied = True   BER = 0.000
+    null_1   relation satisfied = True   BER = 0.000
+    null_2   relation satisfied = True   BER = 0.000
+    null_3   relation satisfied = True   BER = 0.000
+
+  -> Without a prior commitment, a valid witness exists for ANY model.
+     A zero-knowledge proof of this relation would verify, and would hide the fitted A.
+  Caveat: ZKROWNN assumes a semi-honest prover; this is outside its stated threat model.
+$ python 04_committed_seed.py --tries 20000
+
+==============================================================================
+  DEMO D0: Owner opens the commitment published at embedding time
+==============================================================================
+  Published commitment : 38751689ba3ded505000bd60832b471c...  (2026-10-04T18:30:02+00:00)
+  H(seed || owner_id)  : MATCHES
+  BER on stolen model  : 0.000  -> OWNERSHIP VERIFIED
+
+==============================================================================
+  DEMO D1: Naive fix (only the key is derived; signature is a free choice)
+==============================================================================
+  Thief forgeries accepted : 1000/1000  (100%)
+  Example thief commitment : bfe8165fe814df487932911cb451e940...  (made 2026-10-04T19:50:09+00:00, after the theft)
+  -> Only timestamp ordering separates owner from thief. A theft before the owner
+     commits (e.g. a dev-time leak) would defeat even that.
+
+==============================================================================
+  DEMO D2: Real fix (key AND signature derived from the seed); thief searches 20,000 seeds
+==============================================================================
+  Search time              : 2.1s (9,680 seeds/s)
+  Best BER the thief found : 0.250   (mean 0.500)
+  Forgeries accepted       : 0/20,000  at threshold BER <= 0.125
+  Theory, per try          : P[Bin(64,0.5) <= 8] = 2.78e-10  -> expected 5.56e-06 hits
+  Work factor              : ~2^31.7 seeds (~2.5e+09 for a 50% chance)
+                             = ~72 single-core hours at this rate:
+                             feasible on a GPU or cluster. Hence timestamps still matter,
+                             and RQ1 must set signature length T and threshold theta.
+  Target level (T=256 bits, as in Uchida; same theta=1/8): ~2^120 per try
+
+==============================================================================
+  NULL CHECK: owner's key on models that were never watermarked (indicative only)
+==============================================================================
+  null_0   BER = 0.484
+  null_1   BER = 0.594
+  null_2   BER = 0.406
+  null_3   BER = 0.453
+  A handful of null models is not enough to state a false-positive rate; that is Phase 1 work.
+
+  Saved results/forgery_search.png
+$ python 05_ezkl_spike.py --vis private --who owner
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=owner)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 24.12)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate              0.68s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.01s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.70s   -> True
+  prove                  0.66s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.66s | verify 21 ms | proof 60.3 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.61 GiB
+  Saved demo\results\ezkl_private_owner\summary.json
+$ python 05_ezkl_spike.py --vis private --who thief
+
+==============================================================================
+  DEMO E: EZKL proof  (params=private, prover=thief)
+==============================================================================
+  Plain PyTorch score : 64/64   (min signed margin 1.61)
+  ONNX: ir_version=7 opset=[13] ops=['Constant', 'MatMul', 'Mul', 'ReduceSum', 'Relu', 'Sub']
+  gen_settings           0.03s   -> True
+
+
+
+
+
+  calibrate              0.67s   -> True
+  compile_circuit        0.01s   -> True
+  get_srs (public)       0.01s   -> True
+  gen_witness            0.04s   -> ok
+  setup                  0.68s   -> True
+  prove                  0.67s   -> ok
+  verify                 0.02s   -> True
+
+==============================================================================
+  DEMO E RESULT
+==============================================================================
+  verified=True  logrows=15  SRS=public (get_srs)
+  public output (score)  : [['64']]
+  prove 0.67s | verify 21 ms | proof 60.2 KB | vk 65.3 KB | pk 132.1 MB | peak RAM 0.62 GiB
+  Saved demo\results\ezkl_private_thief\summary.json
+$ python 06_vk_crosscheck.py
+
+==============================================================================
+  DEMO E2: thief's forged proof checked against the OWNER's verification key
+==============================================================================
+owner VK                  : 531e35d69b318658
+thief VK (owner settings) : 531e35d69b318658
+thief proof verified under OWNER's VK: True
+  -> Without a published commitment, the verifier cannot tell owner and thief apart.

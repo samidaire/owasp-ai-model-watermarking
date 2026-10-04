@@ -1,0 +1,16 @@
+$ python evaluate_owner.py
+
+==============================================================================
+  DEMO A: Owner's committed seed, watermarked vs clean model (saved checkpoints)
+==============================================================================
+  Published commitment : 38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1
+  Timestamp (UTC)      : 2026-10-04T18:30:02+00:00
+  Derived signature b  : 1001000101010101101011111100110110100011100101000000110011000100
+  Clean       : acc=0.9869  BER(owner key)=0.531
+  Watermarked : acc=0.9866  BER(owner key)=0.000
+  null_0      : acc=0.9875  BER(owner key)=0.484
+  null_1      : acc=0.9879  BER(owner key)=0.594
+  null_2      : acc=0.9877  BER(owner key)=0.406
+  null_3      : acc=0.9880  BER(owner key)=0.453
+
+  Saved results/train.json

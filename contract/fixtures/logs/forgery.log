@@ -1,0 +1,44 @@
+$ python 03_forgery.py
+
+==============================================================================
+  DEMO C, part 1: Uchida ambiguity attack (thief has only the stolen weights)
+==============================================================================
+  Owner, real key        : BER = 0.000
+  Thief, counterfeit key : BER = 0.000   extracted message = 'MALLORY!'
+  -> Both parties 'prove' ownership of the same model.
+
+  Can a judge who SEES the key and weights tell the counterfeit apart?
+    key                         entry mean entry std    KS D  min margin  median margin
+    owner (real)                   +0.0041    1.0029  0.0000        1.42           1.82
+    forged, naive                  -0.0150    1.0050  0.0104        0.02           0.67
+    forged, large-margin rows      -0.0120    0.9980  0.0099        1.43           1.71
+    (KS 5% critical value 0.0142; margins in units of a random row's std)
+    Large-margin forgery BER = 0.000
+    -> Entry distributions match a real key. The naive forgery has smaller margins, which a
+       careful forger can raise by rejection sampling. Under ZK the verifier sees neither.
+
+  The same trick 'proves' ownership of models that were NEVER watermarked:
+    clean    thief BER = 0.000
+    null_0   thief BER = 0.000
+    null_1   thief BER = 0.000
+    null_2   thief BER = 0.000
+    null_3   thief BER = 0.000
+
+==============================================================================
+  DEMO C, part 2: same construction against ZKROWNN's Algorithm 1 relation
+==============================================================================
+  Private witness chosen by the thief AFTER seeing the model:
+    trigger key X_key : (100, 1, 28, 28) (thief's own images)
+    projection A      : fitted, 21632 x 64
+    watermark wm      : 'MALLORY!' (64 bits)
+
+    stolen   relation satisfied = True   BER = 0.000
+    clean    relation satisfied = True   BER = 0.000
+    null_0   relation satisfied = True   BER = 0.000
+    null_1   relation satisfied = True   BER = 0.000
+    null_2   relation satisfied = True   BER = 0.000
+    null_3   relation satisfied = True   BER = 0.000
+
+  -> Without a prior commitment, a valid witness exists for ANY model.
+     A zero-knowledge proof of this relation would verify, and would hide the fitted A.
+  Caveat: ZKROWNN assumes a semi-honest prover; this is outside its stated threat model.

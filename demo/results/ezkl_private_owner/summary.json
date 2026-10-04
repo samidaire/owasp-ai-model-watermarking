@@ -1,0 +1,31 @@
+{
+  "params_visibility": "private",
+  "prover": "owner",
+  "verified": true,
+  "logrows": 15,
+  "srs": "public (get_srs)",
+  "srs_file": "kzg.srs",
+  "plain_score": 64.0,
+  "public_outputs": [
+    [
+      "64"
+    ]
+  ],
+  "public_param_hashes": null,
+  "proof_bytes": 61706,
+  "vk_bytes": 66823,
+  "pk_bytes": 138479371,
+  "seconds": {
+    "gen_settings": 0.031,
+    "calibrate": 0.679,
+    "compile": 0.009,
+    "srs": 0.009,
+    "gen_witness": 0.041,
+    "setup": 0.7,
+    "prove": 0.663,
+    "verify": 0.021
+  },
+  "peak_rss_bytes": 658259968,
+  "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "min_margin": 24.120929718017578
+}

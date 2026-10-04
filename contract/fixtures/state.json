@@ -1,0 +1,1208 @@
+{
+  "api_version": 1,
+  "mode": "live",
+  "env": {
+    "python": "3.14.0",
+    "torch": "2.14.1+cu130",
+    "cuda": "13.0",
+    "gpu": "NVIDIA GeForce RTX 5080",
+    "sm": "sm_120",
+    "vram_gib": 15.9,
+    "status": "ok"
+  },
+  "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+  "results": {
+    "train": {
+      "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+      "timestamp_utc": "2026-10-04T18:30:02+00:00",
+      "owner_id": "owner:yash",
+      "scheme": "C = SHA256('commit|' + seed + '|' + owner_id); b = SHA256('sig|' + seed + '|' + owner_id)[:64 bits]; X = PCG64(SHA256('key|' + seed)).normal(64 x 288)",
+      "device": "cuda",
+      "epochs": null,
+      "threshold": 0.125,
+      "key_shape": [
+        64,
+        288
+      ],
+      "signature_bits": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "models": {
+        "clean": {
+          "accuracy": 0.9869,
+          "owner_ber": 0.53125,
+          "extracted_bits": [
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "watermarked": {
+          "accuracy": 0.9866,
+          "owner_ber": 0.0,
+          "extracted_bits": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        }
+      },
+      "nulls": [
+        {
+          "name": "null_0",
+          "accuracy": 0.9875,
+          "owner_ber": 0.484375
+        },
+        {
+          "name": "null_1",
+          "accuracy": 0.9879,
+          "owner_ber": 0.59375
+        },
+        {
+          "name": "null_2",
+          "accuracy": 0.9877,
+          "owner_ber": 0.40625
+        },
+        {
+          "name": "null_3",
+          "accuracy": 0.988,
+          "owner_ber": 0.453125
+        }
+      ]
+    },
+    "attacks": {
+      "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+      "threshold": 0.125,
+      "rows": [
+        {
+          "attack": "none (stolen as-is)",
+          "family": "baseline",
+          "accuracy": 0.9866,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "prune 20%",
+          "family": "prune",
+          "accuracy": 0.986,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "prune 40%",
+          "family": "prune",
+          "accuracy": 0.9728,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "prune 65%",
+          "family": "prune",
+          "accuracy": 0.6573,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "prune 80%",
+          "family": "prune",
+          "accuracy": 0.3335,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "prune 90%",
+          "family": "prune",
+          "accuracy": 0.0941,
+          "owner_ber": 0.015625,
+          "survives": true
+        },
+        {
+          "attack": "prune 95%",
+          "family": "prune",
+          "accuracy": 0.0852,
+          "owner_ber": 0.015625,
+          "survives": true
+        },
+        {
+          "attack": "int8 quantisation",
+          "family": "quantise",
+          "accuracy": 0.9865,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "int4 quantisation",
+          "family": "quantise",
+          "accuracy": 0.9866,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "FTAL 1 epoch",
+          "family": "finetune",
+          "accuracy": 0.9859,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "FTAL 5 epochs",
+          "family": "finetune",
+          "accuracy": 0.9882,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "RTAL 5 epochs",
+          "family": "finetune",
+          "accuracy": 0.9834,
+          "owner_ber": 0.0,
+          "survives": true
+        },
+        {
+          "attack": "overwrite 3 epochs",
+          "family": "overwrite",
+          "accuracy": 0.9865,
+          "owner_ber": 0.046875,
+          "survives": true
+        },
+        {
+          "attack": "feature permutation",
+          "family": "permute",
+          "accuracy": 0.9866,
+          "owner_ber": 0.4375,
+          "survives": false
+        },
+        {
+          "attack": "permutation + owner realign",
+          "family": "permute",
+          "accuracy": 0.9866,
+          "owner_ber": 0.0,
+          "survives": true
+        }
+      ]
+    },
+    "forgery": {
+      "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+      "threshold": 0.125,
+      "owner": {
+        "ber": 0.0,
+        "signature_bits": [
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "extracted_bits": [
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "thief": {
+        "target_text": "MALLORY!",
+        "target_bits": [
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "extracted_bits": [
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "ber": 0.0,
+        "message": "MALLORY!"
+      },
+      "large_margin_ber": 0.0,
+      "key_stats": [
+        {
+          "key": "owner (real)",
+          "entry_mean": 0.004122002050280571,
+          "entry_std": 1.0028934478759766,
+          "ks_d": 0.0,
+          "min_margin": 1.4211548566818237,
+          "median_margin": 1.8168269395828247
+        },
+        {
+          "key": "forged, naive",
+          "entry_mean": -0.015042920596897602,
+          "entry_std": 1.0050485134124756,
+          "ks_d": 0.01036241319444453,
+          "min_margin": 0.022360332310199738,
+          "median_margin": 0.6666339635848999
+        },
+        {
+          "key": "forged, large-margin rows",
+          "entry_mean": -0.011982638388872147,
+          "entry_std": 0.9980157613754272,
+          "ks_d": 0.009874131944444475,
+          "min_margin": 1.4336308240890503,
+          "median_margin": 1.7096238136291504
+        }
+      ],
+      "ks_critical": 0.014166666666666668,
+      "never_watermarked": [
+        {
+          "model": "clean",
+          "thief_ber": 0.0
+        },
+        {
+          "model": "null_0",
+          "thief_ber": 0.0
+        },
+        {
+          "model": "null_1",
+          "thief_ber": 0.0
+        },
+        {
+          "model": "null_2",
+          "thief_ber": 0.0
+        },
+        {
+          "model": "null_3",
+          "thief_ber": 0.0
+        }
+      ],
+      "zkrownn": {
+        "xkey_shape": [
+          100,
+          1,
+          28,
+          28
+        ],
+        "a_shape": [
+          21632,
+          64
+        ],
+        "rows": [
+          {
+            "model": "stolen",
+            "satisfied": true,
+            "ber": 0.0
+          },
+          {
+            "model": "clean",
+            "satisfied": true,
+            "ber": 0.0
+          },
+          {
+            "model": "null_0",
+            "satisfied": true,
+            "ber": 0.0
+          },
+          {
+            "model": "null_1",
+            "satisfied": true,
+            "ber": 0.0
+          },
+          {
+            "model": "null_2",
+            "satisfied": true,
+            "ber": 0.0
+          },
+          {
+            "model": "null_3",
+            "satisfied": true,
+            "ber": 0.0
+          }
+        ]
+      }
+    },
+    "committed_seed": {
+      "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+      "threshold": 0.125,
+      "signature_bits_T": 64,
+      "d0": {
+        "commitment_matches": true,
+        "owner_ber": 0.0,
+        "verified": true,
+        "timestamp_utc": "2026-10-04T18:30:02+00:00"
+      },
+      "d1": {
+        "wins": 1000,
+        "trials": 1000
+      },
+      "d2": {
+        "tries": 20000,
+        "seconds": 2.0662033557891846,
+        "seeds_per_s": 9679.589351146426,
+        "min_ber": 0.25,
+        "mean_ber": 0.49970625,
+        "accepted": 0,
+        "p_per_try": 2.781336121159862e-10,
+        "log2_work": 31.743502845674723,
+        "seeds_for_half": 2492137412.97435,
+        "single_core_hours": 257463.13428876895,
+        "log2_work_T256": 120.36081582455206,
+        "histogram": [
+          {
+            "ber": 0.0,
+            "count": 0
+          },
+          {
+            "ber": 0.015625,
+            "count": 0
+          },
+          {
+            "ber": 0.03125,
+            "count": 0
+          },
+          {
+            "ber": 0.046875,
+            "count": 0
+          },
+          {
+            "ber": 0.0625,
+            "count": 0
+          },
+          {
+            "ber": 0.078125,
+            "count": 0
+          },
+          {
+            "ber": 0.09375,
+            "count": 0
+          },
+          {
+            "ber": 0.109375,
+            "count": 0
+          },
+          {
+            "ber": 0.125,
+            "count": 0
+          },
+          {
+            "ber": 0.140625,
+            "count": 0
+          },
+          {
+            "ber": 0.15625,
+            "count": 0
+          },
+          {
+            "ber": 0.171875,
+            "count": 0
+          },
+          {
+            "ber": 0.1875,
+            "count": 0
+          },
+          {
+            "ber": 0.203125,
+            "count": 0
+          },
+          {
+            "ber": 0.21875,
+            "count": 0
+          },
+          {
+            "ber": 0.234375,
+            "count": 0
+          },
+          {
+            "ber": 0.25,
+            "count": 1
+          },
+          {
+            "ber": 0.265625,
+            "count": 1
+          },
+          {
+            "ber": 0.28125,
+            "count": 2
+          },
+          {
+            "ber": 0.296875,
+            "count": 13
+          },
+          {
+            "ber": 0.3125,
+            "count": 21
+          },
+          {
+            "ber": 0.328125,
+            "count": 49
+          },
+          {
+            "ber": 0.34375,
+            "count": 75
+          },
+          {
+            "ber": 0.359375,
+            "count": 155
+          },
+          {
+            "ber": 0.375,
+            "count": 294
+          },
+          {
+            "ber": 0.390625,
+            "count": 413
+          },
+          {
+            "ber": 0.40625,
+            "count": 645
+          },
+          {
+            "ber": 0.421875,
+            "count": 880
+          },
+          {
+            "ber": 0.4375,
+            "count": 1323
+          },
+          {
+            "ber": 0.453125,
+            "count": 1506
+          },
+          {
+            "ber": 0.46875,
+            "count": 1743
+          },
+          {
+            "ber": 0.484375,
+            "count": 1981
+          },
+          {
+            "ber": 0.5,
+            "count": 2008
+          },
+          {
+            "ber": 0.515625,
+            "count": 1878
+          },
+          {
+            "ber": 0.53125,
+            "count": 1710
+          },
+          {
+            "ber": 0.546875,
+            "count": 1453
+          },
+          {
+            "ber": 0.5625,
+            "count": 1242
+          },
+          {
+            "ber": 0.578125,
+            "count": 925
+          },
+          {
+            "ber": 0.59375,
+            "count": 672
+          },
+          {
+            "ber": 0.609375,
+            "count": 413
+          },
+          {
+            "ber": 0.625,
+            "count": 273
+          },
+          {
+            "ber": 0.640625,
+            "count": 150
+          },
+          {
+            "ber": 0.65625,
+            "count": 88
+          },
+          {
+            "ber": 0.671875,
+            "count": 52
+          },
+          {
+            "ber": 0.6875,
+            "count": 26
+          },
+          {
+            "ber": 0.703125,
+            "count": 6
+          },
+          {
+            "ber": 0.71875,
+            "count": 1
+          },
+          {
+            "ber": 0.734375,
+            "count": 1
+          },
+          {
+            "ber": 0.75,
+            "count": 0
+          },
+          {
+            "ber": 0.765625,
+            "count": 0
+          },
+          {
+            "ber": 0.78125,
+            "count": 0
+          },
+          {
+            "ber": 0.796875,
+            "count": 0
+          },
+          {
+            "ber": 0.8125,
+            "count": 0
+          },
+          {
+            "ber": 0.828125,
+            "count": 0
+          },
+          {
+            "ber": 0.84375,
+            "count": 0
+          },
+          {
+            "ber": 0.859375,
+            "count": 0
+          },
+          {
+            "ber": 0.875,
+            "count": 0
+          },
+          {
+            "ber": 0.890625,
+            "count": 0
+          },
+          {
+            "ber": 0.90625,
+            "count": 0
+          },
+          {
+            "ber": 0.921875,
+            "count": 0
+          },
+          {
+            "ber": 0.9375,
+            "count": 0
+          },
+          {
+            "ber": 0.953125,
+            "count": 0
+          },
+          {
+            "ber": 0.96875,
+            "count": 0
+          },
+          {
+            "ber": 0.984375,
+            "count": 0
+          },
+          {
+            "ber": 1.0,
+            "count": 0
+          }
+        ]
+      },
+      "nulls": [
+        {
+          "model": "null_0",
+          "owner_ber": 0.484375
+        },
+        {
+          "model": "null_1",
+          "owner_ber": 0.59375
+        },
+        {
+          "model": "null_2",
+          "owner_ber": 0.40625
+        },
+        {
+          "model": "null_3",
+          "owner_ber": 0.453125
+        }
+      ]
+    },
+    "vk_crosscheck": {
+      "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+      "owner_vk": "531e35d69b318658",
+      "thief_vk": "531e35d69b318658",
+      "identical": true,
+      "thief_verified_under_owner_vk": true
+    },
+    "ezkl": {
+      "private_owner": {
+        "params_visibility": "private",
+        "prover": "owner",
+        "verified": true,
+        "logrows": 15,
+        "srs": "public (get_srs)",
+        "srs_file": "kzg.srs",
+        "plain_score": 64.0,
+        "public_outputs": [
+          [
+            "64"
+          ]
+        ],
+        "public_param_hashes": null,
+        "proof_bytes": 61706,
+        "vk_bytes": 66823,
+        "pk_bytes": 138479371,
+        "seconds": {
+          "gen_settings": 0.031,
+          "calibrate": 0.679,
+          "compile": 0.009,
+          "srs": 0.009,
+          "gen_witness": 0.041,
+          "setup": 0.7,
+          "prove": 0.663,
+          "verify": 0.021
+        },
+        "peak_rss_bytes": 658259968,
+        "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+        "min_margin": 24.120929718017578
+      },
+      "private_thief": {
+        "params_visibility": "private",
+        "prover": "thief",
+        "verified": true,
+        "logrows": 15,
+        "srs": "public (get_srs)",
+        "srs_file": "kzg.srs",
+        "plain_score": 64.0,
+        "public_outputs": [
+          [
+            "64"
+          ]
+        ],
+        "public_param_hashes": null,
+        "proof_bytes": 61656,
+        "vk_bytes": 66823,
+        "pk_bytes": 138479371,
+        "seconds": {
+          "gen_settings": 0.03,
+          "calibrate": 0.666,
+          "compile": 0.009,
+          "srs": 0.01,
+          "gen_witness": 0.043,
+          "setup": 0.684,
+          "prove": 0.671,
+          "verify": 0.021
+        },
+        "peak_rss_bytes": 666787840,
+        "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+        "min_margin": 1.6124792098999023
+      },
+      "hashed_owner": {
+        "params_visibility": "hashed",
+        "prover": "owner",
+        "verified": true,
+        "logrows": 20,
+        "srs": "public (get_srs)",
+        "srs_file": "kzg.srs",
+        "plain_score": 64.0,
+        "public_outputs": [
+          [
+            "64"
+          ]
+        ],
+        "public_param_hashes": [
+          [
+            "0x2b2a85af6e5d5909e2d0ea795e31242e5c2004f4234d79e79010c91350d08c47"
+          ]
+        ],
+        "proof_bytes": 66020,
+        "vk_bytes": 2492231,
+        "pk_bytes": 10538584611,
+        "seconds": {
+          "gen_settings": 0.031,
+          "calibrate": 16.008,
+          "compile": 0.01,
+          "srs": 0.23,
+          "gen_witness": 1.378,
+          "setup": 34.168,
+          "prove": 46.9,
+          "verify": 0.561
+        },
+        "peak_rss_bytes": 2831953920,
+        "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+        "min_margin": 24.120929718017578,
+        "param_commitment_poseidon": [
+          [
+            "0x2b2a85af6e5d5909e2d0ea795e31242e5c2004f4234d79e79010c91350d08c47"
+          ]
+        ]
+      },
+      "hashed_thief": {
+        "params_visibility": "hashed",
+        "prover": "thief",
+        "verified": true,
+        "logrows": 20,
+        "srs": "public (get_srs)",
+        "srs_file": "kzg.srs",
+        "plain_score": 64.0,
+        "public_outputs": [
+          [
+            "64"
+          ]
+        ],
+        "public_param_hashes": [
+          [
+            "0x29fa15c85efd094a56789d526b6e84270b31fe19b1f6db3a3c1138cc4502e6ed"
+          ]
+        ],
+        "proof_bytes": 66050,
+        "vk_bytes": 2492231,
+        "pk_bytes": 10538584611,
+        "seconds": {
+          "gen_settings": 0.03,
+          "calibrate": 16.032,
+          "compile": 0.009,
+          "srs": 0.232,
+          "gen_witness": 1.345,
+          "setup": 33.406,
+          "prove": 39.141,
+          "verify": 0.578
+        },
+        "peak_rss_bytes": 2832109568,
+        "commitment": "38751689ba3ded505000bd60832b471c376b2b4782cb81e09ced56dd94667bd1",
+        "min_margin": 1.6124792098999023,
+        "param_commitment_poseidon": [
+          [
+            "0x29fa15c85efd094a56789d526b6e84270b31fe19b1f6db3a3c1138cc4502e6ed"
+          ]
+        ]
+      }
+    }
+  },
+  "job": {
+    "id": "b44c5420d32c",
+    "step": "all",
+    "running": false,
+    "code": 0,
+    "started": 1791143395.4635148,
+    "ended": 1791143421.6942003,
+    "lines": 211
+  }
+}
