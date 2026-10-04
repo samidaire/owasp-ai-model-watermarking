@@ -1,28 +1,31 @@
 import { useState } from "react";
-import { isStale } from "../api";
+import { panelStale } from "../stale";
 import { Histogram } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
-import { ber3, bitsWrong, int, sci, secs } from "../format";
+import { amount, ber3, bitsWrong, int, sci, secs } from "../format";
+import { about } from "../steps";
 import { PanelShell, RunButton, type PanelProps } from "./Shell";
 
 export function PanelD({ s, ctl, refreshing }: PanelProps) {
   const c = s.results.committed_seed;
-  const [tries, setTries] = useState(20000);
+  const step = ctl.steps.committed;
+  const budgets = step.options?.tries?.length ? step.options.tries : [20000, 100000];
+  const [tries, setTries] = useState(budgets[0]);
   const T = c?.signature_bits_T ?? 64;
   return (
     <PanelShell
       letter="D" title="Committed seed" reqs={["OWASP R2: the fix", "RQ1"]}
       claim="Commit at embedding time to a secret seed, and derive both the key and the signature from it. Then the thief can no longer choose a signature after seeing the model."
-      stale={isStale(c?.commitment, s.commitment)} refreshing={refreshing}
+      stale={panelStale("D", s)} refreshing={refreshing}
       actions={<>
         <label className="actions" style={{ gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
           Thief's budget
           <select className="sel" value={tries} onChange={(e) => setTries(Number(e.target.value))} disabled={ctl.running !== null}>
-            <option value={20000}>20,000 seeds (~2 s)</option>
-            <option value={100000}>100,000 seeds (~10 s)</option>
+            {/* The catalogue's duration is for the smallest budget; larger ones scale with the number of seeds. */}
+            {budgets.map((t) => <option key={t} value={t}>{int(t)} seeds ({about((step.seconds * t) / budgets[0])})</option>)}
           </select>
         </label>
-        <RunButton ctl={ctl} step="committed" label="Run live" primary tries={tries} />
+        <RunButton ctl={ctl} step="committed" primary tries={tries} />
       </>}
       notes={<Notes
         say={[
@@ -68,7 +71,7 @@ export function PanelD({ s, ctl, refreshing }: PanelProps) {
         <div className="grid4">
           <Card><Stat label="Success chance per try" value={sci(c.d2.p_per_try)} caption={`P[Bin(${T}, 0.5) ≤ ${Math.floor(c.threshold * T)}]`} /></Card>
           <Card><Stat label="Work factor" value={<>2<sup>{c.d2.log2_work.toFixed(1)}</sup></>} caption={`${sci(c.d2.seeds_for_half)} seeds for a 50% chance`} /></Card>
-          <Card><Stat label="At this machine's rate" value={int(c.d2.single_core_hours)} unit="core-hours" caption={`${int(c.d2.seeds_per_s)} seeds/s on one core`} /></Card>
+          <Card><Stat label="At this machine's rate" value={amount(c.d2.single_core_hours)} unit="core-hours" caption={`${int(c.d2.seeds_per_s)} seeds/s on one core`} /></Card>
           <Card><Stat label="Target at T = 256 bits" value={<>2<sup>{Math.round(c.d2.log2_work_T256)}</sup></>} caption="Uchida's signature length, same θ = 1/8" /></Card>
         </div>
         <Callout tone="warn">

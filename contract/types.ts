@@ -1,7 +1,11 @@
 /**
  * API contract for the watermark demo backend (demo/server.py), api_version 1.
- * Single source of truth: the reference UI (frontend/src/api.ts) imports these types, and
- * contract/fixtures/*.json are real responses captured from the server. See UI_INTEGRATION.md.
+ * Single source of truth: the reference UI imports these types directly (frontend/src/api.ts re-exports them),
+ * and contract/fixtures/*.json are real responses captured from the server. See UI_INTEGRATION.md.
+ *
+ * Newer servers add POST /api/jobs/{id}/cancel (body {}): 202 JobInfo if the job was running,
+ * 409 ErrorBody {error: "job not running", job} otherwise, 404 for an unknown id. Older servers answer 404 for
+ * that path, so a UI must treat a 404/405 there as "cancel not supported".
  */
 
 export type Bits = number[]; // 64 entries, each 0 or 1
@@ -23,6 +27,8 @@ export interface StepInfo {
   description: string;
   /** Only "committed" has options: allowed values for the `tries` field of POST /api/run. */
   options?: { tries: number[] };
+  /** Wall-clock limit in seconds; the server stops the job after it (JobInfo.timed_out, code -3). Newer servers only. */
+  timeout?: number;
 }
 
 export interface StepsResponse { api_version: number; mode: "live" | "simulate"; steps: StepInfo[] }
@@ -39,19 +45,32 @@ export interface Env {
   error?: string;
 }
 
-/** Job status. Returned by POST /api/run (202), embedded in /api/state, and sent in the SSE "done" event. */
+/**
+ * Job status. Returned by POST /api/run (202) and POST /api/jobs/{id}/cancel (202), embedded in /api/state,
+ * and sent in the SSE "done" event.
+ */
 export interface JobInfo {
   id: string;
   step: ServerStep;
   running: boolean;
-  /** null while running; 0 = success; anything else = failure. */
+  /** null while running; 0 = success; -2 = cancelled; -3 = timed out; anything else = failure. */
   code: number | null;
   /** Unix seconds. */
   started: number;
   ended: number | null;
   /** Number of output lines so far. */
   lines: number;
+  /** The job was stopped by POST /api/jobs/{id}/cancel (code -2). Always present on servers with cancel; treat missing as false. */
+  cancelled?: boolean;
+  /** The job was stopped after its step's `timeout` (code -3). Always present on servers with cancel; treat missing as false. */
+  timed_out?: boolean;
 }
+
+/**
+ * Error body of every 4xx response. `job` is set on the 409 of POST /api/run ("another demo is running":
+ * the job that is running) and of POST /api/jobs/{id}/cancel ("job not running": the finished job).
+ */
+export interface ErrorBody { error: string; job?: JobInfo }
 
 /** GET /api/jobs/{id}: JobInfo plus every output line so far. */
 export interface JobDetail extends JobInfo { output: string[] }
@@ -133,6 +152,8 @@ export interface EzklSummary {
   public_outputs: string[][] | null;
   /** hashed only: [[ "0x…" ]], the Poseidon hash of the private key + signature. */
   param_commitment_poseidon?: string[][];
+  /** EZKL's public parameter hashes: [[ "0x…" ]] for hashed runs (same value as param_commitment_poseidon), null for private runs. */
+  public_param_hashes?: string[][] | null;
   proof_bytes: number;
   vk_bytes: number;
   pk_bytes: number;

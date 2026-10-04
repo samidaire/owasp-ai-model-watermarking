@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getState, isStale, runStep, streamJob, type DemoState, type JobInfo, type ServerStep } from "./api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ApiError, cancelJob, followJob, getJob, getState, getSteps, runStep, type DemoState, type JobInfo, type ServerStep,
+} from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Callout } from "./components/ui";
 import { short } from "./format";
 import { PanelA } from "./panels/PanelA";
@@ -8,9 +11,10 @@ import { PanelB } from "./panels/PanelB";
 import { PanelC } from "./panels/PanelC";
 import { PanelD } from "./panels/PanelD";
 import { PanelE } from "./panels/PanelE";
-import type { PanelProps } from "./panels/Shell";
+import { RunButton, type PanelProps } from "./panels/Shell";
+import { panelStatus, type PanelKey as Key, type PanelStatus } from "./stale";
+import { FALLBACK_STEPS, toCatalogue, type StepCatalogue } from "./steps";
 
-type Key = "A" | "B" | "C" | "D" | "E";
 const STEPS: { key: Key; title: string; sub: string; Panel: (p: PanelProps) => React.JSX.Element }[] = [
   { key: "A", title: "Commit & embed", sub: "Seed, key and watermark", Panel: PanelA },
   { key: "B", title: "Removal attacks", sub: "OWASP R1 · gap G2", Panel: PanelB },
@@ -34,15 +38,13 @@ function writePref(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* private window: preference just isn't kept */ }
 }
 
-function stepStatus(k: Key, s: DemoState | null): "ok" | "stale" | "missing" {
-  if (!s) return "missing";
-  const r = s.results;
-  const c = { A: r.train?.commitment, B: r.attacks?.commitment, C: r.forgery?.commitment,
-    D: r.committed_seed?.commitment, E: r.ezkl.private_owner?.commitment }[k];
-  const present = { A: r.train, B: r.attacks, C: r.forgery, D: r.committed_seed, E: r.ezkl.private_owner }[k];
-  if (!present) return "missing";
-  return isStale(c, s.commitment) ? "stale" : "ok";
-}
+/** Sidebar marker per panel status (stale.ts decides the status for the sidebar and the panels alike). */
+const MARK: Record<PanelStatus, { say: string; title: string; icon: string; color: string }> = {
+  fresh: { say: "up to date", title: "Results up to date", icon: "✓", color: "var(--good-text)" },
+  stale: { say: "stale", title: "Stale: made with an older owner key", icon: "!", color: "var(--warning-text)" },
+  unknown: { say: "freshness unknown", title: "Results shown; freshness unknown (no current owner commitment to compare)", icon: "–", color: "var(--text-secondary)" },
+  missing: { say: "no results", title: "No results yet", icon: "○", color: "var(--text-muted)" },
+};
 
 export default function App() {
   const [s, setS] = useState<DemoState | null>(null);
@@ -52,7 +54,17 @@ export default function App() {
   const [job, setJob] = useState<ConsoleJob | null>(null);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const [theme, setTheme] = useState(() => readPref("demo.theme", "auto"));
-  const stop = useRef<(() => void) | null>(null);
+  /** Step catalogue from GET /api/steps; the fallback (src/steps.ts) until it loads, or if it fails. */
+  const [steps, setSteps] = useState<StepCatalogue>(FALLBACK_STEPS);
+  const [stepsLoaded, setStepsLoaded] = useState(false);
+  /** Id of the job a cancel was requested for (until it ends). */
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  /** The server has no cancel endpoint (older server): hide the Cancel button. */
+  const [cancelUnsupported, setCancelUnsupported] = useState(false);
+  /** The job whose output the console follows, and how to stop following it. */
+  const follow = useRef<{ id: string; stop: () => void } | null>(null);
+  const jobRef = useRef<ConsoleJob | null>(null);
+  jobRef.current = job;
 
   const refresh = useCallback(async () => {
     try {
@@ -66,24 +78,73 @@ export default function App() {
     }
   }, []);
 
+  const unfollow = useCallback((id?: string) => {
+    if (follow.current && (id === undefined || follow.current.id === id)) {
+      follow.current.stop();
+      follow.current = null;
+    }
+  }, []);
+
+  /**
+   * The server says job `id` is no longer running (or no longer exists): end it in the console, with its final
+   * JobInfo when the server still has it, otherwise as "lost" (e.g. the server was restarted mid-run).
+   */
+  const settle = useCallback(async (id: string, fromState: JobInfo | null) => {
+    let final: JobInfo | null = fromState?.id === id && !fromState.running ? fromState : null;
+    if (!final) {
+      try {
+        const d = await getJob(id);
+        if (!d.running) final = d;
+      } catch { /* unknown job or unreachable server: ends as "lost" */ }
+    }
+    unfollow(id);
+    setJob((j) => {
+      if (!j || j.info.id !== id || !j.info.running) return j;
+      if (final) return { ...j, info: final };
+      return { ...j, lost: true, info: { ...j.info, running: false, ended: j.info.ended ?? Date.now() / 1000 } };
+    });
+  }, [unfollow]);
+
   const attach = useCallback((info: JobInfo) => {
-    stop.current?.();
-    setJob({ info, lines: [], title: TITLE_OF[info.step] });
-    stop.current = streamJob(
-      info.id,
-      (line) => setJob((j) => (j && j.info.id === info.id ? { ...j, lines: [...j.lines, line] } : j)),
-      (done) => {
-        setJob((j) => (j && j.info.id === info.id ? { ...j, info: done } : j));
+    unfollow();
+    const id = info.id;
+    const update = (f: (j: ConsoleJob) => ConsoleJob) => setJob((j) => (j && j.info.id === id ? f(j) : j));
+    setJob({ info, lines: [], title: TITLE_OF[info.step] ?? info.step });
+    const stop = followJob(id, {
+      onLine: (line) => update((j) => ({ ...j, lines: [...j.lines, line] })),
+      onOutput: (lines) => update((j) => ({ ...j, lines })),
+      onDone: (done) => {
+        if (follow.current?.id === id) follow.current = null;
+        update((j) => ({ ...j, info: done }));
+        setNotice(null);
         refresh();
       },
-    );
-  }, [refresh]);
+      onLost: async () => {
+        // The server no longer knows this job (restarted): trust /api/state from now on. If another job runs
+        // there, the safety-net poll below attaches to it.
+        if (follow.current?.id === id) follow.current = null;
+        const st = await refresh();
+        settle(id, st?.job ?? null);
+      },
+    });
+    follow.current = { id, stop };
+  }, [refresh, settle, unfollow]);
 
   // Initial load: saved results populate every panel before anything runs; re-attach to a running job.
   useEffect(() => {
     refresh().then((st) => { if (st?.job?.running) attach(st.job); });
-    return () => stop.current?.();
-  }, [refresh, attach]);
+    return () => unfollow();
+  }, [refresh, attach, unfollow]);
+
+  // Step catalogue: fetched once on load (again only if the server was unreachable then).
+  useEffect(() => {
+    if (stepsLoaded || offline) return;
+    let live = true;
+    getSteps()
+      .then((r) => { if (live) { setSteps(toCatalogue(r)); setStepsLoaded(true); } })
+      .catch(() => { /* keep the fallback catalogue */ });
+    return () => { live = false; };
+  }, [stepsLoaded, offline]);
 
   // The server probes the GPU in the background; poll until it reports.
   useEffect(() => {
@@ -92,17 +153,22 @@ export default function App() {
     return () => clearTimeout(t);
   }, [s, offline, refresh]);
 
-  // Safety net if the event stream drops: keep job state fresh while running.
+  // Safety net while anything runs (the stream can drop behind a proxy, or the server can restart):
+  // poll /api/state every 5 s. Whenever no job is running there, nothing is running here either.
+  const runningId = job?.info.running ? job.info.id : s?.job?.running ? s.job.id : null;
   useEffect(() => {
-    if (!job?.info.running) return;
+    if (!runningId) return;
     const t = setInterval(async () => {
       const st = await refresh();
-      if (st?.job && st.job.id === job.info.id && !st.job.running) {
-        setJob((j) => (j && j.info.id === st.job!.id ? { ...j, info: st.job! } : j));
-      }
+      if (!st) return; // server unreachable: the offline banner shows; keep polling
+      const sj = st.job;
+      const cur = jobRef.current;
+      if (cur?.info.running && (!sj || !sj.running || sj.id !== cur.info.id)) settle(cur.info.id, sj);
+      // A run this tab isn't following (started elsewhere, or after a missed "done"): follow it.
+      if (sj?.running && sj.id !== cur?.info.id) attach(sj);
     }, 5000);
     return () => clearInterval(t);
-  }, [job?.info.running, job?.info.id, refresh]);
+  }, [runningId, refresh, settle, attach]);
 
   useEffect(() => {
     if (theme === "auto") delete document.documentElement.dataset.theme;
@@ -131,20 +197,58 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [idx, go]);
 
-  const run = useCallback(async (step: ServerStep, opts?: { tries?: number; confirm?: string }) => {
-    if (opts?.confirm && !window.confirm(opts.confirm)) return;
+  const run = useCallback(async (step: ServerStep, opts?: { tries?: number }) => {
+    // Destructive or slow steps (retrain, zk_hashed) carry a confirmation text in the catalogue.
+    const confirmText = steps[step]?.confirm;
+    if (confirmText && !window.confirm(confirmText)) return;
     setNotice(null);
     try {
       const info = await runStep(step, opts?.tries);
       attach(info);
       setConsoleOpen(true);
     } catch (e) {
-      setNotice((e as Error).message);
+      const busy = e instanceof ApiError && e.status === 409 ? e.body.job : undefined;
+      if (busy) {
+        // Only one job runs at a time: show the one that is running instead of just an error.
+        if (jobRef.current?.info.id !== busy.id || !follow.current) attach(busy);
+        setConsoleOpen(true);
+        setNotice(`Another demo is already running (${TITLE_OF[busy.step] ?? busy.step}). Its live output is in the console; Run buttons unlock when it ends.`);
+      } else {
+        setNotice((e as Error).message);
+      }
       refresh();
     }
-  }, [attach, refresh]);
+  }, [attach, refresh, steps]);
+
+  const cancel = useCallback(async () => {
+    const cur = jobRef.current;
+    if (!cur?.info.running) return;
+    const id = cur.info.id;
+    setCancelling(id);
+    try {
+      const r = await cancelJob(id, "cancelled" in cur.info);
+      if (r.kind === "cancelling") {
+        // The "done" event (code -2, cancelled) ends it; if the server already stopped it, end it now.
+        if (!r.job.running) settle(id, r.job);
+        return;
+      }
+      setCancelling(null);
+      if (r.kind === "unsupported") {
+        setCancelUnsupported(true);
+        setNotice("This server version can't cancel a run. It ends by itself; the other Run buttons unlock then.");
+      } else {
+        // Already ended (409) or unknown to the server (404): settle it from what the server says.
+        settle(id, r.kind === "not_running" ? r.job ?? null : null);
+        refresh();
+      }
+    } catch (e) {
+      setCancelling(null);
+      setNotice(`Cancel failed: ${(e as Error).message}`);
+    }
+  }, [settle, refresh]);
 
   const running: ServerStep | null = job?.info.running ? job.info.step : s?.job?.running ? s.job.step : null;
+  const ctl = useMemo(() => ({ running, run, steps }), [running, run, steps]);
   const step = STEPS[idx];
   const env = s?.env;
   let envLabel = "Connecting…";
@@ -166,11 +270,8 @@ export default function App() {
             {env?.status === "ok" && <span className="ic" aria-hidden>{env.gpu ? "✓" : "!"}</span>}{envLabel}
           </span>
           <span className="chip" title={s?.commitment ?? ""}>Owner commitment <span className="mono">{short(s?.commitment)}</span></span>
-          <button className="btn primary" disabled={running !== null || !s} onClick={() => run("all")} aria-label="Run all demos live"
-            title="Re-verify A, then run B, C, D and E1 + E2 live (~30 s). E3 stays precomputed.">
-            {running === "all" ? <span className="spinner" aria-hidden /> : <span aria-hidden>▶</span>}
-            {running === "all" ? "Running all…" : "Run all live"}
-          </button>
+          <RunButton ctl={ctl} step="all" primary disabled={!s}
+            hint="Re-verify A, then run B, C, D and E1 + E2 live. E3 stays precomputed." />
           <select className="sel" value={theme} onChange={(e) => setTheme(e.target.value)} aria-label="Colour theme">
             <option value="auto">Theme: auto</option>
             <option value="light">Theme: light</option>
@@ -195,24 +296,25 @@ export default function App() {
           </Callout>
         </div>
       )}
-      {notice && <div className="banner"><Callout tone="warn"><p>{notice}</p></Callout></div>}
+      {/* Always mounted, so notices (409 busy, cancel not supported, errors) are announced when they appear. */}
+      <div aria-live="polite">
+        {notice && <div className="banner"><Callout tone="warn"><p>{notice}</p></Callout></div>}
+      </div>
 
       <div className="layout">
         <nav className="sidenav" aria-label="Demo steps">
           <div className="navlabel">Demo storyline</div>
           {STEPS.map((x, i) => {
-            const st = stepStatus(x.key, s);
+            const mark = MARK[panelStatus(x.key, s)];
             const busy = running && (PANEL_OF[running] === x.key || PANEL_OF[running] === "*");
             return (
               <button key={x.key} className="navitem" aria-current={i === idx ? "step" : undefined} onClick={() => go(i)}
-                aria-label={`Demo ${x.key}: ${x.title} (${busy ? "running" : { ok: "up to date", stale: "stale", missing: "no results" }[st]})`}>
+                aria-label={`Demo ${x.key}: ${x.title} (${busy ? "running" : mark.say})`}>
                 <span className="letter">{x.key}</span>
                 <span className="t">{x.title}<span className="s">{x.sub}</span></span>
-                <span aria-label={busy ? "running" : st} title={busy ? "Running" : { ok: "Results up to date", stale: "Stale: older owner key", missing: "No results yet" }[st]}>
+                <span aria-hidden title={busy ? "Running" : mark.title}>
                   {busy ? <span className="spinner" style={{ color: "var(--series-1)" }} />
-                    : st === "ok" ? <span style={{ color: "var(--good-text)", fontWeight: 800 }}>✓</span>
-                      : st === "stale" ? <span style={{ color: "var(--warning-text)", fontWeight: 800 }}>!</span>
-                        : <span style={{ color: "var(--text-muted)" }}>○</span>}
+                    : <span style={{ color: mark.color, fontWeight: 800 }}>{mark.icon}</span>}
                 </span>
               </button>
             );
@@ -220,13 +322,23 @@ export default function App() {
           <div className="navhint">← → or PageUp / PageDown to move between demos.</div>
         </nav>
         <main>
-          {s ? <step.Panel s={s} ctl={{ running, run }}
-            refreshing={Boolean(running && (PANEL_OF[running] === step.key || PANEL_OF[running] === "*"))} />
-            : !offline && <p style={{ color: "var(--text-secondary)" }}>Loading saved results…</p>}
+          {s ? (
+            // One boundary per panel (keyed, so moving to another panel starts clean): a render error in one
+            // panel shows an error card there, and the other panels, the sidebar and the console keep working.
+            <ErrorBoundary key={step.key} name={`Demo ${step.key} (${step.title})`} onReload={refresh} resetKey={s}>
+              <step.Panel s={s} ctl={ctl}
+                refreshing={Boolean(running && (PANEL_OF[running] === step.key || PANEL_OF[running] === "*"))} />
+            </ErrorBoundary>
+          ) : !offline && <p style={{ color: "var(--text-secondary)" }}>Loading saved results…</p>}
         </main>
       </div>
 
-      <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)} />
+      <ErrorBoundary name="The console" onReload={() => setConsoleOpen(true)}>
+        <Console job={job} open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)}
+          timeout={job ? steps[job.info.step]?.timeout : undefined}
+          onCancel={job?.info.running && !job.lost && !cancelUnsupported ? cancel : undefined}
+          cancelling={Boolean(job?.info.running && cancelling === job.info.id)} />
+      </ErrorBoundary>
     </div>
   );
 }
