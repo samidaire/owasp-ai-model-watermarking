@@ -1,0 +1,30 @@
+# PostgreSQL 16 for the Sigil backend (DB-01, DEC-06). The backend itself runs natively (it needs the
+# GPU and the demo's Python environment):
+#
+#   docker compose up -d db
+#   set DATABASE_URL=postgresql+psycopg://sigil:sigil-dev-only@127.0.0.1:5432/sigil     (Windows cmd)
+#   export DATABASE_URL=postgresql+psycopg://sigil:sigil-dev-only@127.0.0.1:5432/sigil  (bash)
+#   python -m backend.app --simulate            # migrates the empty database and imports the demo history
+#
+# The port is published on 127.0.0.1 only. Change the password with SIGIL_DB_PASSWORD for anything but a
+# local demo. See docs/backend.md (backup and restore, native install).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sigil
+      POSTGRES_USER: sigil
+      POSTGRES_PASSWORD: ${SIGIL_DB_PASSWORD:-sigil-dev-only}
+    ports:
+      - "127.0.0.1:${SIGIL_DB_PORT:-5432}:5432"
+    volumes:
+      - sigil-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sigil -d sigil"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  sigil-pgdata:
