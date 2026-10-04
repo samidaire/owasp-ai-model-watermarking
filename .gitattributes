@@ -5,3 +5,8 @@
 *.gz binary
 *.png binary
 *.onnx binary
+*.sh text eol=lf
+*.ptau binary
+*.zkey binary
+*.wasm binary
+*.r1cs binary
