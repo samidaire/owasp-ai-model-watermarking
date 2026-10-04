@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sigil-watermark"
+version = "0.2.0"
+description = "Framework-agnostic neural-network watermarking with zero-knowledge ownership proofs (Circom + SnarkJS)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+  { name = "Sami Daire" },
+  { name = "Mohamed Ansari" },
+  { name = "Arfat Shaikh" },
+  { name = "Yash Bandiwadekar" },
+]
+dependencies = [
+  "numpy>=1.26",
+  "cryptography>=42",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.2"]
+tf = ["tensorflow>=2.16"]
+onnx = ["onnx>=1.16"]
+dev = ["pytest>=8", "pytest-timeout>=2.3"]
+
+[project.scripts]
+sigil = "sigil.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sigil"]
