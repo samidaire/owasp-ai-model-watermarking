@@ -84,8 +84,33 @@ def main():
         log(f"T={c['T']}: {block['owner_key_vs_nulls']['false_positives']}/{len(errs)} null pairs accepted, "
             f"errors {block['owner_key_vs_nulls']['errors']}")
 
-    # pooled: many independent (seed, owner key) pairs against every null, T=64
+    # common mode: unrelated networks' Uchida vectors share a mean component mu, so X @ w ~ mu * rowsum(X) and the
+    # extracted bits for a fixed key are largely predictable: bit_i ~ [mu * rowsum_i >= 0]. For a fixed owner key the
+    # null errors therefore cluster around the distance between b and that pattern (a per-key quantity).
     pcfg = P.Config()
+    cm_rows = []
+    for v in vecs:
+        cm_rows.append(float(v.mean() / v.std()))
+    pattern_dist, predicted_share = {}, []
+    for s in cfg["owner_seeds"]:
+        o = Owner(f"m5/mnist/owner/{s}", pcfg)
+        rs = o.X.astype(np.int64).sum(1)
+        for v in vecs:
+            bits = (o.X.astype(np.float64) @ v >= 0).astype(np.uint8)
+            pred = ((np.sign(v.mean()) * rs) >= 0).astype(np.uint8)
+            predicted_share.append(float((bits == pred).mean()))
+        pattern_dist[str(s)] = {"neg_mean": int(((rs <= 0).astype(np.uint8) != o.b).sum()),
+                                "pos_mean": int(((rs >= 0).astype(np.uint8) != o.b).sum())}
+    out["common_mode"] = {
+        "mean_over_std_of_null_vectors": stats(cm_rows),
+        "share_of_bits_predicted_by_rowsum_sign": stats(predicted_share),
+        "owner_signature_distance_to_common_mode_pattern": pattern_dist,
+        "note": "errors of a null model against a fixed key cluster near this distance; P[distance <= max_err] over "
+                "random keys is P[Bin(T, 1/2) <= max_err], so the pooled multi-key study, not the per-key one, bounds the FPR",
+    }
+    log(f"common mode: {out['common_mode']}")
+
+    # pooled: many independent (seed, owner key) pairs against every null, T=64
     W = np.stack([P.quantize(v, pcfg) for v in vecs])              # (nulls, M) int64
     pooled = []
     for j in range(cfg["pooled_keys"]):

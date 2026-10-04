@@ -268,7 +268,8 @@ def main():
                      f"max_err = {mn['configs']['T64']['protocol_config']['max_err']} (95% Clopper–Pearson upper bound "
                      f"{sci(o['cp95_upper'])}); pooled over {p['n']} independent keys: {p['false_positives']}/{p['n']} "
                      f"(upper bound {sci(p['cp95_upper'])}), against the binomial reference "
-                     f"P[Bin(64, 1/2) ≤ 8] = {sci(p['binomial_reference'])}.")
+                     f"P[Bin({mn['configs']['T64']['protocol_config']['T']}, 1/2) ≤ "
+                     f"{mn['configs']['T64']['protocol_config']['max_err']}] = {sci(p['binomial_reference'])}.")
     if ct_train:
         st = ct_train["summary"]
         c256 = st.get("T256", {}).get("acc_cost_pp")
@@ -402,6 +403,26 @@ def main():
               f"matches; Clopper–Pearson upper bound {sci(tsn['cp95_upper'])}; exact binomial FPR {sci(tsn['binomial_reference'])})."
               + (f" CIFAR-10: {cn['triggerset']['false_positives']}/{cn['triggerset']['pairs']} (max {cn['triggerset']['max_matches']})."
                  if cn else ""), "", f"![Null error distribution]({fig_nulls(mn)})", ""]
+        cmn = mn.get("common_mode")
+        if cmn:
+            dists = cmn["owner_signature_distance_to_common_mode_pattern"]
+            sh = cmn["share_of_bits_predicted_by_rowsum_sign"]["mean"]
+            side = "neg_mean" if cmn["mean_over_std_of_null_vectors"]["mean"] < 0 else "pos_mean"
+            ccm = [(k, b["common_mode"]) for k, b in (cn or {}).get("configs", {}).items() if b.get("common_mode")]
+            L += [f"**Why the per-key null errors spread wider than the binomial.** The null models' Uchida vectors share "
+                  f"a common-mode component (mean/std of the vector: {pm(cmn['mean_over_std_of_null_vectors'])}), so "
+                  f"X·w ≈ mean(w)·rowsum(X) and {sh * 100:.0f} % of a null model's bits are predicted by the sign of the "
+                  "key's row sums alone. For a *fixed* key, every unrelated model's errors therefore cluster near the "
+                  "distance between the signature and that pattern (owner keys here: "
+                  + ", ".join(f"s{k}: {v[side]}" for k, v in dists.items())
+                  + f" of {mn['configs']['T64']['protocol_config']['T']}). Over random keys that distance is itself "
+                  "Bin(T, ½), so the false-positive rate *over keys* equals the binomial reference — this is what the pooled "
+                  "study measures — but an individual owner should check at registration that their signature is far "
+                  "(≫ max_err) from the common-mode pattern of their architecture, or a later protocol version should "
+                  "centre w before projecting (protocol v2 fixes norm = none)."
+                  + (" CIFAR-10 ResNet-18 (BatchNorm after the conv): " + "; ".join(
+                      f"{k}: mean/std {pm(c['mean_over_std_of_null_vectors'])}, bits predicted "
+                      f"{c['share_of_bits_predicted_by_rowsum_sign']['mean'] * 100:.0f} %" for k, c in ccm) + "." if ccm else ""), ""]
         L += ["**θ per configuration:** max_err = T/8 (θ = 0.125) is kept for every configuration: no null model came "
               "close to it, and the pooled study matches the binomial model, so the binomial reference is the FPR to quote "
               "and the empirical bound is the evidence that the binomial model applies." if
@@ -516,13 +537,18 @@ def main():
                   "the registry timestamp (earliest registration wins), not by the watermark."]
         ex = [(n, st) for n, st in s.items() if st["family"] in ("extraction", "distillation")]
         if ex:
+            T = mm["protocol_config"]["T"]
+            null_sd = mn["configs"]["T64"]["owner_key_vs_nulls"]["errors"]["std"] if mn else None
             L += ["", "**Why the white-box mark fails extraction.** A distilled or extracted student is a fresh network: its "
                   "weights are only constrained to reproduce the victim's outputs, and the Uchida mark lives in the "
                   "victim's weights, not in its input–output behaviour. The student's errors against the owner's key are "
                   + "; ".join(f"{n}: {pm(st['errors'], 1, 1)}" for n, st in ex)
-                  + f" (chance is {mm['protocol_config']['T'] // 2}), all far above max_err = {mm['protocol_config']['max_err']}. "
-                  "They sit somewhat below T/2 because an unrelated network's Uchida vector is not a perfectly random "
-                  "direction (see the null errors in §4); none comes near the threshold."]
+                  + f" — centred on chance (T/2 = {T // 2}) and never near max_err = {mm['protocol_config']['max_err']} "
+                  f"(smallest single value: {min(r['errors'] for r in mm['rows'] if r['model'] == 'wm' and r['family'] in ('extraction', 'distillation'))}). "
+                  f"The seed-to-seed spread is wider than the binomial √T/2 = {math.sqrt(T) / 2:.1f}"
+                  + (f", as it is for independently trained null models ({null_sd:.1f}, §4)" if null_sd else "")
+                  + (": for a fixed key, unrelated networks' bits are correlated through the common-mode component "
+                     "described in §4." if mn and mn.get("common_mode") else ".")]
         if "dual" in mm["summary"]:
             dx = [(n, st) for n, st in mm["summary"]["dual"].items() if st["family"] in ("extraction", "distillation")]
             L += ["", "**Does the trigger-set mark hold under extraction?** On MNIST: "
@@ -540,9 +566,21 @@ def main():
                        "The trigger set does **not** survive black-box extraction with in-distribution attacker queries: "
                        "the attacker never queries the out-of-distribution trigger images, so the student never learns their "
                        "secret labels. This matches the known weakness of Adi-style trigger sets against extraction "
-                       "(Lukas et al., SoK 2022). Per NFR-10, no copy may claim that any mark here 'survives extraction'.")
-                  + " The trigger set does still add evidence against removal attacks that keep the model itself "
-                    "(quantisation, pruning, fine-tuning), where the dual table above shows it."]
+                       "(Lukas et al., SoK 2022). Per NFR-10, no copy may claim that any mark here 'survives extraction'.")]
+            # dual-mark policy (ROB-06): per seed, is at least one of the two marks detected?
+            dual_rows = [r for r in mm["rows"] if r["model"] == "dual"]
+            names = list(dict.fromkeys(r["attack"] for r in dual_rows))
+            either = {n: sum(bool(r["survived"] or r.get("trigger_accepted")) for r in dual_rows if r["attack"] == n) for n in names}
+            nseed = len(mm["seeds"])
+            wb_only = [n for n in names if mm["summary"]["dual"][n]["trigger_accepted"] < nseed <= either[n]
+                       and mm["summary"]["dual"][n]["survived"] == nseed]
+            ts_only = [n for n in names if mm["summary"]["dual"][n]["survived"] < nseed <= either[n]]
+            lost = [n for n in names if either[n] < nseed]
+            L += ["", f"**Dual-mark policy (ROB-06).** Counting a seed as detected when *either* mark is accepted, the dual "
+                  f"model is detected in every seed for {sum(either[n] == nseed for n in names)} of {len(names)} rows. The "
+                  f"trigger set covers rows where the white-box mark fails: {', '.join(ts_only) or 'none'}. The white-box "
+                  f"mark covers rows where the trigger set fails: {', '.join(wb_only) or 'none'}. Rows where neither mark "
+                  f"is detected in some seed: {', '.join(lost) or 'none'}."]
     if cm:
         s256 = cm["summary"].get("T256", {})
         rem = [n for n, st in s256.items() if st["survived"] < st["n"]]

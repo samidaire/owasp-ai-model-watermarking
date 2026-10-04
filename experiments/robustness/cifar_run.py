@@ -62,9 +62,13 @@ class Run:
         tsc = self.cfg["triggerset"]
         self.spec = TS.Spec(n=tsc["n"], shape=(3, 32, 32), num_classes=10, grid=tsc["grid"])
         self.k_ts = TS.threshold(self.spec.n, 10, tsc["fpr"])
+        self._owners = {}
 
     def owner(self, s, T):
-        return Owner(f"m5/cifar/owner/{s}", self.pcfgs[T])
+        key = (s, T)
+        if key not in self._owners:
+            self._owners[key] = Owner(f"m5/cifar/owner/{s}", self.pcfgs[T])
+        return self._owners[key]
 
     def trigger_set(self, s):
         o = self.owner(s, 256)
@@ -183,6 +187,14 @@ class Run:
             if rerr:
                 blk["realigned_nulls"] = {"n": len(rerr), "false_positives": sum(e <= pcfg.max_err for e in rerr),
                                           "errors": stats(rerr), "min_errors": int(min(rerr))}
+            share = []
+            for o in owners:
+                rs = o.X.astype(np.int64).sum(1)
+                for v in vecs:
+                    bits = (o.X.astype(np.float64) @ v >= 0).astype(np.uint8)
+                    share.append(float((bits == ((np.sign(v.mean()) * rs) >= 0)).mean()))
+            blk["common_mode"] = {"mean_over_std_of_null_vectors": stats([float(v.mean() / v.std()) for v in vecs]),
+                                  "share_of_bits_predicted_by_rowsum_sign": stats(share)}
             out["configs"][f"T{T}"] = blk
             log(f"nulls T={T}: {blk}")
         matches = []

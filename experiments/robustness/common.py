@@ -90,11 +90,15 @@ class Owner:
         self.keys = keypair(f"{label}/ed25519")
         self.pkh = P.pk_hash(self.keys.public_bytes)
         self.seed = seed_int(f"{label}/seed")
-        self.X = P.key_matrix(self.seed, self.pkh, cfg).astype(np.float32)
+        self._Xi = P.key_matrix(self.seed, self.pkh, cfg)
+        self.X = self._Xi.astype(np.float32)
         self.b = P.signature_bits(self.seed, self.pkh, cfg)
 
     def detect(self, w: np.ndarray) -> P.Detection:
-        return P.detect(self.seed, self.pkh, self.cfg, w)
+        """Exactly sigil.protocol.detect, with the derived key cached (deriving it costs ~2 s at T=256, M=2304)."""
+        w_q = np.asarray(w) if np.asarray(w).dtype.kind == "i" else P.quantize(w, self.cfg)
+        e = P.errors(P.extract_bits(self._Xi, w_q), self.b)
+        return P.Detection(errors=e, ber=e / self.cfg.T, max_err=self.cfg.max_err, accepted=e <= self.cfg.max_err)
 
 
 # ------------------------------------------------------------------ statistics
