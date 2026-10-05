@@ -238,7 +238,8 @@ figcaption b { color: var(--espresso); }
       <tr><td>Trusted setup</td><td>Groth16 needs public parameters made once per circuit. Phase 1 uses the public Perpetual Powers of Tau ceremony; phase 2 is one contribution for Sigil's circuit.</td></tr>
       <tr><td>On-chain verifier</td><td>A Solidity smart contract exported by SnarkJS that checks the same proof on an Ethereum-style chain. The demo runs it on a local Hardhat chain.</td></tr>
       <tr><td>Protocol v1 / v2</td><td>v1 is the research baseline (demos A–E). v2 is the full fix (demo F and the SDK). See §3.7.</td></tr>
-      <tr><td>Replay (simulate) mode</td><td>The app shows the saved results and the Run buttons replay recorded logs; nothing executes. Live mode runs the real scripts on your machine.</td></tr>
+      <tr><td>Replay (simulate) mode</td><td>The Run buttons replay the recorded output of real runs and then show those saved results; nothing executes. Live mode runs the real scripts on your machine.</td></tr>
+      <tr><td>Clear</td><td>Empties every page and the console so the next runs start from nothing. Only the view is cleared: the saved results on disk are kept.</td></tr>
     </tbody>
   </table>
 </section>
@@ -376,7 +377,7 @@ figcaption b { color: var(--espresso); }
     <li>A console window opens and your browser opens <code>http://127.0.0.1:8765</code> on the home page. If the browser doesn't open, type that address yourself.</li>
     <li><strong>Keep the console window open</strong> while you use the app. Closing it (or pressing Ctrl+C in it) stops the app.</li>
   </ol>
-  <div class="box caramel"><span class="t">What replay mode means</span><p>Every page shows the saved results from real runs. The Run buttons replay the recorded output of those runs in the console, so presenting works on any laptop, with no installs and no risk. A banner at the top of the app says <strong>Simulate mode</strong> so nobody mistakes it for a live run.</p></div>
+  <div class="box caramel"><span class="t">What replay mode means</span><p>Every page starts <strong>empty</strong>: nothing has run yet. Pressing a Run button replays the recorded output of a real run in the console, and when it finishes that demo's saved results appear on its pages. So presenting works on any laptop, with no installs and no risk. A banner at the top says <strong>Simulate mode</strong> so nobody mistakes it for a live run. <strong>Clear results</strong> empties the pages again for the next audience; <strong>Show saved results</strong> fills them all at once.</p></div>
 
   <h3>5.3 Option 2 · Everything live</h3>
   <ol class="steps">
@@ -450,6 +451,8 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
       <div class="legend"><b>✓</b><span>up to date</span><b>!</b><span>stale: made with an older owner key (re-run it)</span><b>–</b><span>freshness unknown</span><b>○</b><span>no results yet</span><b>◌</b><span>spinning: being refreshed by the current run</span></div></li>
     <li><strong>Environment chip:</strong> your GPU's name, <strong>CPU only</strong>, or <strong>No ML stack: replay only</strong> when PyTorch isn't installed.</li>
     <li><strong>Run all live:</strong> re-verifies demo A, then runs B, C, D and E1 + E2. Demo F and E3 aren't part of it (run F from its own page; E3 stays precomputed).</li>
+    <li><strong>Clear results:</strong> empties every page and the console for a new test. The saved results on disk are kept; nothing is deleted.</li>
+    <li><strong>Show saved results</strong> (under Clear, while the pages are empty): fills every page with the saved results at once, for example on a laptop where nothing can run live.</li>
     <li><strong>Motion:</strong> turns the animations off, useful on a slow projector laptop.</li>
   </ul>
   <h4>Console</h4>
@@ -457,7 +460,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
   <table>
     <thead><tr><th style="width:36%">Console status</th><th>Meaning</th></tr></thead>
     <tbody>
-      <tr><td>Idle</td><td>Nothing has run in this session; the saved results are shown</td></tr>
+      <tr><td>Idle</td><td>Nothing has run since the page opened (or since Clear)</td></tr>
       <tr><td>◌ Running <em>name</em> · seconds</td><td>A run is streaming; the last line is shown next to the timer</td></tr>
       <tr><td>✓ <em>name</em> finished</td><td>The run succeeded and the pages reloaded its results</td></tr>
       <tr><td>■ <em>name</em> cancelled</td><td>You pressed Cancel run. Results from before the run are kept</td></tr>
@@ -466,15 +469,16 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
   </table>
 
   <h3>6.3 Overview (<code>/app</code>)</h3>
-  <p>The four tiles summarise the project: the <strong>Groth16 proof</strong> time and size, the <strong>accuracy cost</strong> of the watermark, <strong>forgeries accepted</strong> in demo D's seed search, and <strong>attacks survived</strong> in demo B.</p>
+  <figure><img src="img/overview-empty.jpg" alt="Overview before anything has run"><figcaption><b>The starting state.</b> Every page begins empty: "Nothing has run yet", tiles at "—", every demo marked ○ in the sidebar. <strong>Run all live</strong> runs demos A–E and <strong>Run demo F live</strong> makes the zero-knowledge proof; each page fills in as its run finishes. Pages that are still empty show the Run button that fills them.</figcaption></figure>
+  <p>Once demos have run, the four tiles summarise the project: the <strong>Groth16 proof</strong> time and size, the <strong>accuracy cost</strong> of the watermark, <strong>forgeries accepted</strong> in demo D's seed search, and <strong>attacks survived</strong> in demo B.</p>
   <figure><img src="img/overview-models.jpg" alt="Models, proof pipeline and audit log"><figcaption><b>Models, proof pipeline and audit log.</b> The models table lists every checkpoint with its accuracy and owner BER; the last column links to the page that explains it. The pipeline card shows the four protocol steps for the v2 model. The audit log lists recent events from the saved records (commitments, registrations, runs).</figcaption></figure>
   <table>
     <thead><tr><th>Model</th><th>What it is</th><th class="num">Accuracy</th><th class="num">Owner BER</th><th>Status</th></tr></thead>
     <tbody>
       <tr><td><code>watermarked.pt</code></td><td>Protocol v1 watermarked model (demo A)</td><td class="num">98.66%</td><td class="num">0.000</td><td><span class="pill good">Ownership shown</span></td></tr>
       <tr><td><code>watermarked_v2.pt</code></td><td>Protocol v2 watermarked model (demo F)</td><td class="num">98.57%</td><td class="num">0.000</td><td><span class="pill good">ZK-verified</span></td></tr>
-      <tr><td><code>clean.pt</code></td><td>Same network, never watermarked</td><td class="num">98.69%</td><td class="num">0.531</td><td><span class="pill badp">No match</span></td></tr>
-      <tr><td><code>null_0–3.pt</code></td><td>Four independently trained models, never watermarked</td><td class="num">≈ 98.8%</td><td class="num">0.406–0.594</td><td><span class="pill badp">No match</span></td></tr>
+      <tr><td><code>clean.pt</code></td><td>Same network, never watermarked</td><td class="num">98.69%</td><td class="num">0.531</td><td><span class="pill neutral">Not claimed (correct)</span></td></tr>
+      <tr><td><code>null_0–3.pt</code></td><td>Four independently trained models, never watermarked</td><td class="num">≈ 98.8%</td><td class="num">0.406–0.594</td><td><span class="pill neutral">Not claimed (correct)</span></td></tr>
     </tbody>
   </table>
 
@@ -484,20 +488,21 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
   <figure><img src="img/embed-v1.jpg" alt="Embed page, protocol v1"><figcaption><b>Protocol v1 (demo A).</b> The research baseline. Its 64 signature bits <em>are</em> drawn (dark = 1) because v1 is for teaching. <strong>Re-verify live</strong> re-checks the saved models without retraining. <strong>Retrain with a new seed…</strong> asks for confirmation first: it replaces the owner key and makes demos B–E stale until they are re-run.</figcaption></figure>
 
   <h3>6.5 Verify ownership (<code>/app/verify</code>)</h3>
-  <figure><img src="img/verify-ok.jpg" alt="Verify page, honest proof"><figcaption><b>The honest claim.</b> Left: <strong>The claim</strong> (model, claimed owner, commitment, registration time) and the actual <code>proof.json</code> / <code>public.json</code> from the last demo F run, with the five public signals labelled. Right: the verdict stamp, <strong>Ownership verified</strong>, with "0 of 64 bits revealed".</figcaption></figure>
+  <figure><img src="img/verify-ok.jpg" alt="Verify page, honest proof"><figcaption><b>The honest claim.</b> Left: <strong>The claim</strong> (model, claimed owner, commitment, registration time) and the actual <code>proof.json</code> / <code>public.json</code> from the last demo F run, with the five public signals labelled. Right: the verdict stamp, <strong>Ownership verified</strong>, with "0 of 64 bits revealed". <strong>Verify this proof live</strong> runs every check again and prints them in the console.</figcaption></figure>
   <div class="two">
     <figure><img src="img/verify-onchain.jpg" alt="On-chain verdict"><figcaption><b>On-chain.</b> The same proof checked by the Solidity verifier on a local chain: verify gas 243,225, deploy 430,402, chain 31337. A tampered public signal is rejected there too. If the on-chain record belongs to an older proof, the card says so.</figcaption></figure>
-    <figure><img src="img/verify-rejected.jpg" alt="Rejected proof"><figcaption><b>A misuse.</b> Clicking <strong>tampered proof bytes</strong> shows what demo F's verifier said about that real attempt: the stamp turns red and shakes, with the reason. <strong>Back to the honest proof</strong> resets it.</figcaption></figure>
+    <figure><img src="img/verify-rejected.jpg" alt="Rejected proof"><figcaption><b>A misuse, run live.</b> Clicking <strong>tampered proof bytes</strong> changes one number in the saved proof and runs the real verifier on it again (about 1 s). The stamp turns red and shakes, and the console prints all twelve checks with the failing one marked <code>[XX]</code>. <strong>Back to the honest proof</strong> re-verifies the original.</figcaption></figure>
   </div>
   <figure><img src="img/verify-checks-failed.jpg" alt="Checks list with one failure"><figcaption><b>What gets checked.</b> The eleven checks from §3.5. During a misuse, the one that caught it turns red (here: Groth16 proof verifies).</figcaption></figure>
   <h4>The four misuse buttons</h4>
+  <p>Each button takes demo F's saved proof, changes one thing, and runs the verifier on it again (<code>demo/09_verify_live.py</code>, about a second). In replay mode the console plays back a recorded run of the same check.</p>
   <table>
-    <thead><tr><th style="width:27%">Button</th><th>What was attempted in demo F</th><th style="width:27%">Check that catches it</th></tr></thead>
+    <thead><tr><th style="width:27%">Button</th><th>What is changed</th><th style="width:27%">Check that catches it</th></tr></thead>
     <tbody>
-      <tr><td>replayed for another claim</td><td>Re-submit the owner's valid proof for a new claim (different nonce)</td><td>Made for this claim (nonce)</td></tr>
-      <tr><td>checked against a different model</td><td>Present the proof against another model file</td><td>About this exact model (w_hash)</td></tr>
-      <tr><td>tampered proof bytes</td><td>Change bytes inside the proof</td><td>Groth16 proof verifies</td></tr>
-      <tr><td>receipt from an untrusted registry</td><td>Back the registration with a receipt from a registry the verifier doesn't trust</td><td>Registry receipt from a trusted registry</td></tr>
+      <tr><td>replayed for another claim</td><td>The verifier opens a new claim (fresh nonce) and the old proof is resubmitted</td><td>Made for this claim (nonce)</td></tr>
+      <tr><td>checked against a different model</td><td>The suspect file is <code>clean.pt</code>, a model that was never watermarked</td><td>About this exact model (w_hash)</td></tr>
+      <tr><td>tampered proof bytes</td><td>The first number of the proof (<code>pi_a</code>) is increased by 1</td><td>Groth16 proof verifies</td></tr>
+      <tr><td>receipt from an untrusted registry</td><td>The registration is timestamped by a registry the verifier doesn't trust (and later than the claim)</td><td>Registry receipt from a trusted registry</td></tr>
     </tbody>
   </table>
 
@@ -537,12 +542,13 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
 
   <h3>W1 · The 5-minute presentation</h3>
   <ol class="steps">
+    <li><strong>Before the audience arrives:</strong> press <strong>Clear results</strong> in the sidebar, so every page starts empty.</li>
     <li><strong>Home</strong> (<code>/</code>), 30 s: read the headline, "Prove it's yours. Reveal nothing." Point at the weight grid: the caramel cells carry signature bits. Click <strong>Open dashboard</strong>.</li>
-    <li><strong>Overview</strong>, 45 s: walk the four tiles: 3.73 s to prove, −0.03 pp accuracy, 0 of 20,000 forgeries, 13 of 14 attacks survived. In the models table, show that the clean and null models read "No match".</li>
+    <li><strong>Overview</strong>, 60 s: it says nothing has run yet. Press <strong>Run all live</strong>, then <strong>Run demo F live</strong>, and let the console stream (about 2 minutes live, a few seconds in replay mode). The tiles fill in: 3.73 s to prove, −0.03 pp accuracy, 0 of 20,000 forgeries, 13 of 14 attacks survived. In the models table, the clean and null models read "Not claimed".</li>
     <li><strong>Embed watermark</strong>, 45 s: on protocol v2, point out that the signature is drawn as hidden squares and only the commitment is public. Switch to v1 to show what a revealed signature looks like, then back.</li>
-    <li><strong>Verify ownership</strong>, 90 s: read the claim, show the proof is tiny (three curve points), then the green stamp. Switch to <strong>On-chain</strong>: 243,225 gas. Click <strong>tampered proof bytes</strong>: red stamp, and the failing check is highlighted. Click <strong>Back to the honest proof</strong>.</li>
+    <li><strong>Verify ownership</strong>, 90 s: read the claim, show the proof is tiny (three curve points), then the green stamp. Switch to <strong>On-chain</strong>: 243,225 gas. Click <strong>tampered proof bytes</strong>: the verifier runs again, the stamp turns red, and the console lists every check with the failing one marked. Click <strong>Back to the honest proof</strong>.</li>
     <li><strong>Robustness lab</strong>, 60 s: the pruning chart: "the mark outlives the model". Point at the one red card (feature permutation) and say it's the known limit.</li>
-    <li>Close with the research demos if there is time (W5).</li>
+    <li>Close with the research demos if there is time (W5). For the next group, press <strong>Clear results</strong> and start again.</li>
   </ol>
 
   <h3>W2 · Verify a claim and show a rejection</h3>
@@ -551,7 +557,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
     <li>Read <strong>The claim</strong> card: which model, whose key, which commitment, when it was registered.</li>
     <li>In the proof box, note the five public signals: owner key hash, settings hash, commitment, w_hash, nonce. Nothing secret is in them.</li>
     <li>Check the verdict: <strong>Ownership verified</strong>, 0 of 64 bits revealed. Scroll to <strong>What gets checked</strong>: all eleven are ✓.</li>
-    <li>Under <strong>Try a misuse</strong>, click each button in turn. For each, read the reason on the stamp card and find the red check in the list (see the table in §6.5).</li>
+    <li>Under <strong>Try a misuse</strong>, click each button in turn. Each one runs the verifier again: read the reason on the stamp card, find the red check in the list, and point at the <code>[XX]</code> line in the console (see the table in §6.5).</li>
     <li>Toggle <strong>Off-chain / On-chain</strong> to show the same proof checked by the smart contract.</li>
   </ol>
 
@@ -594,9 +600,11 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
   </ol>
   <h4>In front of the teacher</h4>
   <ol class="steps">
-    <li><strong>Note the "before".</strong> On Overview, read out "0 / 20,000" forgeries. On Verify ownership, read out the first digits of <code>pi_a</code> in the proof box and the registration time.</li>
+    <li><strong>Start from nothing.</strong> Press <strong>Clear results</strong>: every page is empty and the console is idle. Everything the teacher sees from now on comes from runs they watch.</li>
+    <li><strong>Note the "before"</strong> if you showed saved results earlier: on Overview, "0 / 20,000" forgeries; on Verify ownership, the first digits of <code>pi_a</code> and the registration time.</li>
     <li><strong>Let the teacher choose.</strong> Open <strong>Demo D</strong>, let the teacher pick the number of thief seeds (20,000 or 100,000) and click <strong>Run live</strong>. The console streams the real search (about 3 s for 20,000, about 17 s for 100,000). Afterwards the Overview tile reads, for example, "0 / 100,000". Measured on this laptop: 100,000 seeds in 16.8 s, 0 accepted.</li>
     <li><strong>Generate a fresh proof.</strong> Open <strong>Demo F</strong> and click <strong>Run demo F live</strong> (about 80 s on a GPU laptop, 86 s CPU-only). Explain the six parts while the console streams them. When it finishes, the Verify page shows a <em>brand-new</em> proof: different <code>pi_a</code> digits, a new nonce, a new registration time, and new entries in the Overview audit log.</li>
+    <li><strong>Misuse it live.</strong> On Verify ownership, click the misuse buttons: each one changes the new proof and runs the verifier on it in about a second, with every check printed in the console.</li>
     <li><strong>Attack it live.</strong> On <strong>Robustness lab</strong>, click <strong>Run attacks live</strong> (about 10 s): pruning, quantisation and fine-tuning run again and the chart redraws.</li>
     <li><strong>Optional, strongest:</strong> on <strong>Embed watermark → Protocol v1</strong>, click <strong>Retrain with a new seed…</strong> (about 35 s on a GPU). A new owner seed, a new commitment and new signature bits appear. Demos B–E are then marked <strong>!</strong> (stale) until you click <strong>Run all live</strong> (about 30 s), which recomputes them with the new key. Do this last.</li>
   </ol>
@@ -677,9 +685,9 @@ print(detection.errors, detection.accepted)</pre>
   <table>
     <thead><tr><th>Model</th><th class="num">Accuracy</th><th class="num">Owner BER</th><th>Verdict</th></tr></thead>
     <tbody>
-      <tr><td>Clean (never watermarked)</td><td class="num">98.69%</td><td class="num">0.531</td><td class="bad">No match</td></tr>
+      <tr><td>Clean (never watermarked)</td><td class="num">98.69%</td><td class="num">0.531</td><td>Not claimed (correct)</td></tr>
       <tr><td>Watermarked (v1)</td><td class="num">98.66%</td><td class="num">0.000</td><td class="ok">Ownership shown</td></tr>
-      <tr><td>Null models 0–3</td><td class="num">98.75–98.80%</td><td class="num">0.484 · 0.594 · 0.406 · 0.453</td><td class="bad">No match</td></tr>
+      <tr><td>Null models 0–3</td><td class="num">98.75–98.80%</td><td class="num">0.484 · 0.594 · 0.406 · 0.453</td><td>Not claimed (correct)</td></tr>
     </tbody>
   </table>
 
@@ -751,7 +759,7 @@ print(detection.errors, detection.accepted)</pre>
   <table>
     <thead><tr><th style="width:36%">Case</th><th>Where to see it</th><th style="width:30%">Why it fails</th></tr></thead>
     <tbody>
-      <tr><td>Replayed proof</td><td>Verify → Try a misuse</td><td>Nonce mismatch</td></tr>
+      <tr><td>Replayed proof</td><td>Verify → Try a misuse (re-runs the verifier)</td><td>Nonce mismatch</td></tr>
       <tr><td>Proof checked against another model</td><td>Verify → Try a misuse</td><td>w_hash mismatch</td></tr>
       <tr><td>Tampered proof bytes</td><td>Verify → Try a misuse</td><td>The zk-SNARK doesn't verify</td></tr>
       <tr><td>Receipt from an untrusted registry</td><td>Verify → Try a misuse</td><td>Registry receipt invalid</td></tr>
@@ -803,6 +811,7 @@ print(detection.errors, detection.accepted)</pre>
       <tr><td>Sidebar says "No ML stack: replay only"</td><td>PyTorch isn't installed for the Python the server uses. Run the setup (Option 2), start with <code>Start-Demo-UI.cmd</code>, or present in replay mode.</td></tr>
       <tr><td>Demo F says the circuit isn't set up</td><td>Re-run the setup (it installs <code>dist/sigil-proving-keys-t64.zip</code>), or run <code>.venv\Scripts\python -m sigil.cli zk-setup</code> (about 3 minutes).</td></tr>
       <tr><td>Antivirus blocks <code>tools/bin/circom.exe</code></td><td>It's the official circom 2.2.3 release from github.com/iden3/circom. Allow it, or present demo F in replay mode.</td></tr>
+      <tr><td>Every page is empty</td><td>That's the starting state (or someone pressed Clear). Run a demo or <strong>Run all live</strong>, or press <strong>Show saved results</strong> in the sidebar.</td></tr>
       <tr><td>A demo shows "!" (stale) in the sidebar</td><td>It was made with an older owner key (after a Retrain). Re-run it, or <strong>Run all live</strong>.</td></tr>
       <tr><td>The page looks old or the fonts look plain</td><td>Hard-refresh with Ctrl+F5. The fonts are bundled; nothing is loaded from the internet.</td></tr>
       <tr><td>Animations stutter on the projector laptop</td><td>Switch <strong>Motion</strong> off in the sidebar.</td></tr>
@@ -813,7 +822,7 @@ print(detection.errors, detection.accepted)</pre>
   <h4>Does it need the internet, or send data anywhere?</h4>
   <p>No. The app and the server run on your machine and listen only on <code>127.0.0.1</code>. Only the optional setup downloads packages.</p>
   <h4>Is replay mode faking the results?</h4>
-  <p>No. The pages show the saved results of real runs, and the console replays their recorded output. The banner says it is replay mode. Note that the recorded console logs and the saved result files come from runs made at slightly different times, so a few printed values can differ by a bit or two (for example, demo F6's owner shows 0 of 64 wrong in the replayed log and 1 of 64 in the saved results). Live mode always shows the current run.</p>
+  <p>No. Pages start empty; pressing Run replays the recorded output of a real run in the console, then shows that run's saved results. The banner says it is replay mode. Note that the recorded console logs and the saved result files come from runs made at slightly different times, so a few printed values can differ by a bit or two (for example, demo F6's owner shows 0 of 64 wrong in the replayed log and 1 of 64 in the saved results). Live mode always shows the current run.</p>
   <h4>Can I watermark my own model?</h4>
   <p>Yes, with the SDK (chapter 8): PyTorch training via <code>embed_torch</code>, Keras via the Keras adapter, and detection and verification from <code>.pt</code>, <code>.h5</code>/<code>.keras</code> or <code>.onnx</code> files.</p>
   <h4>What exactly does the verifier learn?</h4>

@@ -69,6 +69,12 @@ await scrollTo("#how", "start", -20); await shot("home-how");
 await scrollTo("#robust", "start", -20); await shot("home-robust");
 await scrollTo("#team", "start", -20); await shot("home-team");
 
+// The starting state: nothing has run yet (no stored view), then every saved result shown for the tour
+await go("/app");
+await js(`localStorage.removeItem("sigil.shown"); localStorage.removeItem("sigil.clearedAt");`);
+await go("/app"); await shot("overview-empty");
+await js(`localStorage.setItem("sigil.shown", JSON.stringify(["train","attacks","forgery","committed_seed","zk","zk_hashed","protocol_v2"]));`);
+
 // Overview
 await go("/app"); await shot("overview");
 await scrollTo(".page .cols", "start", -24); await shot("overview-models");
@@ -81,7 +87,9 @@ await click(".segbar button", "v1"); await scrollTo(".page h1", "start", -150); 
 await go("/app/verify"); await scrollTo(".page h1", "start", -150); await shot("verify-ok");
 await click(".segbar button", "On-chain"); await scrollTo(".page h1", "start", -150); await shot("verify-onchain");
 await click(".segbar button", "Off-chain");
-await click(".page button", "tampered proof bytes"); await sleep(900); await scrollTo(".page h1", "start", -150); await shot("verify-rejected");
+// a misuse button re-runs the verifier (replayed in simulate mode): verdict above, every check in the console
+await click(".page button", "tampered proof bytes"); await sleep(2600); await scrollTo(".page h1", "start", -150); await shot("verify-rejected");
+await click(".console button", "Hide console");
 await scrollTo(".page .stp.fail", "center", 80); await shot("verify-checks-failed");
 
 // Robustness

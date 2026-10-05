@@ -26,8 +26,9 @@ python demo/server.py --simulate
 
 Then open <http://127.0.0.1:8765>. On Windows you can double-click `Start-Demo-UI-Simulate.cmd` instead.
 
-Every page shows the saved results, and the Run buttons replay recorded runs. Use this as the fallback during
-the presentation.
+Every page starts empty. A Run button replays the recorded output of a real run in the console, then that demo's
+saved results appear. **Clear results** (sidebar) empties the pages for a new test; **Show saved results** fills
+them all at once. Use this mode as the fallback during the presentation.
 
 ### The pages
 
@@ -64,17 +65,21 @@ Then start the app: double-click `Start-Demo-UI.cmd` (Windows), or run `.venv/bi
 3. Keep a second terminal ready with `python demo/server.py --simulate --port 8766` in case anything goes wrong.
 
 **During:**
+- **Start clean:** press **Clear results** so every page is empty, then fill them by running: **Run all live**
+  (A–E) and **Run demo F live**. Clear again for the next group.
 - **Suggested route:** Home → Overview → Embed watermark → Verify ownership (try a misuse) → Robustness lab,
   then the research demos A–F for the full story.
 - **Navigate** with the sidebar. Inside the research demos, ← → (or a presentation clicker's PageUp /
   PageDown) moves between A–F.
 - **Run** with the caramel buttons. The console at the bottom streams the run live; **Cancel run** stops it.
+- **Misuse:** on Verify ownership, each "Try a misuse" button re-runs the verifier on the saved proof with one thing
+  changed (about 1 s); the console prints every check, the failing one marked `[XX]`.
 - **Say** what's in each demo's **Presenter notes**. The caveats there are the honest limits examiners will
   ask about.
 - **Motion:** the toggle in the sidebar turns the animations off if the projector machine is slow.
 
 **Showing the teacher it's really live** (needs Option 2 and `Start-Demo-UI.cmd`, so no "Simulate mode" banner):
-1. Note the "before": Overview says 0 / 20,000 forgeries; Verify shows the proof's first `pi_a` digits.
+1. Press **Clear results**: every page is empty, so everything that appears comes from runs the teacher watches.
 2. Demo D: let the teacher pick 20,000 or 100,000 thief seeds and click **Run live** (~3 s / ~17 s).
    The Overview tile changes to the new count.
 3. Demo F: **Run demo F live** (~80 s). The Verify page then shows a brand-new proof (new `pi_a`, nonce and

@@ -56,8 +56,8 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
         </div>
         <div className="actions">
           {nothing ? <>
-            <RunButton ctl={ctl} step="protocol_v2" />
             <RunButton ctl={ctl} step="all" primary />
+            <RunButton ctl={ctl} step="protocol_v2" />
           </> : <>
             <Link to="/app/embed" className="btn">Embed watermark</Link>
             <Link to="/app/verify" className="btn primary">Verify ownership <Icon name="arrow" size={18} /></Link>
