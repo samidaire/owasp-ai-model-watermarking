@@ -154,7 +154,6 @@ main { padding: 28px 36px calc(var(--console-h, 140px) + 36px); min-width: 0; }
 .btn.primary { background: var(--caramel); }
 .btn.primary:hover:not(:disabled) { animation: jelly .8s ease-out; }
 .btn.subtle { background: transparent; box-shadow: none; }
-select.sel { min-height: 40px; padding: 0 12px; border-radius: 12px; border: var(--line); background: var(--paper); font-weight: 600; }
 .toggle {
   display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer;
   border: 1.5px solid var(--espresso); background: var(--paper); font-weight: 700; font-size: 13px;

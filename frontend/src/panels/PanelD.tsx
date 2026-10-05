@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Dropdown } from "../components/Dropdown";
 import { panelStale } from "../stale";
 import { Histogram } from "../components/charts";
 import { Callout, Card, Empty, Notes, Stat, Verdict } from "../components/ui";
@@ -18,13 +19,13 @@ export function PanelD({ s, ctl, refreshing }: PanelProps) {
       claim="Commit at embedding time to a secret seed, and derive both the key and the signature from it. Then the thief can no longer choose a signature after seeing the model."
       stale={panelStale("D", s)} refreshing={refreshing}
       actions={<>
-        <label className="actions" style={{ gap: 6, color: "var(--text-secondary)", fontSize: 13 }}>
-          Thief's budget
-          <select className="sel" value={tries} onChange={(e) => setTries(Number(e.target.value))} disabled={ctl.running !== null}>
-            {/* The catalogue's duration is for the smallest budget; larger ones scale with the number of seeds. */}
-            {budgets.map((t) => <option key={t} value={t}>{int(t)} seeds ({about((step.seconds * t) / budgets[0])})</option>)}
-          </select>
-        </label>
+        <span className="actions" style={{ gap: 8, color: "var(--text-secondary)", fontSize: 13 }}>
+          <span id="thief-budget-label">Thief's budget</span>
+          {/* The catalogue's duration is for the smallest budget; larger ones scale with the number of seeds. */}
+          <Dropdown labelledBy="thief-budget-label" value={String(tries)} disabled={ctl.running !== null} minWidth={220}
+            onChange={(v) => setTries(Number(v))}
+            options={budgets.map((t) => ({ value: String(t), label: `${int(t)} seeds (${about((step.seconds * t) / budgets[0])})` }))} />
+        </span>
         <RunButton ctl={ctl} step="committed" primary tries={tries} />
       </>}
       notes={<Notes

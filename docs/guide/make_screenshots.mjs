@@ -83,6 +83,7 @@ const scrollToText = (sel, text, dy = 0) =>
 
 // The model bar with a tested stolen copy
 await useModel("prune90"); await go("/app"); await scrollTo(".modelbar", "start", -24); await shot("modelbar");
+await js(`document.querySelector(".modelbar .dd-btn").click(); await new Promise(r => setTimeout(r, 500));`); await shot("modelbar-menu");
 await useModel("watermarked_v2");
 
 // Overview
