@@ -31,6 +31,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+import model_catalogue
 from demo_common import RESULTS, ROOT, child_env, current_commitment, is_noise, scrub_paths
 
 API_VERSION = 1
@@ -46,7 +47,7 @@ CODE_CANCELLED, CODE_TIMED_OUT = -2, -3
 CONFIG = {"ui": DIST, "simulate": False, "sim_delay": 1.0}
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
 
-# step -> list of script invocations ("{tries}" is substituted from the request)
+# step -> list of script invocations ("{tries}" and "{model}" are substituted from the request)
 STEPS = {
     "evaluate": [["evaluate_owner.py"]],
     "retrain": [["01_train.py"]],
@@ -66,6 +67,8 @@ STEPS = {
     "verify_model": [["09_verify_live.py", "--case", "model"]],
     "verify_tamper": [["09_verify_live.py", "--case", "tamper"]],
     "verify_registry": [["09_verify_live.py", "--case", "registry"]],
+    # "Model under test": watermark readout, accuracy and (if the mark is there) a Groth16 proof for one model
+    "model_test": [["10_test_model.py", "--model", "{model}"]],
 }
 STEPS["all"] = STEPS["evaluate"] + STEPS["attacks"] + STEPS["forgery"] + STEPS["committed"] + STEPS["zk"]
 
@@ -106,6 +109,9 @@ STEP_INFO = {
                       "description": "Changes one number inside the proof, then verifies it."},
     "verify_registry": {"panel": "F", "label": "Use an untrusted registry", "seconds": 2, "confirm": None, "writes": [],
                         "description": "Backs the registration with a receipt from a registry the verifier doesn't trust."},
+    "model_test": {"panel": "*", "label": "Test this model", "seconds": 15, "confirm": None, "writes": ["model_tests/<model>.json"],
+                   "description": "Reads the watermark in the selected model, measures its accuracy and, if the owner's mark "
+                                  "is there, makes and verifies a Groth16 proof of ownership. Needs a model (GET /api/models)."},
 }
 
 
@@ -156,9 +162,9 @@ def rel(p) -> str:
 class Job:
     """One run of a step: its scripts run one after another, each in a child process."""
 
-    def __init__(self, step, cmds, tries=DEFAULT_TRIES, timeout=None):
+    def __init__(self, step, cmds, tries=DEFAULT_TRIES, timeout=None, model=None):
         self.id = uuid.uuid4().hex[:12]
-        self.step, self.cmds, self.tries, self.timeout = step, cmds, tries, timeout
+        self.step, self.cmds, self.tries, self.timeout, self.model = step, cmds, tries, timeout, model
         self.lines, self.done, self.code = [], False, None
         self.cancelled, self.timed_out = False, False
         self.started, self.ended = time.time(), None
@@ -175,7 +181,7 @@ class Job:
     def info(self):
         return {"id": self.id, "step": self.step, "running": not self.done, "code": self.code,
                 "started": self.started, "ended": self.ended, "lines": len(self.lines),
-                "cancelled": self.cancelled, "timed_out": self.timed_out}
+                "cancelled": self.cancelled, "timed_out": self.timed_out, "model": self.model}
 
     def finish(self, code):
         with self.cond:
@@ -280,13 +286,24 @@ class SimJob(Job):
     """--simulate: replays the recorded output of a real run. Executes nothing, writes nothing."""
 
     def _run(self) -> int:
-        log, wanted = sim_log_for(self.step, self.tries)
         self.push(f"[SIMULATED] Replaying recorded output of step '{self.step}'. Nothing is executed; results/ is unchanged.")
+        if self.model is not None:
+            log = SIM_LOGS / f"{self.step}_{model_catalogue.safe_name(self.model)}.log"   # ids like "file:x.pt" never become paths
+            if not log.exists():
+                self.push(f"[SIMULATED] There's no recording for {self.model!r}: replay mode can only show the built-in models.")
+                self.push("[SIMULATED] To test your own file, start the server without --simulate (Start-Demo-UI.cmd).")
+                return 1
+            self.push(f"[SIMULATED] Replaying {rel(log)}")
+            return self._replay(log)
+        log, wanted = sim_log_for(self.step, self.tries)
         if log is None:
             self.push(f"[SIMULATED] no recorded log at {rel(wanted)}")
             return 1
         note = "" if log == wanted else f" (no recording for tries={self.tries:,}; numbers below are from a {DEFAULT_TRIES:,}-try run)"
         self.push(f"[SIMULATED] Replaying {rel(log)}{note}")
+        return self._replay(log)
+
+    def _replay(self, log: Path) -> int:
         for line in log.read_text(encoding="utf-8").splitlines():
             self.push(line)
             if self.stop.wait((0.5 if line.startswith("$ python") else 0.025) * CONFIG["sim_delay"]):
@@ -333,6 +350,16 @@ def read_json(p: Path):
         return None
 
 
+def model_tests():
+    """results/model_tests/*.json keyed by model id (the "Model under test" results)."""
+    out = {}
+    for p in sorted((RESULTS / "model_tests").glob("*.json")):
+        r = read_json(p)
+        if isinstance(r, dict) and isinstance(r.get("model"), str):
+            out[r["model"]] = r
+    return out
+
+
 def state():
     job = CURRENT["job"]
     return {
@@ -349,6 +376,7 @@ def state():
             "ezkl": {f"{v}_{w}": read_json(RESULTS / f"ezkl_{v}_{w}" / "summary.json")
                      for v in ("private", "hashed") for w in ("owner", "thief")},
             "protocol_v2": read_json(RESULTS / "protocol_v2.json"),     # demo F (may be null)
+            "model_tests": model_tests(),
         },
         "job": job.info() if job else None,
     }
@@ -479,6 +507,8 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/state":
             return self.send_json(state())
+        if path == "/api/models":
+            return self.send_json({"api_version": API_VERSION, "models": model_catalogue.catalogue()})
         if path == "/api/steps":
             return self.send_json({"api_version": API_VERSION, "mode": state()["mode"],
                                    "steps": [{"id": k, **v} for k, v in STEP_INFO.items()]})
@@ -545,12 +575,18 @@ class Handler(BaseHTTPRequestHandler):
             tries = -1
         if tries not in TRIES_ALLOWED:
             return self.send_json({"error": f"tries must be one of {TRIES_ALLOWED}"}, 400)
+        model = None
+        if any("{model}" in arg for cmd in STEPS[step] for arg in cmd):
+            model = body.get("model")
+            if not isinstance(model, str) or model_catalogue.resolve(model) is None:   # only catalogue ids, never paths
+                return self.send_json({"error": f"unknown model {model!r}: see GET /api/models"}, 400)
         with LOCK:
             cur = CURRENT["job"]
             if cur and not cur.done:
                 return self.send_json({"error": "another demo is running", "job": cur.info()}, 409)
-            cmds = [[c.replace("{tries}", str(tries)) for c in cmd] for cmd in STEPS[step]]
-            job = (SimJob if CONFIG["simulate"] else Job)(step, cmds, tries=tries, timeout=STEP_INFO[step]["timeout"])
+            cmds = [[c.replace("{tries}", str(tries)).replace("{model}", model or "") for c in cmd] for cmd in STEPS[step]]
+            job = (SimJob if CONFIG["simulate"] else Job)(step, cmds, tries=tries, timeout=STEP_INFO[step]["timeout"],
+                                                          model=model)
             JOBS[job.id] = job
             CURRENT["job"] = job
         print(f"[{time.strftime('%H:%M:%S')}] {'SIMULATE ' if CONFIG['simulate'] else ''}run {step} (job {job.id})", flush=True)

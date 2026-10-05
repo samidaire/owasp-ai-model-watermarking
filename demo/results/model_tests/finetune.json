@@ -1,0 +1,48 @@
+{
+  "model": "finetune",
+  "label": "watermarked_v2 \u00b7 fine-tuned 5 epochs",
+  "group": "Stolen copies (attacked live)",
+  "derived": true,
+  "file": null,
+  "sha256": "b9fdef2c1c8ddaa8732975df6a1efeb200e32f610bed35f49c842e0f47ee66bc",
+  "accuracy": 0.988,
+  "readable": true,
+  "error": null,
+  "v2": {
+    "errors": 0,
+    "ber": 0.0,
+    "max_err": 8,
+    "accepted": true
+  },
+  "v1": {
+    "ber": 0.515625,
+    "accepted": false
+  },
+  "proof": {
+    "made": true,
+    "accepted": true,
+    "checks": {
+      "registration_valid": true,
+      "receipt_valid": true,
+      "registered_before_claim": true,
+      "claim_matches_registration": true,
+      "claim_matches_suspect": true,
+      "public_signal_count": true,
+      "public_pk_hash": true,
+      "public_config_hash": true,
+      "public_commitment": true,
+      "public_w_hash": true,
+      "public_nonce": true,
+      "snark_valid": true
+    },
+    "reasons": [],
+    "timing": {
+      "witness_s": 0.501,
+      "prove_s": 3.499
+    },
+    "proof_bytes": 855,
+    "nonce": "8810695833672764574081870771430164781575924048715520163437897124374339258351"
+  },
+  "verdict": "proven",
+  "tested_at": "2026-10-05T04:30:01Z"
+}

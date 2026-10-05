@@ -3,9 +3,10 @@ import type { ServerStep } from "../api";
 import type { PageProps } from "../App";
 import { Icon } from "../components/icons";
 import { Callout, Empty, Verdict } from "../components/ui";
-import { bytes, secs, short, when } from "../format";
+import { bytes, pct, secs, short, when } from "../format";
 import { Stamp } from "../panels/PanelF";
 import { RunButton } from "../panels/Shell";
+import { modelVerdict, TestButton } from "../shell/ModelBar";
 import { Link } from "../router";
 
 /** The verifier's checks, in order (sdk/src/sigil/verify.py). */
@@ -44,6 +45,62 @@ interface Onchain { verified: boolean; tampered_public_signal_verified: boolean;
 const SIGNALS = ["pk_hash", "config_hash", "commitment", "w_hash", "nonce"];
 const cut = (v: string) => (v.length > 16 ? `${v.slice(0, 7)}…${v.slice(-6)}` : v);
 
+/** The selected model's test: verdict stamp, the numbers, and every check the verifier ran. */
+function ModelVerdict({ s, ctl }: PageProps) {
+  const m = ctl.models.find((x) => x.id === ctl.model);
+  if (!m) return null;
+  const r = s.results.model_tests?.[ctl.model];
+  if (!r) return (
+    <section className="box" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+      <h2 className="h-sm">Verdict for {m.label}</h2>
+      <Empty what={m.label} action={<TestButton ctl={ctl} />} />
+    </section>
+  );
+  const v = modelVerdict(r);
+  const ok = r.verdict === "proven";
+  const text = r.verdict === "proven"
+    ? `The owner proved in zero knowledge that ${r.label} carries their watermark. The verifier learned 0 of the 64 watermark bits.`
+    : r.verdict === "no_proof"
+      ? `The owner's watermark isn't in ${r.label}: ${r.v2?.errors ?? "?"} of 64 bits read wrong (more than ${r.v2?.max_err ?? 8}). No valid proof can exist, so none was made.`
+      : r.verdict === "unreadable" ? `This file can't be tested: ${r.error}.` : `The proof was rejected: ${r.proof?.reasons.join("; ")}.`;
+  const rows: [string, boolean, string?][] = [];
+  rows.push(["Watermarked layer readable (conv2, 288 values)", r.readable, r.readable ? undefined : r.error ?? undefined]);
+  if (r.v2) rows.push([`Owner's mark present (at most ${r.v2.max_err} of 64 bits wrong)`, r.v2.accepted, `${r.v2.errors}/64`]);
+  if (r.proof?.made) for (const [k, label] of CHECKS) { if (k in r.proof.checks) rows.push([label, r.proof.checks[k]]); }
+  else if (r.v2) rows.push(["Zero-knowledge proof", false, "not possible"]);
+  return (
+    <div className="cols">
+      <section className="box" aria-live="polite" style={{ flex: "1 1 440px", minWidth: 0, padding: 26, display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center",
+        background: ok ? "var(--caramel-soft)" : "color-mix(in oklab, var(--rust) 10%, var(--paper))" }}>
+        <span className="eyebrow">Verdict for the model under test</span>
+        <div key={r.tested_at + r.model} className={ok ? undefined : "shake"}><Stamp ok={ok} /></div>
+        <h2 className="h-lg" style={{ fontSize: "clamp(28px, 2.8vw, 40px)" }}>{v.text}</h2>
+        <p className="muted" style={{ margin: 0, maxWidth: 460 }}>{text}</p>
+        <div className="actions" style={{ justifyContent: "center" }}>
+          <span className="chip mono">{r.label}</span>
+          <span className="chip mono">{r.accuracy === null ? "accuracy n/a" : `${pct(r.accuracy)} accuracy`}</span>
+          {r.v1 && <span className="chip mono">v1 owner BER {r.v1.ber.toFixed(3)}</span>}
+          {r.proof?.made && r.proof.timing && <span className="chip mono">prove {secs(r.proof.timing.prove_s)} · {bytes(r.proof.proof_bytes ?? 0)}</span>}
+        </div>
+        <div className="actions" style={{ justifyContent: "center", paddingTop: 4 }}><TestButton ctl={ctl} label="Test it again" /></div>
+        <span className="muted" style={{ fontSize: 12 }}>Tested {when(r.tested_at)}</span>
+      </section>
+      <section className="box" style={{ flex: "1 1 380px", minWidth: 0, padding: 22, display: "flex", flexDirection: "column", gap: 12 }}>
+        <h2 className="h-sm">What was checked</h2>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          {rows.map(([label, pass, note]) => (
+            <li key={label} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <span className={`stp ${pass ? "ok" : "fail"}`} aria-hidden><Icon name={pass ? "check" : "x"} size={16} /></span>
+              <span style={{ fontWeight: 600, fontSize: 14.5, flex: 1 }}>{label}<span className="sr-only">: {pass ? "passed" : "failed"}</span></span>
+              {note && <span className="mono muted" style={{ fontSize: 12.5 }}>{note}</span>}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  );
+}
+
 export function Verify({ s, ctl }: PageProps) {
   const f = s.results.protocol_v2;
   const [proof, setProof] = useState<Proof | null>(null);
@@ -66,11 +123,13 @@ export function Verify({ s, ctl }: PageProps) {
   if (!f) return (
     <>
       <div className="pagehead"><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <span className="chip" style={{ alignSelf: "flex-start" }}>Verify ownership · demo F</span>
+        <span className="chip" style={{ alignSelf: "flex-start" }}>Verify ownership</span>
         <h1 className="display" style={{ margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>Check the <span className="jw hlw">claim.</span></h1>
-        <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>There's no proof to check yet. Demo F registers the owner, opens a claim and makes the zero-knowledge proof; this page then verifies it.</p>
+        <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>Pick a model above and test it: the owner proves ownership in zero knowledge and the verifier runs every check.</p>
       </div></div>
-      <Empty what="the proof of ownership" action={<RunButton ctl={ctl} step="protocol_v2" primary />} />
+      <ModelVerdict s={s} ctl={ctl} />
+      <div><span className="eyebrow">Demo F</span><h2 className="h-lg" style={{ fontSize: "clamp(26px, 2.6vw, 36px)", marginTop: 4 }}>The recorded claim, in detail</h2></div>
+      <Empty what="demo F's claim" action={<RunButton ctl={ctl} step="protocol_v2" primary />} />
     </>
   );
   const shown = misuse ? f.misuse[misuse] : null;
@@ -88,14 +147,21 @@ export function Verify({ s, ctl }: PageProps) {
     <>
       <div className="pagehead">
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <span className="chip in" style={{ ["--i" as string]: 0, alignSelf: "flex-start" }}>Verify ownership · demo F</span>
+          <span className="chip in" style={{ ["--i" as string]: 0, alignSelf: "flex-start" }}>Verify ownership</span>
           <h1 className="display in" style={{ ["--i" as string]: 1, margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>
             Check the <span className="jw hlw">claim.</span>
           </h1>
           <p className="muted in" style={{ ["--i" as string]: 2, margin: 0, fontSize: 16, maxWidth: 640 }}>
-            Anyone can run this check with the public verification key. The watermark itself never leaves the owner.
+            Pick a model above and test it: the owner proves ownership in zero knowledge and the verifier runs every check.
+            Anyone can run this check with the public verification key; the watermark itself never leaves the owner.
           </p>
         </div>
+      </div>
+
+      <ModelVerdict s={s} ctl={ctl} />
+
+      <div className="pagehead">
+        <div><span className="eyebrow">Demo F</span><h2 className="h-lg" style={{ fontSize: "clamp(26px, 2.6vw, 36px)", marginTop: 4 }}>The recorded claim, in detail</h2></div>
         <div className="segbar" role="group" aria-label="Where to verify" style={{ flex: "0 1 320px" }}>
           <button type="button" aria-pressed={mode === "off"} onClick={() => setMode("off")}>Off-chain</button>
           <button type="button" aria-pressed={mode === "on"} onClick={() => setMode("on")}>On-chain</button>

@@ -3,6 +3,7 @@ import { TITLE_OF } from "../App";
 import type { ConsoleJob } from "../components/Console";
 import { Icon } from "../components/icons";
 import { Verdict } from "../components/ui";
+import { modelVerdict } from "../shell/ModelBar";
 import { RunButton } from "../panels/Shell";
 import { bytes, pct, secs, short, when } from "../format";
 import { Link } from "../router";
@@ -19,8 +20,7 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
   const attacks = (r.attacks?.rows ?? []).filter((x) => x.family !== "baseline");
   const survived = attacks.filter((x) => x.survives).length;
   const fresh = DEMOS.filter((d) => panelStatus(d.key, s) === "fresh").length;
-  const theta = t?.threshold ?? 0.125;
-  const nullsOk = (t?.nulls ?? []).every((n) => n.owner_ber > theta);
+  const tests = r.model_tests ?? {};
 
   const events: Event[] = [];
   if (f) {
@@ -29,6 +29,11 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
     if (thief) events.push({ at: thief.registered_at, title: "Later registration on an overwritten copy", detail: `dispute rule: earliest valid registration wins → ${f.overwrite_dispute.winner}`, icon: "x", tone: "bad" });
   }
   if (t) events.push({ at: t.timestamp_utc, title: "Commitment published (protocol v1)", detail: `SHA-256 ${short(t.commitment, 14)} · ${t.owner_id}`, icon: "lock", tone: "plain" });
+  for (const x of Object.values(tests)) {
+    const v = modelVerdict(x);
+    events.push({ at: x.tested_at, title: `Model test: ${x.label}`, detail: `${v.text}${x.v2 ? ` · ${x.v2.errors}/64 bits wrong` : ""}`,
+      icon: "flask", tone: v.tone === "good" ? "accent" : "bad" });
+  }
   if (s.job) {
     const j = s.job;
     events.push({ at: new Date(j.started * 1000).toISOString(), title: `${TITLE_OF[j.step] ?? j.step} ${j.running ? "running" : j.code === 0 ? "finished" : j.cancelled ? "cancelled" : "failed"}`,
@@ -38,7 +43,7 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
 
   const runningName = ctl.running ? TITLE_OF[ctl.running] : null;
   const shownCount = DEMOS.filter((d) => panelStatus(d.key, s) !== "missing").length;
-  const nothing = shownCount === 0;
+  const nothing = shownCount === 0 && Object.keys(r.model_tests ?? {}).length === 0;
 
   return (
     <>
@@ -94,42 +99,28 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
         <section className="box" style={{ flex: "2 1 620px", minWidth: 0, padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <h2 className="h-sm">Models</h2>
-            <span className="muted" style={{ fontSize: 13 }}>Checkpoints in demo/ckpt · threshold θ = {theta.toFixed(3)}</span>
+            <span className="muted" style={{ fontSize: 13 }}>Select one, then <strong>Test this model</strong> above · accept at ≤ 8 of 64 bits wrong</span>
           </div>
           <div className="tablewrap">
             <table className="tbl">
-              <thead><tr><th>Model</th><th>Protocol</th><th>Bits</th><th>Accuracy</th><th>Owner BER</th><th>Status</th><th><span className="sr-only">Open</span></th></tr></thead>
+              <thead><tr><th>Model</th><th>Kind</th><th>Accuracy</th><th>Owner's mark</th><th>Verdict</th><th><span className="sr-only">Select</span></th></tr></thead>
               <tbody>
-                {t && <tr>
-                  <td><ModelName name="watermarked" file="watermarked.pt" /></td>
-                  <td className="muted">v1 · SHA-256 seed</td><td className="mono">64</td>
-                  <td className="mono">{pct(t.models.watermarked.accuracy)}</td><td className="mono">{t.models.watermarked.owner_ber.toFixed(3)}</td>
-                  <td>{t.models.watermarked.owner_ber <= theta ? <Verdict tone="good">Ownership shown</Verdict> : <Verdict tone="bad">No match</Verdict>}</td>
-                  <td><Link to="/app/demo/A" className="rowgo">Demo A <Icon name="arrow" size={16} /></Link></td>
-                </tr>}
-                {f && <tr>
-                  <td><ModelName name="watermarked_v2" file="v2/watermarked_v2.pt" tint /></td>
-                  <td className="muted">v2 · Poseidon + Groth16</td><td className="mono">{f.config.T}</td>
-                  <td className="mono">{pct(f.accuracy.watermarked_v2)}</td><td className="mono">{f.owner_detection.ber.toFixed(3)}</td>
-                  <td>{f.owner_proof.accepted ? <Verdict tone="good">ZK-verified</Verdict> : <Verdict tone="bad">Rejected</Verdict>}</td>
-                  <td><Link to="/app/verify" className="rowgo">Verify <Icon name="arrow" size={16} /></Link></td>
-                </tr>}
-                {t && <tr>
-                  <td><ModelName name="clean" file="clean.pt" /></td>
-                  <td className="muted">never watermarked</td><td className="mono">—</td>
-                  <td className="mono">{pct(t.models.clean.accuracy)}</td><td className="mono">{t.models.clean.owner_ber.toFixed(3)}</td>
-                  <td><Verdict tone="neutral">Not claimed (correct)</Verdict></td>
-                  <td><Link to="/app/demo/A" className="rowgo">Demo A <Icon name="arrow" size={16} /></Link></td>
-                </tr>}
-                {!t && !f && <tr><td colSpan={7} className="muted" style={{ fontWeight: 400 }}>No models checked yet: run demo A (<strong>Run all live</strong>) or demo F.</td></tr>}
-                {t && t.nulls.length > 0 && <tr>
-                  <td><ModelName name={`null models ×${t.nulls.length}`} file="null_0 … null_3.pt" tint /></td>
-                  <td className="muted">never watermarked</td><td className="mono">—</td>
-                  <td className="mono">{pct(Math.min(...t.nulls.map((n) => n.accuracy)))}+</td>
-                  <td className="mono">{Math.min(...t.nulls.map((n) => n.owner_ber)).toFixed(3)}–{Math.max(...t.nulls.map((n) => n.owner_ber)).toFixed(3)}</td>
-                  <td>{nullsOk ? <Verdict tone="neutral">Not claimed (correct)</Verdict> : <Verdict tone="bad">False claim</Verdict>}</td>
-                  <td><Link to="/app/demo/A" className="rowgo">Demo A <Icon name="arrow" size={16} /></Link></td>
-                </tr>}
+                {ctl.models.map((m) => {
+                  const r = tests[m.id];
+                  const v = r ? modelVerdict(r) : null;
+                  const sel = m.id === ctl.model;
+                  return (
+                    <tr key={m.id} style={sel ? { background: "var(--cream)" } : undefined}>
+                      <td><ModelName name={m.label} file={m.file ?? "made live from watermarked_v2.pt"} tint={m.derived} /></td>
+                      <td className="muted">{m.group}</td>
+                      <td className="mono">{r?.accuracy != null ? pct(r.accuracy) : "—"}</td>
+                      <td className="mono">{r?.v2 ? `${r.v2.errors}/64 wrong` : "—"}</td>
+                      <td>{v ? <Verdict tone={v.tone}>{v.text}</Verdict> : <span className="muted">Not tested</span>}</td>
+                      <td>{sel ? <span className="chip">Selected</span>
+                        : <button type="button" className="linkbtn" disabled={ctl.running === "model_test"} onClick={() => ctl.setModel(m.id)}>Select</button>}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

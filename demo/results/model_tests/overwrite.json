@@ -1,0 +1,48 @@
+{
+  "model": "overwrite",
+  "label": "watermarked_v2 \u00b7 overwritten by a thief",
+  "group": "Stolen copies (attacked live)",
+  "derived": true,
+  "file": null,
+  "sha256": "1fd2a12eda368da92437190ffb2692c37d5ec0ce3941e9dd8501c8268817623a",
+  "accuracy": 0.9885,
+  "readable": true,
+  "error": null,
+  "v2": {
+    "errors": 1,
+    "ber": 0.015625,
+    "max_err": 8,
+    "accepted": true
+  },
+  "v1": {
+    "ber": 0.546875,
+    "accepted": false
+  },
+  "proof": {
+    "made": true,
+    "accepted": true,
+    "checks": {
+      "registration_valid": true,
+      "receipt_valid": true,
+      "registered_before_claim": true,
+      "claim_matches_registration": true,
+      "claim_matches_suspect": true,
+      "public_signal_count": true,
+      "public_pk_hash": true,
+      "public_config_hash": true,
+      "public_commitment": true,
+      "public_w_hash": true,
+      "public_nonce": true,
+      "snark_valid": true
+    },
+    "reasons": [],
+    "timing": {
+      "witness_s": 0.501,
+      "prove_s": 3.558
+    },
+    "proof_bytes": 855,
+    "nonce": "14977890173608586904530988468196845746795885580543783307350679207839541405162"
+  },
+  "verdict": "proven",
+  "tested_at": "2026-10-05T04:30:19Z"
+}

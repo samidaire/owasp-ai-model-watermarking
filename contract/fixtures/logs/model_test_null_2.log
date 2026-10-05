@@ -1,0 +1,21 @@
+$ python 10_test_model.py --model null_2
+
+==============================================================================
+  MODEL TEST: null_2.pt
+==============================================================================
+  group          : Never watermarked
+  what it is     : An independently trained model, never watermarked.
+  file           : ckpt/null_2.pt
+  sha256         : ddaf64778ea885bf7387f867e9b8736b…
+  accuracy       : 98.77% on 10,000 MNIST test images
+
+  Watermark readout (layer conv2)
+  [XX]  protocol v2 owner (e28b7f9e9f75…): 30/64 bits wrong (accept at ≤ 8)
+  [--]  protocol v1 owner (owner:yash): BER 0.406 (accept at ≤ 0.125)
+
+  Proof of ownership (protocol v2: Circom + Groth16)
+  no proof possible: 30/64 bits wrong (> 8): the circuit has no valid witness, so no proof is attempted
+
+  VERDICT: NOT PROVEN: the owner's watermark isn't in this model
+
+  Saved results/model_tests/null_2.json

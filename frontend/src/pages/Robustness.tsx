@@ -4,12 +4,45 @@ import { Callout, Empty, Verdict } from "../components/ui";
 import { ber3, pct } from "../format";
 import { RunButton } from "../panels/Shell";
 import { Link } from "../router";
+import { modelVerdict, TestButton } from "../shell/ModelBar";
 import { panelStale } from "../stale";
 
 const FAMILY: Record<string, { label: string; icon: string }> = {
   baseline: { label: "none", icon: "check" }, prune: { label: "pruning", icon: "scissors" }, quantise: { label: "quantisation", icon: "stairs" },
   finetune: { label: "fine-tuning", icon: "sliders" }, overwrite: { label: "overwriting", icon: "copy" }, permute: { label: "permutation", icon: "refresh" },
 };
+
+/** The owner's model attacked live (each copy made by 10_test_model.py), then tested: accuracy, mark, proof. */
+function StolenCopies({ s, ctl }: PageProps) {
+  const copies = ctl.models.filter((m) => m.derived);
+  if (!copies.length) return null;
+  return (
+    <section className="box" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, alignItems: "baseline" }}>
+        <h2 className="h-sm">Attack the owner's model, then test it</h2>
+        <span className="muted" style={{ fontSize: 13.5 }}>Each button makes that stolen copy of watermarked_v2.pt now and tests it: accuracy, watermark, proof.</span>
+      </div>
+      <div className="statgrid">
+        {copies.map((m) => {
+          const r = s.results.model_tests?.[m.id];
+          const v = r ? modelVerdict(r) : null;
+          return (
+            <article key={m.id} className="box" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8, boxShadow: "var(--sh-1)",
+              background: m.id === ctl.model ? "var(--cream)" : "var(--paper)" }}>
+              <strong style={{ fontSize: 14.5 }}>{m.label.replace("watermarked_v2 · ", "")}</strong>
+              <span className="muted" style={{ fontSize: 12.5 }}>{m.note}</span>
+              {r && v ? <>
+                <Verdict tone={v.tone}>{v.text}</Verdict>
+                <span className="mono muted" style={{ fontSize: 12.5 }}>{r.accuracy != null ? pct(r.accuracy) : "—"} accuracy · {r.v2 ? `${r.v2.errors}/64 wrong` : "—"}</span>
+              </> : <span className="muted" style={{ fontSize: 13 }}>Not tested yet</span>}
+              <div style={{ marginTop: "auto", paddingTop: 4 }}><TestButton ctl={ctl} id={m.id} primary={!r} label={r ? "Attack & test again" : "Attack & test"} /></div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export function Robustness({ s, ctl }: PageProps) {
   const a = s.results.attacks;
@@ -21,7 +54,9 @@ export function Robustness({ s, ctl }: PageProps) {
         <h1 className="display" style={{ margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>Robustness <span className="jw hlw">lab.</span></h1>
         <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>Attack the stolen model the way a thief would, then check whether the owner's watermark survives.</p>
       </div></div>
-      <Empty what="the attacks" action={<RunButton ctl={ctl} step="attacks" primary />} />
+      <StolenCopies s={s} ctl={ctl} />
+      <h2 className="h-sm">The full attack suite (demo B)</h2>
+      <Empty what="the attack suite" action={<RunButton ctl={ctl} step="attacks" primary />} />
     </>
   );
   const theta = a.threshold;
@@ -48,6 +83,8 @@ export function Robustness({ s, ctl }: PageProps) {
         </div>
         <RunButton ctl={ctl} step="attacks" primary />
       </div>
+
+      <StolenCopies s={s} ctl={ctl} />
 
       <div className="statgrid">
         {others.map((r, i) => {

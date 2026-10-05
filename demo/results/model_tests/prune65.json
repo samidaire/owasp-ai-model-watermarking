@@ -1,0 +1,48 @@
+{
+  "model": "prune65",
+  "label": "watermarked_v2 \u00b7 pruned 65%",
+  "group": "Stolen copies (attacked live)",
+  "derived": true,
+  "file": null,
+  "sha256": "c1d7e4be8a9fe1996d710691f131fc89ac99313537d3f297c1ad6b7e9d166f71",
+  "accuracy": 0.5026,
+  "readable": true,
+  "error": null,
+  "v2": {
+    "errors": 0,
+    "ber": 0.0,
+    "max_err": 8,
+    "accepted": true
+  },
+  "v1": {
+    "ber": 0.515625,
+    "accepted": false
+  },
+  "proof": {
+    "made": true,
+    "accepted": true,
+    "checks": {
+      "registration_valid": true,
+      "receipt_valid": true,
+      "registered_before_claim": true,
+      "claim_matches_registration": true,
+      "claim_matches_suspect": true,
+      "public_signal_count": true,
+      "public_pk_hash": true,
+      "public_config_hash": true,
+      "public_commitment": true,
+      "public_w_hash": true,
+      "public_nonce": true,
+      "snark_valid": true
+    },
+    "reasons": [],
+    "timing": {
+      "witness_s": 0.51,
+      "prove_s": 3.465
+    },
+    "proof_bytes": 854,
+    "nonce": "17788879466195150122410027522865744167147275873987004660452021522198833009642"
+  },
+  "verdict": "proven",
+  "tested_at": "2026-10-05T04:29:30Z"
+}

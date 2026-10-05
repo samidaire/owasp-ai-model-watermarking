@@ -1,0 +1,37 @@
+$ python 10_test_model.py --model prune90
+
+==============================================================================
+  MODEL TEST: watermarked_v2 · pruned 90%
+==============================================================================
+  group          : Stolen copies (attacked live)
+  what it is     : A thief zeroes the 90% smallest weights of every layer: the model barely works any more.
+  making it now  : loading watermarked_v2.pt and applying the attack…
+                   done in 0.2 s
+  file           : (made in memory, saved to a temporary file)
+  sha256         : de38c72ed696ea183099e1bf4e11cd94…
+  accuracy       : 2.01% on 10,000 MNIST test images
+
+  Watermark readout (layer conv2)
+  [ok]  protocol v2 owner (e28b7f9e9f75…): 1/64 bits wrong (accept at ≤ 8)
+  [--]  protocol v1 owner (owner:yash): BER 0.516 (accept at ≤ 0.125)
+
+  Proof of ownership (protocol v2: Circom + Groth16)
+  claim opened   : nonce 8672861912…069628 for this file
+  proof made     : witness 0.50 s, prove 3.55 s, 855 bytes
+
+  [ok]  Registration signed by the owner
+  [ok]  Registry receipt from a trusted registry
+  [ok]  Registered before the claim
+  [ok]  Claim refers to this registration
+  [ok]  Claim refers to this suspect file
+  [ok]  Five public signals
+  [ok]  Proof is for the owner's key
+  [ok]  Same watermark configuration
+  [ok]  Opens the published commitment
+  [ok]  About this exact model (w_hash)
+  [ok]  Made for this claim (nonce)
+  [ok]  Groth16 proof verifies
+
+  VERDICT: OWNERSHIP PROVEN: 0 watermark bits revealed
+
+  Saved results/model_tests/prune90.json

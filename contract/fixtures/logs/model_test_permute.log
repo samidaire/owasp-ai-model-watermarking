@@ -1,0 +1,23 @@
+$ python 10_test_model.py --model permute
+
+==============================================================================
+  MODEL TEST: watermarked_v2 · channels permuted
+==============================================================================
+  group          : Stolen copies (attacked live)
+  what it is     : A thief reorders conv1's channels: same predictions, different weight order. The known limit.
+  making it now  : loading watermarked_v2.pt and applying the attack…
+                   done in 0.1 s
+  file           : (made in memory, saved to a temporary file)
+  sha256         : 438563439c51fe9199cc0664254c7d21…
+  accuracy       : 98.57% on 10,000 MNIST test images
+
+  Watermark readout (layer conv2)
+  [XX]  protocol v2 owner (e28b7f9e9f75…): 39/64 bits wrong (accept at ≤ 8)
+  [--]  protocol v1 owner (owner:yash): BER 0.484 (accept at ≤ 0.125)
+
+  Proof of ownership (protocol v2: Circom + Groth16)
+  no proof possible: 39/64 bits wrong (> 8): the circuit has no valid witness, so no proof is attempted
+
+  VERDICT: NOT PROVEN: the owner's watermark isn't in this model
+
+  Saved results/model_tests/permute.json

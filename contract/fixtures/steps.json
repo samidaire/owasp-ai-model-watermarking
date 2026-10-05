@@ -172,6 +172,18 @@
       "writes": [],
       "description": "Backs the registration with a receipt from a registry the verifier doesn't trust.",
       "timeout": 120
+    },
+    {
+      "id": "model_test",
+      "panel": "*",
+      "label": "Test this model",
+      "seconds": 15,
+      "confirm": null,
+      "writes": [
+        "model_tests/<model>.json"
+      ],
+      "description": "Reads the watermark in the selected model, measures its accuracy and, if the owner's mark is there, makes and verifies a Groth16 proof of ownership. Needs a model (GET /api/models).",
+      "timeout": 150
     }
   ]
 }

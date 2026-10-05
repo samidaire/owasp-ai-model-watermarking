@@ -15,6 +15,20 @@ export const REVEALS: Partial<Record<ServerStep, ResultKey[]>> = {
 };
 
 const KEY = "sigil.shown";
+const MODELS_KEY = "sigil.shownModels";
+
+/** Model ids whose "Model under test" result is on screen (tested since the last Clear, or Show saved). */
+export function loadShownModels(): Set<string> {
+  try {
+    const v = JSON.parse(localStorage.getItem(MODELS_KEY) ?? "[]");
+    return new Set(Array.isArray(v) ? v.filter((k): k is string => typeof k === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+export function saveShownModels(ids: Set<string>) {
+  try { localStorage.setItem(MODELS_KEY, JSON.stringify([...ids])); } catch { /* private window: not kept */ }
+}
 const CLEARED = "sigil.clearedAt";
 
 /** When Clear was last pressed (Unix seconds): runs that started earlier no longer show in the audit log. */
@@ -39,7 +53,7 @@ export function saveShown(shown: Set<ResultKey>) {
 }
 
 /** The server's state with every result that hasn't been run (or shown) in this session blanked out. */
-export function applyView(s: DemoState, shown: Set<ResultKey>, clearedAt: number): DemoState {
+export function applyView(s: DemoState, shown: Set<ResultKey>, clearedAt: number, shownModels: Set<string>): DemoState {
   const r = s.results;
   const pick = <T,>(k: ResultKey, v: T): T | null => (shown.has(k) ? v : null);
   return {
@@ -56,6 +70,7 @@ export function applyView(s: DemoState, shown: Set<ResultKey>, clearedAt: number
         hashed_owner: pick("zk_hashed", r.ezkl.hashed_owner), hashed_thief: pick("zk_hashed", r.ezkl.hashed_thief),
       },
       protocol_v2: pick("protocol_v2", r.protocol_v2 ?? null),
+      model_tests: Object.fromEntries(Object.entries(r.model_tests ?? {}).filter(([id]) => shownModels.has(id))),
     },
   };
 }

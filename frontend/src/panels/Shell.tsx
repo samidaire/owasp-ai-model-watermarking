@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { DemoState, ServerStep } from "../api";
+import type { DemoState, ModelInfo, ServerStep } from "../api";
 import { ReqChip, StaleBadge } from "../components/ui";
 import { about, RUNNING_NAME, type StepCatalogue } from "../steps";
 
@@ -9,7 +9,13 @@ export interface RunCtl {
   /** Labels, durations and confirmation texts from GET /api/steps (fallback catalogue if that failed). */
   steps: StepCatalogue;
   /** Starts a step; asks for confirmation first when the step's catalogue entry has a `confirm` text. */
-  run: (step: ServerStep, opts?: { tries?: number }) => void;
+  run: (step: ServerStep, opts?: { tries?: number; model?: string }) => void;
+  /** "Model under test": the menu's choices (GET /api/models), the selected id and its setter. */
+  models: ModelInfo[];
+  model: string;
+  setModel: (id: string) => void;
+  /** The model a running model_test job is testing, if any. */
+  runningModel: string | null;
 }
 
 export interface PanelProps { s: DemoState; ctl: RunCtl; refreshing: boolean }

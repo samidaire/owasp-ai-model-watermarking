@@ -71,6 +71,10 @@ export const FALLBACK_STEPS: StepCatalogue = {
     id: "verify_registry", panel: "F", label: "Use an untrusted registry", seconds: 2, confirm: null, writes: [],
     description: "Backs the registration with a receipt from a registry the verifier doesn't trust.",
   },
+  model_test: {
+    id: "model_test", panel: "*", label: "Test this model", seconds: 15, confirm: null, writes: ["model_tests/<model>.json"],
+    description: "Reads the watermark in the selected model, measures its accuracy and, if the owner's mark is there, makes and verifies a Groth16 proof of ownership.",
+  },
 };
 
 /** The server's catalogue, keyed by step id. A step the server doesn't list keeps its fallback entry. */
@@ -85,7 +89,7 @@ export const RUNNING_NAME: Record<ServerStep, string> = {
   evaluate: "re-verification", retrain: "retraining", attacks: "attacks", forgery: "forgery",
   committed: "seed search", zk: "E1 + E2 proofs", zk_hashed: "E3 proofs", protocol_v2: "demo F", all: "all demos",
   verify_honest: "verification", verify_replay: "verification", verify_model: "verification", verify_tamper: "verification",
-  verify_registry: "verification",
+  verify_registry: "verification", model_test: "model test",
 };
 
 /** "~10 s", "~3 min". */

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ApiError, cancelJob, followJob, getJob, getState, getSteps, runStep, type DemoState, type JobInfo, type ServerStep,
+  ApiError, cancelJob, followJob, getJob, getModels, getState, getSteps, runStep, type DemoState, type JobInfo, type ModelInfo,
+  type ServerStep,
 } from "./api";
 import { Console, type ConsoleJob } from "./components/Console";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -11,8 +12,11 @@ import { Landing } from "./pages/Landing";
 import { Overview } from "./pages/Overview";
 import { Robustness } from "./pages/Robustness";
 import { Verify } from "./pages/Verify";
-import { ALL_RESULTS, REVEALS, applyView, loadClearedAt, loadShown, saveClearedAt, saveShown, type ResultKey } from "./reveal";
+import {
+  ALL_RESULTS, REVEALS, applyView, loadClearedAt, loadShown, loadShownModels, saveClearedAt, saveShown, saveShownModels, type ResultKey,
+} from "./reveal";
 import { navigate, usePath } from "./router";
+import { ModelBar } from "./shell/ModelBar";
 import { Side } from "./shell/Side";
 import { FALLBACK_STEPS, toCatalogue, type StepCatalogue } from "./steps";
 import type { RunCtl } from "./panels/Shell";
@@ -21,7 +25,7 @@ export const TITLE_OF: Record<ServerStep, string> = {
   evaluate: "Demo A (re-verify)", retrain: "Demo A (retrain)", attacks: "Demo B (removal attacks)", forgery: "Demo C (forgery)",
   committed: "Demo D (committed seed)", zk: "Demo E1 + E2", zk_hashed: "Demo E3", protocol_v2: "Demo F (protocol v2)", all: "All demos",
   verify_honest: "Live verification", verify_replay: "Misuse: replayed proof", verify_model: "Misuse: different model",
-  verify_tamper: "Misuse: tampered proof", verify_registry: "Misuse: untrusted registry",
+  verify_tamper: "Misuse: tampered proof", verify_registry: "Misuse: untrusted registry", model_test: "Model test",
 };
 const SERVER_CMD = "Double-click Start-Demo-UI.cmd in the project folder, or run: python demo/server.py";
 
@@ -52,10 +56,29 @@ export default function App() {
   const [cancelUnsupported, setCancelUnsupported] = useState(false);
   /** Results on screen: none until a run finishes (or "Show saved results"); Clear empties them again. */
   const [shown, setShown] = useState<Set<ResultKey>>(loadShown);
+  const [shownModels, setShownModels] = useState<Set<string>>(loadShownModels);
   const reveal = useCallback((done: JobInfo | null) => {
     const keys = done && done.code === 0 ? REVEALS[done.step] : undefined;
     if (keys) setShown((cur) => (keys.every((k) => cur.has(k)) ? cur : new Set([...cur, ...keys])));
+    const tested = done && done.code === 0 && done.step === "model_test" ? done.model : null;
+    if (tested) setShownModels((cur) => (cur.has(tested) ? cur : new Set([...cur, tested])));
   }, []);
+  useEffect(() => saveShownModels(shownModels), [shownModels]);
+  /** "Model under test": the menu (GET /api/models, re-read when the window regains focus so dropped files appear). */
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const modelsRef = useRef<ModelInfo[]>([]);
+  modelsRef.current = models;
+  const [model, setModelState] = useState(() => readPref("sigil.model", "watermarked_v2"));
+  const setModel = useCallback((id: string) => { setModelState(id); writePref("sigil.model", id); }, []);
+  useEffect(() => {
+    const load = () => getModels().then((r) => setModels(r.models)).catch(() => { /* older server: no menu */ });
+    load();
+    window.addEventListener("focus", load);
+    return () => window.removeEventListener("focus", load);
+  }, []);
+  useEffect(() => {
+    if (models.length && !models.some((m) => m.id === model)) setModel(models[0].id);
+  }, [models, model, setModel]);
   const [clearedAt, setClearedAt] = useState(loadClearedAt);
   useEffect(() => saveShown(shown), [shown]);
   useEffect(() => saveClearedAt(clearedAt), [clearedAt]);
@@ -104,7 +127,8 @@ export default function App() {
     unfollow();
     const id = info.id;
     const update = (f: (j: ConsoleJob) => ConsoleJob) => setJob((j) => (j && j.info.id === id ? f(j) : j));
-    setJob({ info, lines: [], title: TITLE_OF[info.step] ?? info.step });
+    const tested = info.model ? modelsRef.current.find((m) => m.id === info.model)?.label ?? info.model : null;
+    setJob({ info, lines: [], title: (TITLE_OF[info.step] ?? info.step) + (tested ? `: ${tested}` : "") });
     const stop = followJob(id, {
       onLine: (line) => update((j) => ({ ...j, lines: [...j.lines, line] })),
       onOutput: (lines) => update((j) => ({ ...j, lines })),
@@ -166,12 +190,12 @@ export default function App() {
     writePref("demo.motion", motion ? "on" : "off");
   }, [motion]);
 
-  const run = useCallback(async (step: ServerStep, opts?: { tries?: number }) => {
+  const run = useCallback(async (step: ServerStep, opts?: { tries?: number; model?: string }) => {
     const confirmText = steps[step]?.confirm;
     if (confirmText && !window.confirm(confirmText)) return;
     setNotice(null);
     try {
-      const info = await runStep(step, opts?.tries);
+      const info = await runStep(step, opts?.tries, opts?.model);
       attach(info);
       setConsoleOpen(true);
     } catch (e) {
@@ -213,18 +237,24 @@ export default function App() {
   }, [settle, refresh]);
 
   const running: ServerStep | null = job?.info.running ? job.info.step : s?.job?.running ? s.job.step : null;
-  const ctl = useMemo<RunCtl>(() => ({ running, run, steps }), [running, run, steps]);
-  const view = useMemo(() => (s ? applyView(s, shown, clearedAt) : null), [s, shown, clearedAt]);
+  const runningModel = job?.info.running ? job.info.model ?? null : s?.job?.running ? s.job.model ?? null : null;
+  const ctl = useMemo<RunCtl>(() => ({ running, run, steps, models, model, setModel, runningModel }),
+    [running, run, steps, models, model, setModel, runningModel]);
+  const view = useMemo(() => (s ? applyView(s, shown, clearedAt, shownModels) : null), [s, shown, clearedAt, shownModels]);
 
   /** Clear: every page back to "nothing has run yet", the console emptied, ready for a new test. */
   const clear = useCallback(() => {
     setShown(new Set());
+    setShownModels(new Set());
     setClearedAt(Date.now() / 1000);
     setNotice(null);
     setJob((j) => (j?.info.running ? j : null));
     setConsoleOpen(false);
   }, []);
-  const showSaved = useCallback(() => setShown(new Set(ALL_RESULTS)), []);
+  const showSaved = useCallback(() => {
+    setShown(new Set(ALL_RESULTS));
+    setShownModels(new Set(Object.keys(s?.results.model_tests ?? {})));
+  }, [s]);
 
   // ------------------------------------------------------------------ routes
   const isLanding = path === "/" || path === "/index.html";
@@ -269,7 +299,7 @@ export default function App() {
   return (
     <div className="appwrap">
       <Side path={path} s={view} ctl={ctl} motion={motion} onMotion={() => setMotion((m) => !m)}
-        shownCount={shown.size} onClear={clear} onShowSaved={showSaved} />
+        shownCount={shown.size + shownModels.size} onClear={clear} onShowSaved={showSaved} />
       <main className="page">
         {offline && (
           <Callout tone="bad">
@@ -284,6 +314,9 @@ export default function App() {
           </Callout>
         )}
         <div aria-live="polite">{notice && <Callout tone="warn"><p>{notice}</p></Callout>}</div>
+        {view && models.length > 0 && (
+          <ErrorBoundary name="The model menu" onReload={refresh}><ModelBar s={view} ctl={ctl} /></ErrorBoundary>
+        )}
         <ErrorBoundary key={path} name={pageName} onReload={refresh} resetKey={s}>{page}</ErrorBoundary>
       </main>
       <ErrorBoundary name="The console" onReload={() => setConsoleOpen(true)}>

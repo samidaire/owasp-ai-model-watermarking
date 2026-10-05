@@ -141,6 +141,11 @@ The live catalogue is in `contract/fixtures/steps.json`.
 | `protocol_v2` | F | 80 | 800 | — | `protocol_v2.json`, `protocol_v2/*.json` |
 | `all` | `*` | 30 | 300 | — | evaluate → attacks → forgery → committed → zk |
 | `verify_honest`, `verify_replay`, `verify_model`, `verify_tamper`, `verify_registry` | F | 2 | 120 | — | nothing: `09_verify_live.py` re-checks demo F's saved proof, honestly or with one misuse, and prints every verifier check |
+| `model_test` | `*` | 15 | 150 | — (body needs `model`: an id from `GET /api/models`) | `model_tests/<model>.json`: `10_test_model.py` builds the model (stolen copies are made live), measures accuracy, reads the mark with both owners' keys and, if the v2 mark is there, makes and verifies a Groth16 proof |
+
+`GET /api/models` lists the "Model under test" menu (`contract/fixtures/models.json`): the demo's checkpoints, six
+stolen copies of the owner's v2 model, and any `.pt`/`.h5`/`.keras`/`.onnx` file in `demo/models/` (id `file:<name>`).
+Results arrive in `/api/state` as `results.model_tests[<id>]`; the job's `model` field says which model a run tests.
 
 - **`confirm`.** When it's non-null, show its text and require a confirmation before POSTing. These steps are destructive or slow.
 - **Labels and durations.** Use `label` and `seconds` for buttons and for "this takes ~N s" hints.

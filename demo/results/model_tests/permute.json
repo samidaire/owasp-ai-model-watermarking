@@ -1,0 +1,34 @@
+{
+  "model": "permute",
+  "label": "watermarked_v2 \u00b7 channels permuted",
+  "group": "Stolen copies (attacked live)",
+  "derived": true,
+  "file": null,
+  "sha256": "438563439c51fe9199cc0664254c7d215b5732820ec438189b790cf544c3806a",
+  "accuracy": 0.9857,
+  "readable": true,
+  "error": null,
+  "v2": {
+    "errors": 39,
+    "ber": 0.609375,
+    "max_err": 8,
+    "accepted": false
+  },
+  "v1": {
+    "ber": 0.484375,
+    "accepted": false
+  },
+  "proof": {
+    "made": false,
+    "accepted": false,
+    "checks": {},
+    "reasons": [
+      "no proof possible: 39/64 bits wrong (> 8)"
+    ],
+    "timing": null,
+    "proof_bytes": null,
+    "nonce": null
+  },
+  "verdict": "no_proof",
+  "tested_at": "2026-10-05T04:30:10Z"
+}

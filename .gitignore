@@ -59,3 +59,8 @@ demo/results/**/extract.onnx
 
 # packaged proving keys (scripts/package_keys.py)
 /dist/
+
+# Your own models for the "Model under test" menu (demo/models/README.md), and their test results
+/demo/models/*
+!/demo/models/README.md
+/demo/results/model_tests/file_*.json

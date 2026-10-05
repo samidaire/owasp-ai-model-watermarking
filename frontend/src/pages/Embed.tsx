@@ -1,10 +1,11 @@
 import { useState } from "react";
 import type { PageProps } from "../App";
 import { Icon } from "../components/icons";
-import { Callout, Empty } from "../components/ui";
+import { Callout, Empty, Verdict } from "../components/ui";
 import { pct, short, when } from "../format";
 import { RunButton } from "../panels/Shell";
 import { Link } from "../router";
+import { TestButton } from "../shell/ModelBar";
 
 type Proto = "v1" | "v2";
 
@@ -18,6 +19,45 @@ function BitBox({ bits, hidden, T }: { bits?: number[]; hidden?: boolean; T: num
           style={{ ["--i" as string]: (i % 16) + Math.floor(i / 16) }} title={b < 0 ? "hidden" : `bit ${i}: ${b}`} />
       ))}
     </div>
+  );
+}
+
+/** How much of the owner's signature a key reads back, against the acceptance line (7/8 of the bits). */
+function Meter({ label, match, ok, detail }: { label: string; match: number; ok: boolean; detail: string }) {
+  return (
+    <div style={{ flex: "1 1 240px", minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 650 }}>
+        <span>{label}</span>{ok ? <Verdict tone="good">Mark present</Verdict> : <Verdict tone="bad">Mark absent</Verdict>}
+      </div>
+      <div role="img" aria-label={`${Math.round(match * 100)}% of the bits match; the line is the acceptance threshold`}
+        style={{ position: "relative", height: 14, border: "var(--line)", borderRadius: 999, overflow: "hidden", background: "var(--paper)" }}>
+        <div style={{ width: `${match * 100}%`, height: "100%", background: ok ? "var(--espresso)" : "var(--rust)", transformOrigin: "left", animation: "fillx .9s var(--spring) backwards" }} />
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: "87.5%", borderLeft: "3px dashed var(--caramel)" }} />
+      </div>
+      <span className="mono muted" style={{ fontSize: 12.5 }}>{detail}</span>
+    </div>
+  );
+}
+
+/** Is the owner's watermark in the model under test? (from its model test) */
+function ModelReadout({ s, ctl }: PageProps) {
+  const m = ctl.models.find((x) => x.id === ctl.model);
+  if (!m) return null;
+  const r = s.results.model_tests?.[ctl.model];
+  return (
+    <section className="box" style={{ padding: 22, display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ flex: "1 1 260px", minWidth: 0 }}>
+        <span className="eyebrow">Watermark readout · model under test</span>
+        <h2 className="h-sm" style={{ marginTop: 4 }}>{m.label}</h2>
+        <p className="muted" style={{ margin: "4px 0 0", fontSize: 13.5 }}>Read from layer conv2 with each owner's key. Present means at most 8 of the 64 bits are wrong.</p>
+      </div>
+      {!r ? <TestButton ctl={ctl} /> : !r.readable || !r.v2 || !r.v1
+        ? <Verdict tone="warn">Can't read conv2: {r.error}</Verdict>
+        : <div style={{ display: "flex", flexWrap: "wrap", gap: 18, flex: "2 1 460px", minWidth: 0 }}>
+            <Meter label="Protocol v2 owner (Ed25519)" match={(64 - r.v2.errors) / 64} ok={r.v2.accepted} detail={`${64 - r.v2.errors}/64 bits match · present at ≥ 56`} />
+            <Meter label="Protocol v1 owner (owner:yash)" match={1 - r.v1.ber} ok={r.v1.accepted} detail={`BER ${r.v1.ber.toFixed(3)} · present at ≤ 0.125`} />
+          </div>}
+    </section>
   );
 }
 
@@ -61,6 +101,8 @@ export function Embed({ s, ctl }: PageProps) {
           </li>
         ))}
       </ol>
+
+      <ModelReadout s={s} ctl={ctl} />
 
       {!ready ? <Empty what={v2 ? "protocol v2 (demo F)" : "protocol v1 (demo A)"}
         action={<RunButton ctl={ctl} step={v2 ? "protocol_v2" : "evaluate"} primary />} /> : (

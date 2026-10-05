@@ -1,0 +1,109 @@
+{
+  "api_version": 1,
+  "models": [
+    {
+      "id": "watermarked_v2",
+      "group": "Owner's models",
+      "label": "watermarked_v2.pt",
+      "file": "ckpt/v2/watermarked_v2.pt",
+      "derived": false,
+      "note": "The owner's model as registered (protocol v2, demo F)."
+    },
+    {
+      "id": "watermarked_v1",
+      "group": "Owner's models",
+      "label": "watermarked.pt",
+      "file": "ckpt/watermarked.pt",
+      "derived": false,
+      "note": "The research baseline's model (protocol v1, demos A–E). Watermarked with a different owner key."
+    },
+    {
+      "id": "prune65",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · pruned 65%",
+      "file": null,
+      "derived": true,
+      "note": "A thief zeroes the 65% smallest weights of every layer."
+    },
+    {
+      "id": "prune90",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · pruned 90%",
+      "file": null,
+      "derived": true,
+      "note": "A thief zeroes the 90% smallest weights of every layer: the model barely works any more."
+    },
+    {
+      "id": "int8",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · int8 quantised",
+      "file": null,
+      "derived": true,
+      "note": "A thief rounds every weight to 8 bits to shrink the model."
+    },
+    {
+      "id": "finetune",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · fine-tuned 5 epochs",
+      "file": null,
+      "derived": true,
+      "note": "A thief keeps training all layers on 10,000 images of their own."
+    },
+    {
+      "id": "permute",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · channels permuted",
+      "file": null,
+      "derived": true,
+      "note": "A thief reorders conv1's channels: same predictions, different weight order. The known limit."
+    },
+    {
+      "id": "overwrite",
+      "group": "Stolen copies (attacked live)",
+      "label": "watermarked_v2 · overwritten by a thief",
+      "file": null,
+      "derived": true,
+      "note": "A thief embeds their own mark on top (3 epochs). The owner's mark should still read."
+    },
+    {
+      "id": "clean",
+      "group": "Never watermarked",
+      "label": "clean.pt",
+      "file": "ckpt/clean.pt",
+      "derived": false,
+      "note": "Same network trained without any watermark."
+    },
+    {
+      "id": "null_0",
+      "group": "Never watermarked",
+      "label": "null_0.pt",
+      "file": "ckpt/null_0.pt",
+      "derived": false,
+      "note": "An independently trained model, never watermarked."
+    },
+    {
+      "id": "null_1",
+      "group": "Never watermarked",
+      "label": "null_1.pt",
+      "file": "ckpt/null_1.pt",
+      "derived": false,
+      "note": "An independently trained model, never watermarked."
+    },
+    {
+      "id": "null_2",
+      "group": "Never watermarked",
+      "label": "null_2.pt",
+      "file": "ckpt/null_2.pt",
+      "derived": false,
+      "note": "An independently trained model, never watermarked."
+    },
+    {
+      "id": "null_3",
+      "group": "Never watermarked",
+      "label": "null_3.pt",
+      "file": "ckpt/null_3.pt",
+      "derived": false,
+      "note": "An independently trained model, never watermarked."
+    }
+  ]
+}

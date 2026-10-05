@@ -205,3 +205,9 @@ html::-webkit-scrollbar-thumb:active, body::-webkit-scrollbar-thumb:active { bac
   .page { padding: 18px 14px calc(var(--console-h, 140px) + 24px); }
 }
 @keyframes fillx { from { scale: 0 1; } to { scale: 1 1; } }
+
+/* ---------------------------------------------------------------- "Model under test" bar (every app page) */
+.modelbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding: 16px 20px; background: var(--paper); }
+.modelbar .mb-pick { display: flex; flex-direction: column; gap: 8px; flex: 1 1 420px; min-width: 0; }
+.modelbar .mb-result { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 300px; min-width: 0; }
+.modelbar select.sel { min-width: min(320px, 100%); max-width: 100%; cursor: pointer; }

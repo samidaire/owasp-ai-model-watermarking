@@ -1,0 +1,34 @@
+{
+  "model": "null_2",
+  "label": "null_2.pt",
+  "group": "Never watermarked",
+  "derived": false,
+  "file": "ckpt/null_2.pt",
+  "sha256": "ddaf64778ea885bf7387f867e9b8736b9e14d5851ecb55a198335ae2b09c67d3",
+  "accuracy": 0.9877,
+  "readable": true,
+  "error": null,
+  "v2": {
+    "errors": 30,
+    "ber": 0.46875,
+    "max_err": 8,
+    "accepted": false
+  },
+  "v1": {
+    "ber": 0.40625,
+    "accepted": false
+  },
+  "proof": {
+    "made": false,
+    "accepted": false,
+    "checks": {},
+    "reasons": [
+      "no proof possible: 30/64 bits wrong (> 8)"
+    ],
+    "timing": null,
+    "proof_bytes": null,
+    "nonce": null
+  },
+  "verdict": "no_proof",
+  "tested_at": "2026-10-05T04:30:39Z"
+}

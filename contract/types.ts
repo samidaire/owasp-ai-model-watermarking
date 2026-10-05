@@ -13,7 +13,9 @@ export type Bits = number[]; // 64 entries, each 0 or 1
 /** GET /api/steps  ·  POST /api/run {step} */
 export type ServerStep = "evaluate" | "retrain" | "attacks" | "forgery" | "committed" | "zk" | "zk_hashed" | "protocol_v2" | "all"
   // the Verify page re-checks demo F's saved proof live, honestly or with one misuse (writes nothing)
-  | "verify_honest" | "verify_replay" | "verify_model" | "verify_tamper" | "verify_registry";
+  | "verify_honest" | "verify_replay" | "verify_model" | "verify_tamper" | "verify_registry"
+  // "Model under test": watermark readout, accuracy and a proof for one model (POST body needs `model`)
+  | "model_test";
 
 export interface StepInfo {
   id: ServerStep;
@@ -66,6 +68,8 @@ export interface JobInfo {
   cancelled?: boolean;
   /** The job was stopped after its step's `timeout` (code -3). Always present on servers with cancel; treat missing as false. */
   timed_out?: boolean;
+  /** The model id a `model_test` job tests (null for other steps; missing on older servers). */
+  model?: string | null;
 }
 
 /**
@@ -198,6 +202,50 @@ export interface ProtocolV2Result {
                        winner: "owner" | "thief" | null };
 }
 
+/** GET /api/models: what the "Model under test" menu offers (demo/model_catalogue.py). */
+export interface ModelInfo {
+  /** Built-in id ("watermarked_v2", "prune65", "clean", …) or "file:<name>" for a file in demo/models/. */
+  id: string;
+  group: string;
+  label: string;
+  /** Path relative to demo/, or null for a stolen copy made live from the owner's model. */
+  file: string | null;
+  derived: boolean;
+  note: string;
+}
+export interface ModelsResponse { api_version: number; models: ModelInfo[] }
+
+/** results/model_tests/<model>.json: one run of 10_test_model.py. */
+export interface ModelTestResult {
+  model: string;
+  label: string;
+  group: string;
+  derived: boolean;
+  file: string | null;
+  sha256: string;
+  /** On the 10,000 MNIST test images; null when the file isn't the demo's network. */
+  accuracy: number | null;
+  /** False when no conv2 layer of M = 288 values could be read (then `error` says why). */
+  readable: boolean;
+  error: string | null;
+  /** Protocol v2 owner (Ed25519): bits wrong out of 64, accepted at <= max_err. */
+  v2: { errors: number; ber: number; max_err: number; accepted: boolean } | null;
+  /** Protocol v1 owner (owner:yash): bit error rate, accepted at <= 0.125. */
+  v1: { ber: number; accepted: boolean } | null;
+  proof: {
+    made: boolean;
+    accepted: boolean;
+    checks: Record<string, boolean>;
+    reasons: string[];
+    timing: { witness_s: number; prove_s: number } | null;
+    proof_bytes: number | null;
+    nonce: string | null;
+  } | null;
+  /** proven: proof made and every check passed; no_proof: the mark isn't there; rejected: a check failed. */
+  verdict: "proven" | "no_proof" | "rejected" | "unreadable";
+  tested_at: string;
+}
+
 export interface DemoState {
   api_version: number;
   /** "simulate" = runs replay recorded logs (server started with --simulate). Show this prominently. */
@@ -214,6 +262,8 @@ export interface DemoState {
     ezkl: Record<"private_owner" | "private_thief" | "hashed_owner" | "hashed_thief", EzklSummary | null>;
     /** Demo F; absent on servers older than protocol v2. */
     protocol_v2?: ProtocolV2Result | null;
+    /** "Model under test" results keyed by model id; absent on older servers. */
+    model_tests?: Record<string, ModelTestResult>;
   };
   job: JobInfo | null;
 }
