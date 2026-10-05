@@ -14,6 +14,10 @@
 .jw:hover { animation: jelly .8s ease-out; }
 .word-in { display: inline-block; animation: drop .95s var(--spring) backwards; animation-delay: .25s; transform-origin: 50% 100%; }
 
+/* Plain text links (in callouts and paragraphs): palette colours instead of the browser's blue. */
+a:not([class]) { color: var(--cocoa); font-weight: 650; text-decoration: underline; text-decoration-color: var(--caramel); text-decoration-thickness: 2px; text-underline-offset: 3px; transition: color .2s; }
+a:not([class]):hover { color: var(--espresso); text-decoration-color: var(--espresso); }
+
 /* ---------------------------------------------------------------- buttons (extra sizes on top of .btn) */
 .btn.lg { min-height: 56px; padding: 0 26px; font-size: 16.5px; }
 .btn.dark { background: var(--espresso); color: var(--paper); box-shadow: 3px 3px 0 var(--caramel); }
