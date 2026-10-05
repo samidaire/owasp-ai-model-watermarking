@@ -98,10 +98,13 @@ export function Meter({ value, color, threshold, label }: {
   );
 }
 
-export function Empty({ what }: { what: string }) {
+/** A page or panel before anything has run (or after Clear): says what to press, with that button if given. */
+export function Empty({ what, action }: { what: string; action?: ReactNode }) {
   return (
     <Callout tone="warn">
-      <p>No saved results for {what} yet. Press <strong>Run live</strong> above.</p>
+      <p>Nothing has run yet for {what}. {action ? "Run it now" : <>Press the <strong>Run</strong> button above</>}; the
+        results appear here when it finishes.</p>
+      {action && <div className="actions" style={{ marginTop: 10 }}>{action}</div>}
     </Callout>
   );
 }

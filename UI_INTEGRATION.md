@@ -138,7 +138,9 @@ The live catalogue is in `contract/fixtures/steps.json`.
 | `committed` | D | 3 | 120 | — (option `tries`: 20000 or 100000) | `committed_seed.json`, `forgery_search.png` |
 | `zk` | E | 10 | 120 | — | `ezkl_private_*/summary.json`, `vk_crosscheck.json` |
 | `zk_hashed` | E | 200 | 1800 | **yes**: ~3 min, ~10 GB temporary disk | `ezkl_hashed_*/summary.json` |
+| `protocol_v2` | F | 80 | 800 | — | `protocol_v2.json`, `protocol_v2/*.json` |
 | `all` | `*` | 30 | 300 | — | evaluate → attacks → forgery → committed → zk |
+| `verify_honest`, `verify_replay`, `verify_model`, `verify_tamper`, `verify_registry` | F | 2 | 120 | — | nothing: `09_verify_live.py` re-checks demo F's saved proof, honestly or with one misuse, and prints every verifier check |
 
 - **`confirm`.** When it's non-null, show its text and require a confirmation before POSTing. These steps are destructive or slow.
 - **Labels and durations.** Use `label` and `seconds` for buttons and for "this takes ~N s" hints.

@@ -1,0 +1,28 @@
+$ python 09_verify_live.py --case model
+
+==============================================================================
+  VERIFY LIVE: checked against a different model
+==============================================================================
+  what changes   : the suspect file is clean.pt, a model that was never watermarked
+  suspect file   : clean.pt  (sha256 a5226684c0bab67b…)
+  claim nonce    : 3382768077…282553   opened 2026-10-04T22:23:11.566Z
+  proof pi_a[0]  : 1185742808…595903
+  registry       : trusted (e563b2dec65bf8cd…)
+
+  Running sigil.verify.verify_ownership (recomputes w_hash from the file, runs SnarkJS)…
+
+  [ok]  Registration signed by the owner
+  [ok]  Registry receipt from a trusted registry
+  [ok]  Registered before the claim
+  [ok]  Claim refers to this registration
+  [ok]  Claim refers to this suspect file
+  [ok]  Five public signals
+  [ok]  Proof is for the owner's key
+  [ok]  Same watermark configuration
+  [ok]  Opens the published commitment
+  [XX]  About this exact model (w_hash)
+  [ok]  Made for this claim (nonce)
+  [ok]  Groth16 proof verifies
+
+  VERDICT: REJECTED in 0.53 s
+    reason: proof is about a different model (w_hash mismatch)

@@ -62,7 +62,8 @@ export function Embed({ s, ctl }: PageProps) {
         ))}
       </ol>
 
-      {!ready ? <Empty what={v2 ? "demo F" : "demo A"} /> : (
+      {!ready ? <Empty what={v2 ? "protocol v2 (demo F)" : "protocol v1 (demo A)"}
+        action={<RunButton ctl={ctl} step={v2 ? "protocol_v2" : "evaluate"} primary />} /> : (
         <div className="cols">
           <section className="box" style={{ flex: "1 1 520px", minWidth: 0, padding: 26, display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14, padding: 14, border: "1.5px dashed color-mix(in oklab, var(--espresso) 30%, transparent)", borderRadius: 18, background: "var(--cream)" }}>

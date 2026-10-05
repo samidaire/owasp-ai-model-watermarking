@@ -11,6 +11,7 @@ import { Landing } from "./pages/Landing";
 import { Overview } from "./pages/Overview";
 import { Robustness } from "./pages/Robustness";
 import { Verify } from "./pages/Verify";
+import { ALL_RESULTS, REVEALS, applyView, loadClearedAt, loadShown, saveClearedAt, saveShown, type ResultKey } from "./reveal";
 import { navigate, usePath } from "./router";
 import { Side } from "./shell/Side";
 import { FALLBACK_STEPS, toCatalogue, type StepCatalogue } from "./steps";
@@ -19,6 +20,8 @@ import type { RunCtl } from "./panels/Shell";
 export const TITLE_OF: Record<ServerStep, string> = {
   evaluate: "Demo A (re-verify)", retrain: "Demo A (retrain)", attacks: "Demo B (removal attacks)", forgery: "Demo C (forgery)",
   committed: "Demo D (committed seed)", zk: "Demo E1 + E2", zk_hashed: "Demo E3", protocol_v2: "Demo F (protocol v2)", all: "All demos",
+  verify_honest: "Live verification", verify_replay: "Misuse: replayed proof", verify_model: "Misuse: different model",
+  verify_tamper: "Misuse: tampered proof", verify_registry: "Misuse: untrusted registry",
 };
 const SERVER_CMD = "Double-click Start-Demo-UI.cmd in the project folder, or run: python demo/server.py";
 
@@ -47,6 +50,15 @@ export default function App() {
   const [cancelling, setCancelling] = useState<string | null>(null);
   /** The server has no cancel endpoint (older server): hide the Cancel button. */
   const [cancelUnsupported, setCancelUnsupported] = useState(false);
+  /** Results on screen: none until a run finishes (or "Show saved results"); Clear empties them again. */
+  const [shown, setShown] = useState<Set<ResultKey>>(loadShown);
+  const reveal = useCallback((done: JobInfo | null) => {
+    const keys = done && done.code === 0 ? REVEALS[done.step] : undefined;
+    if (keys) setShown((cur) => (keys.every((k) => cur.has(k)) ? cur : new Set([...cur, ...keys])));
+  }, []);
+  const [clearedAt, setClearedAt] = useState(loadClearedAt);
+  useEffect(() => saveShown(shown), [shown]);
+  useEffect(() => saveClearedAt(clearedAt), [clearedAt]);
   const follow = useRef<{ id: string; stop: () => void } | null>(null);
   const jobRef = useRef<ConsoleJob | null>(null);
   jobRef.current = job;
@@ -80,12 +92,13 @@ export default function App() {
       } catch { /* unknown job or unreachable server: ends as "lost" */ }
     }
     unfollow(id);
+    reveal(final);
     setJob((j) => {
       if (!j || j.info.id !== id || !j.info.running) return j;
       if (final) return { ...j, info: final };
       return { ...j, lost: true, info: { ...j.info, running: false, ended: j.info.ended ?? Date.now() / 1000 } };
     });
-  }, [unfollow]);
+  }, [unfollow, reveal]);
 
   const attach = useCallback((info: JobInfo) => {
     unfollow();
@@ -99,6 +112,7 @@ export default function App() {
         if (follow.current?.id === id) follow.current = null;
         update((j) => ({ ...j, info: done }));
         setNotice(null);
+        reveal(done);
         refresh();
       },
       onLost: async () => {
@@ -108,7 +122,7 @@ export default function App() {
       },
     });
     follow.current = { id, stop };
-  }, [refresh, settle, unfollow]);
+  }, [refresh, settle, unfollow, reveal]);
 
   // Initial load: saved results populate every page before anything runs; re-attach to a running job.
   useEffect(() => {
@@ -200,6 +214,17 @@ export default function App() {
 
   const running: ServerStep | null = job?.info.running ? job.info.step : s?.job?.running ? s.job.step : null;
   const ctl = useMemo<RunCtl>(() => ({ running, run, steps }), [running, run, steps]);
+  const view = useMemo(() => (s ? applyView(s, shown, clearedAt) : null), [s, shown, clearedAt]);
+
+  /** Clear: every page back to "nothing has run yet", the console emptied, ready for a new test. */
+  const clear = useCallback(() => {
+    setShown(new Set());
+    setClearedAt(Date.now() / 1000);
+    setNotice(null);
+    setJob((j) => (j?.info.running ? j : null));
+    setConsoleOpen(false);
+  }, []);
+  const showSaved = useCallback(() => setShown(new Set(ALL_RESULTS)), []);
 
   // ------------------------------------------------------------------ routes
   const isLanding = path === "/" || path === "/index.html";
@@ -233,17 +258,18 @@ export default function App() {
 
   let page: React.ReactNode;
   let pageName = "This page";
-  if (!s) page = !offline && <p className="muted">Loading saved results…</p>;
-  else if (path === "/app" || path === "/app/") { page = <Overview s={s} ctl={ctl} job={job} />; pageName = "Overview"; }
-  else if (path.startsWith("/app/embed")) { page = <Embed s={s} ctl={ctl} />; pageName = "Embed watermark"; }
-  else if (path.startsWith("/app/verify")) { page = <Verify s={s} ctl={ctl} />; pageName = "Verify ownership"; }
-  else if (path.startsWith("/app/robustness")) { page = <Robustness s={s} ctl={ctl} />; pageName = "Robustness lab"; }
-  else if (demoKey) { page = <Demos s={s} ctl={ctl} k={demoKey} />; pageName = `Demo ${demoKey}`; }
+  if (!view) page = !offline && <p className="muted">Loading…</p>;
+  else if (path === "/app" || path === "/app/") { page = <Overview s={view} ctl={ctl} job={job} />; pageName = "Overview"; }
+  else if (path.startsWith("/app/embed")) { page = <Embed s={view} ctl={ctl} />; pageName = "Embed watermark"; }
+  else if (path.startsWith("/app/verify")) { page = <Verify s={view} ctl={ctl} />; pageName = "Verify ownership"; }
+  else if (path.startsWith("/app/robustness")) { page = <Robustness s={view} ctl={ctl} />; pageName = "Robustness lab"; }
+  else if (demoKey) { page = <Demos s={view} ctl={ctl} k={demoKey} />; pageName = `Demo ${demoKey}`; }
   else page = <Callout tone="warn"><p>No page here. <a href="/app">Go to the overview</a>.</p></Callout>;
 
   return (
     <div className="appwrap">
-      <Side path={path} s={s} ctl={ctl} motion={motion} onMotion={() => setMotion((m) => !m)} />
+      <Side path={path} s={view} ctl={ctl} motion={motion} onMotion={() => setMotion((m) => !m)}
+        shownCount={shown.size} onClear={clear} onShowSaved={showSaved} />
       <main className="page">
         {offline && (
           <Callout tone="bad">
@@ -253,8 +279,8 @@ export default function App() {
         )}
         {s?.mode === "simulate" && (
           <Callout tone="warn">
-            <p><strong>Simulate mode.</strong> Run buttons replay recorded logs; nothing is executed and the results shown are the saved ones.
-              For real runs, restart the server without <span className="mono">--simulate</span>.</p>
+            <p><strong>Simulate mode.</strong> Run buttons replay recorded logs: nothing is executed, and each page then shows that demo's
+              saved results. For real runs, start the server without <span className="mono">--simulate</span> (<span className="mono">Start-Demo-UI.cmd</span>).</p>
           </Callout>
         )}
         <div aria-live="polite">{notice && <Callout tone="warn"><p>{notice}</p></Callout>}</div>

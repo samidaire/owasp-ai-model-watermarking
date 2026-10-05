@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ServerStep } from "../api";
 import type { PageProps } from "../App";
 import { Icon } from "../components/icons";
 import { Callout, Empty, Verdict } from "../components/ui";
@@ -30,6 +31,14 @@ function failedCheck(reason: string): string | null {
   return null;
 }
 
+/** The live re-check behind each misuse button (demo/09_verify_live.py): same proof, one thing changed. */
+const MISUSE_STEP: Record<string, ServerStep> = {
+  "replayed for another claim": "verify_replay",
+  "checked against a different model": "verify_model",
+  "tampered proof bytes": "verify_tamper",
+  "receipt from an untrusted registry": "verify_registry",
+};
+
 interface Proof { pi_a: string[]; pi_b: string[][]; pi_c: string[]; protocol: string; curve: string }
 interface Onchain { verified: boolean; tampered_public_signal_verified: boolean; verify_gas: string; deploy_gas: string; chain_id: number; proof_pi_a0?: string }
 const SIGNALS = ["pk_hash", "config_hash", "commitment", "w_hash", "nonce"];
@@ -54,8 +63,23 @@ export function Verify({ s, ctl }: PageProps) {
     return () => { live = false; };
   }, [stamp]);
 
-  if (!f) return <Empty what="demo F (protocol v2)" />;
+  if (!f) return (
+    <>
+      <div className="pagehead"><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <span className="chip" style={{ alignSelf: "flex-start" }}>Verify ownership · demo F</span>
+        <h1 className="display" style={{ margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>Check the <span className="jw hlw">claim.</span></h1>
+        <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>There's no proof to check yet. Demo F registers the owner, opens a claim and makes the zero-knowledge proof; this page then verifies it.</p>
+      </div></div>
+      <Empty what="the proof of ownership" action={<RunButton ctl={ctl} step="protocol_v2" primary />} />
+    </>
+  );
   const shown = misuse ? f.misuse[misuse] : null;
+  /** Show the verdict demo F recorded, and re-run that verification live so the console shows every check. */
+  const pick = (k: string | null) => {
+    setMisuse(k);
+    const step: ServerStep = k ? MISUSE_STEP[k] ?? "verify_honest" : "verify_honest";
+    if (!ctl.running && ctl.steps[step]) void ctl.run(step, {});
+  };
   const ok = shown ? shown.accepted : f.owner_proof.accepted;
   const tripped = shown ? failedCheck(shown.reasons[0] ?? "") : null;
   const onchainCurrent = onchain && proof && onchain.proof_pi_a0 === proof.pi_a[0];
@@ -160,19 +184,21 @@ export function Verify({ s, ctl }: PageProps) {
               </p>
             )}
             <div className="actions" style={{ justifyContent: "center", paddingTop: 4 }}>
-              <RunButton ctl={ctl} step="protocol_v2" primary hint="Re-run demo F: a fresh claim, proof and verification" />
-              {misuse && <button type="button" className="btn" onClick={() => setMisuse(null)}>Back to the honest proof</button>}
+              {misuse
+                ? <button type="button" className="btn primary" onClick={() => pick(null)}>Back to the honest proof</button>
+                : <RunButton ctl={ctl} step="verify_honest" primary />}
+              <RunButton ctl={ctl} step="protocol_v2" hint="Re-run demo F: a fresh claim, proof and verification" />
             </div>
           </section>
 
           <section className="box" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
             <h2 className="h-sm">Try a misuse</h2>
-            <p className="muted" style={{ margin: "-6px 0 0", fontSize: 13.5 }}>Each was actually attempted in the last demo F run; this shows what the verifier said.</p>
+            <p className="muted" style={{ margin: "-6px 0 0", fontSize: 13.5 }}>Each button changes one thing about the saved proof and runs the verifier on it again: the console shows every check.</p>
             <div className="actions">
               {Object.keys(f.misuse).map((k) => (
                 <button key={k} type="button" className="btn" aria-pressed={misuse === k}
                   style={misuse === k ? { background: "var(--espresso)", color: "var(--paper)" } : undefined}
-                  onClick={() => setMisuse(misuse === k ? null : k)}>{k}</button>
+                  onClick={() => pick(misuse === k ? null : k)}>{k}</button>
               ))}
             </div>
           </section>

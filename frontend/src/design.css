@@ -18,6 +18,11 @@
 a:not([class]) { color: var(--cocoa); font-weight: 650; text-decoration: underline; text-decoration-color: var(--caramel); text-decoration-thickness: 2px; text-underline-offset: 3px; transition: color .2s; }
 a:not([class]):hover { color: var(--espresso); text-decoration-color: var(--espresso); }
 
+/* A button that reads as an inline text link. */
+.linkbtn { all: unset; cursor: pointer; color: var(--cocoa); font-weight: 650; text-decoration: underline; text-decoration-color: var(--caramel); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.linkbtn:hover { color: var(--espresso); }
+.linkbtn:focus-visible { outline: 2px solid var(--caramel); outline-offset: 2px; border-radius: 4px; }
+
 /* ---------------------------------------------------------------- buttons (extra sizes on top of .btn) */
 .btn.lg { min-height: 56px; padding: 0 26px; font-size: 16.5px; }
 .btn.dark { background: var(--espresso); color: var(--paper); box-shadow: 3px 3px 0 var(--caramel); }
@@ -191,7 +196,7 @@ html::-webkit-scrollbar-thumb:active, body::-webkit-scrollbar-thumb:active { bac
   /* Narrow screens: the sidebar becomes a compact card of wrapping pills above the page. */
   .side { position: static; max-width: none; max-height: none; overflow: visible; margin: 12px 12px 0; flex-basis: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
   .side > .brandlink { margin-right: auto; }
-  .side .ws, .side .group > p { display: none; }
+  .side .ws, .side .group > p.hint { display: none; }
   .side .group { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 6px; }
   .side .sectlabel { flex-basis: 100%; padding: 2px 4px 0; }
   .side .side-link { min-height: 40px; padding: 0 12px; border-color: color-mix(in oklab, var(--espresso) 22%, transparent); }

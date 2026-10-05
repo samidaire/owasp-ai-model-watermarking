@@ -51,6 +51,26 @@ export const FALLBACK_STEPS: StepCatalogue = {
     id: "all", panel: "*", label: "Run all live", seconds: 30, confirm: null, writes: [],
     description: "evaluate, attacks, forgery, committed, zk (E3 stays precomputed).",
   },
+  verify_honest: {
+    id: "verify_honest", panel: "F", label: "Verify this proof live", seconds: 2, confirm: null, writes: [],
+    description: "Runs every verifier check on demo F's saved proof, including the Groth16 verification.",
+  },
+  verify_replay: {
+    id: "verify_replay", panel: "F", label: "Replay it for another claim", seconds: 2, confirm: null, writes: [],
+    description: "Resubmits the saved proof for a new claim with a fresh nonce.",
+  },
+  verify_model: {
+    id: "verify_model", panel: "F", label: "Check it against a different model", seconds: 2, confirm: null, writes: [],
+    description: "Checks the saved proof against clean.pt instead of the watermarked model.",
+  },
+  verify_tamper: {
+    id: "verify_tamper", panel: "F", label: "Tamper with the proof", seconds: 2, confirm: null, writes: [],
+    description: "Changes one number inside the proof, then verifies it.",
+  },
+  verify_registry: {
+    id: "verify_registry", panel: "F", label: "Use an untrusted registry", seconds: 2, confirm: null, writes: [],
+    description: "Backs the registration with a receipt from a registry the verifier doesn't trust.",
+  },
 };
 
 /** The server's catalogue, keyed by step id. A step the server doesn't list keeps its fallback entry. */
@@ -64,6 +84,8 @@ export function toCatalogue(r: StepsResponse): StepCatalogue {
 export const RUNNING_NAME: Record<ServerStep, string> = {
   evaluate: "re-verification", retrain: "retraining", attacks: "attacks", forgery: "forgery",
   committed: "seed search", zk: "E1 + E2 proofs", zk_hashed: "E3 proofs", protocol_v2: "demo F", all: "all demos",
+  verify_honest: "verification", verify_replay: "verification", verify_model: "verification", verify_tamper: "verification",
+  verify_registry: "verification",
 };
 
 /** "~10 s", "~3 min". */

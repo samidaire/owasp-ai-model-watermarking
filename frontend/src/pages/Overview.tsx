@@ -3,6 +3,7 @@ import { TITLE_OF } from "../App";
 import type { ConsoleJob } from "../components/Console";
 import { Icon } from "../components/icons";
 import { Verdict } from "../components/ui";
+import { RunButton } from "../panels/Shell";
 import { bytes, pct, secs, short, when } from "../format";
 import { Link } from "../router";
 import { panelStatus } from "../stale";
@@ -36,6 +37,8 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
   events.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   const runningName = ctl.running ? TITLE_OF[ctl.running] : null;
+  const shownCount = DEMOS.filter((d) => panelStatus(d.key, s) !== "missing").length;
+  const nothing = shownCount === 0;
 
   return (
     <>
@@ -45,13 +48,20 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
           <h1 className="display in" style={{ ["--i" as string]: 1, margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>
             Welcome back, <span className="jw hlw">Team Sigil.</span>
           </h1>
-          <p className="muted in" style={{ ["--i" as string]: 2, margin: 0, fontSize: 16 }}>
-            Every saved result is loaded: {fresh} of {DEMOS.length} demos are up to date.
+          <p className="muted in" style={{ ["--i" as string]: 2, margin: 0, fontSize: 16, maxWidth: 640 }}>
+            {nothing
+              ? <>Nothing has run yet. Press <strong>Run all live</strong> for demos A–E, then <strong>Run demo F live</strong> for the zero-knowledge proof. Each page fills in as its run finishes.</>
+              : <>{shownCount} of {DEMOS.length} demos have run; {fresh} up to date.</>}
           </p>
         </div>
         <div className="actions">
-          <Link to="/app/embed" className="btn">Embed watermark</Link>
-          <Link to="/app/verify" className="btn primary">Verify ownership <Icon name="arrow" size={18} /></Link>
+          {nothing ? <>
+            <RunButton ctl={ctl} step="protocol_v2" />
+            <RunButton ctl={ctl} step="all" primary />
+          </> : <>
+            <Link to="/app/embed" className="btn">Embed watermark</Link>
+            <Link to="/app/verify" className="btn primary">Verify ownership <Icon name="arrow" size={18} /></Link>
+          </>}
         </div>
       </div>
 
@@ -73,7 +83,7 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
         </div>
         <div className="box lift pop wig stile" style={{ ["--i" as string]: 3, background: "var(--espresso)", color: "var(--paper)", boxShadow: "5px 5px 0 var(--caramel)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span className="eyebrow" style={{ color: "var(--sand)" }}>Attacks survived</span><span className="ibub" style={{ background: "var(--caramel)", color: "var(--espresso)" }}><Icon name="bolt" /></span></div>
-          <div className="big">{survived}<small>/{attacks.length}</small></div>
+          <div className="big">{attacks.length ? survived : "—"}<small>/{attacks.length || "—"}</small></div>
           <div style={{ height: 12, border: "2px solid var(--paper)", borderRadius: 999, overflow: "hidden" }}>
             <div style={{ width: `${attacks.length ? (survived / attacks.length) * 100 : 0}%`, height: "100%", background: "var(--caramel)", transformOrigin: "left", animation: "fillx 1.1s var(--spring) backwards .3s" }} />
           </div>
@@ -111,6 +121,7 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
                   <td><Verdict tone="neutral">Not claimed (correct)</Verdict></td>
                   <td><Link to="/app/demo/A" className="rowgo">Demo A <Icon name="arrow" size={16} /></Link></td>
                 </tr>}
+                {!t && !f && <tr><td colSpan={7} className="muted" style={{ fontWeight: 400 }}>No models checked yet: run demo A (<strong>Run all live</strong>) or demo F.</td></tr>}
                 {t && t.nulls.length > 0 && <tr>
                   <td><ModelName name={`null models ×${t.nulls.length}`} file="null_0 … null_3.pt" tint /></td>
                   <td className="muted">never watermarked</td><td className="mono">—</td>
@@ -154,7 +165,7 @@ export function Overview({ s, ctl, job }: PageProps & { job: ConsoleJob | null }
               <div style={{ height: 16, border: "var(--line)", borderRadius: 999, overflow: "hidden", background: "var(--paper)" }}>
                 <div className={runningName ? "stripes" : undefined} style={{ width: runningName ? "60%" : f ? "100%" : "0%", height: "100%", backgroundColor: "var(--caramel)", borderRight: "var(--line)", transition: "width .6s var(--spring)" }} />
               </div>
-              <span className="muted" style={{ fontSize: 13 }}>{runningName ? `${runningName}: live output in the console below` : "Verified off-chain with SnarkJS; also verifies on a local EVM"}</span>
+              <span className="muted" style={{ fontSize: 13 }}>{runningName ? `${runningName}: live output in the console below` : f ? "Verified off-chain with SnarkJS; also verifies on a local EVM" : "Run demo F to generate and verify a proof"}</span>
             </div>
           </section>
 

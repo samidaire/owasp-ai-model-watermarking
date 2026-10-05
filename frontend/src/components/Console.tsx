@@ -74,7 +74,7 @@ export function Console({ job, open, onToggle, onCancel, cancelling, timeout }: 
   }, []);
 
   const info = job?.info;
-  const last = job?.lines.filter((l) => l.trim()).at(-1) ?? "No demo run yet in this session. Saved results are shown.";
+  const last = job?.lines.filter((l) => l.trim()).at(-1) ?? "Nothing has run yet. Press a Run button: its live output streams here.";
 
   return (
     <section className="console" aria-label="Demo console" ref={root}>

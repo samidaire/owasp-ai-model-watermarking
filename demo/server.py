@@ -60,6 +60,12 @@ STEPS = {
                   ["05_ezkl_spike.py", "--vis", "hashed", "--who", "thief"],
                   ["07_commitment_summary.py"]],      # E3 verdict + public-signal checks into the summaries
     "protocol_v2": [["08_protocol_v2.py"]],           # demo F: sigil SDK + Circom/SnarkJS end to end
+    # Verify page: re-check demo F's saved proof live, honestly or with one misuse (writes nothing)
+    "verify_honest": [["09_verify_live.py", "--case", "honest"]],
+    "verify_replay": [["09_verify_live.py", "--case", "replay"]],
+    "verify_model": [["09_verify_live.py", "--case", "model"]],
+    "verify_tamper": [["09_verify_live.py", "--case", "tamper"]],
+    "verify_registry": [["09_verify_live.py", "--case", "registry"]],
 }
 STEPS["all"] = STEPS["evaluate"] + STEPS["attacks"] + STEPS["forgery"] + STEPS["committed"] + STEPS["zk"]
 
@@ -90,6 +96,16 @@ STEP_INFO = {
                                    "thief, misuse, attacks and the overwrite dispute."},
     "all": {"panel": "*", "label": "Run all live", "seconds": 30, "confirm": None, "writes": [],
             "description": "evaluate, attacks, forgery, committed, zk (E3 stays precomputed)."},
+    "verify_honest": {"panel": "F", "label": "Verify this proof live", "seconds": 2, "confirm": None, "writes": [],
+                      "description": "Runs every verifier check on demo F's saved proof, including the Groth16 verification."},
+    "verify_replay": {"panel": "F", "label": "Replay it for another claim", "seconds": 2, "confirm": None, "writes": [],
+                      "description": "Resubmits the saved proof for a new claim with a fresh nonce."},
+    "verify_model": {"panel": "F", "label": "Check it against a different model", "seconds": 2, "confirm": None, "writes": [],
+                     "description": "Checks the saved proof against clean.pt instead of the watermarked model."},
+    "verify_tamper": {"panel": "F", "label": "Tamper with the proof", "seconds": 2, "confirm": None, "writes": [],
+                      "description": "Changes one number inside the proof, then verifies it."},
+    "verify_registry": {"panel": "F", "label": "Use an untrusted registry", "seconds": 2, "confirm": None, "writes": [],
+                        "description": "Backs the registration with a receipt from a registry the verifier doesn't trust."},
 }
 
 

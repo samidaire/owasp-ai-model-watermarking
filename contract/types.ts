@@ -11,7 +11,9 @@
 export type Bits = number[]; // 64 entries, each 0 or 1
 
 /** GET /api/steps  ·  POST /api/run {step} */
-export type ServerStep = "evaluate" | "retrain" | "attacks" | "forgery" | "committed" | "zk" | "zk_hashed" | "protocol_v2" | "all";
+export type ServerStep = "evaluate" | "retrain" | "attacks" | "forgery" | "committed" | "zk" | "zk_hashed" | "protocol_v2" | "all"
+  // the Verify page re-checks demo F's saved proof live, honestly or with one misuse (writes nothing)
+  | "verify_honest" | "verify_replay" | "verify_model" | "verify_tamper" | "verify_registry";
 
 export interface StepInfo {
   id: ServerStep;

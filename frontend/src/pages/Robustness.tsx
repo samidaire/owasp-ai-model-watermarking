@@ -14,7 +14,16 @@ const FAMILY: Record<string, { label: string; icon: string }> = {
 export function Robustness({ s, ctl }: PageProps) {
   const a = s.results.attacks;
   const t = s.results.train;
-  if (!a) return <Empty what="the robustness lab (demo B)" />;
+  if (!a) return (
+    <>
+      <div className="pagehead"><div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <span className="chip" style={{ alignSelf: "flex-start" }}>Robustness lab · demo B</span>
+        <h1 className="display" style={{ margin: 0, fontSize: "clamp(40px, 4.4vw, 62px)" }}>Robustness <span className="jw hlw">lab.</span></h1>
+        <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>Attack the stolen model the way a thief would, then check whether the owner's watermark survives.</p>
+      </div></div>
+      <Empty what="the attacks" action={<RunButton ctl={ctl} step="attacks" primary />} />
+    </>
+  );
   const theta = a.threshold;
   const pruning = a.rows
     .filter((r) => r.family === "baseline" || r.family === "prune")

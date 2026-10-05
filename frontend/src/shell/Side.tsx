@@ -19,8 +19,10 @@ const MARK: Record<PanelStatus, { icon: string; say: string }> = {
   missing: { icon: "○", say: "no results yet" },
 };
 
-export function Side({ path, s, ctl, motion, onMotion }: {
+export function Side({ path, s, ctl, motion, onMotion, shownCount, onClear, onShowSaved }: {
   path: string; s: DemoState | null; ctl: RunCtl; motion: boolean; onMotion: () => void;
+  /** How many result sets are on screen; Clear empties every page for a new test, Show saved brings all back. */
+  shownCount: number; onClear: () => void; onShowSaved: () => void;
 }) {
   const env = s?.env;
   let envLabel = "Connecting…";
@@ -66,7 +68,7 @@ export function Side({ path, s, ctl, motion, onMotion }: {
             </Link>
           );
         })}
-        <p className="muted" style={{ fontSize: 12, padding: "4px 12px 0", margin: 0 }}>In a demo, ← → move between A–F.</p>
+        <p className="muted hint" style={{ fontSize: 12, padding: "4px 12px 0", margin: 0 }}>In a demo, ← → move between A–F.</p>
       </div>
 
       <div className="group" style={{ gap: 10, paddingTop: 4 }}>
@@ -75,6 +77,15 @@ export function Side({ path, s, ctl, motion, onMotion }: {
           {env?.status === "ok" && <Icon name="check" size={14} />}{envLabel}
         </span>
         <RunButton ctl={ctl} step="all" primary disabled={!s} hint="Re-verify A, then run B, C, D and E1 + E2 live. E3 stays precomputed." />
+        <button type="button" className="btn" onClick={onClear} disabled={ctl.running !== null || (shownCount === 0)}
+          title="Empty every page and the console for a new test. Saved results on disk are kept.">
+          <Icon name="refresh" size={18} />Clear results
+        </button>
+        <p className="muted" style={{ fontSize: 12, margin: "-2px 4px 0", lineHeight: 1.45 }}>
+          {shownCount === 0
+            ? <>Fresh start: pages fill in as you run demos. <button type="button" className="linkbtn" onClick={onShowSaved}>Show saved results</button></>
+            : "Clear empties every page for a new test."}
+        </p>
         <button type="button" className="toggle" aria-pressed={motion} onClick={onMotion} style={{ justifyContent: "center" }}>
           <span className="knob" aria-hidden />Motion
         </button>
