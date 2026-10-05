@@ -548,9 +548,9 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         parts = path.split("/")
         cancel_id = parts[3] if len(parts) == 5 and parts[1:3] == ["api", "jobs"] and parts[4] == "cancel" else None
+        raw, err = self.read_body()     # read first, so error replies (even the 404) never reset the connection
         if path != "/api/run" and cancel_id is None:
             return self.send_json({"error": "not found"}, 404)
-        raw, err = self.read_body()     # read first, so error replies never reset the connection
         origin = self.headers.get("Origin")
         if not self.host_ok() or (origin is not None and not origin_allowed(origin)):
             return self.send_json({"error": "origin not allowed"}, 403)            # cross-site request
