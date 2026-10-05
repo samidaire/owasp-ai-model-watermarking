@@ -2,7 +2,8 @@
 
 This covers the presentation build: demos A–F in the Cocoa Pop UI. Everything runs locally; nothing is sent to a
 cloud service. **The full illustrated guide is [`Sigil-User-Guide.pdf`](Sigil-User-Guide.pdf)** (install, every
-screen, walkthroughs, SDK, results, limits).
+screen, walkthroughs, SDK, results, limits). **[`DEPLOY.md`](DEPLOY.md)** is the step-by-step deployment runbook,
+written so an AI agent can follow it; after any setup, `scripts/verify_deploy.py` checks everything end to end.
 
 | Demo | What it shows | Live run |
 |---|---|---|
