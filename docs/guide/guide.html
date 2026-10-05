@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sigil · User guide and product explanation</title>
+<meta name="author" content="Team Sigil: Sami Daire, Mohamed Ansari, Arfat Shaikh, Yash Bandiwadekar">
+<meta name="description" content="How to install, run and present the Sigil demo, what every screen means, and how the watermark and zero-knowledge proof work.">
+<style>
+@font-face { font-family: "Bricolage"; src: url("fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Instrument"; src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; }
+@font-face { font-family: "JBMono"; src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 800; }
+
+:root {
+  --paper: #fffcf7; --cream: #f4ebdf; --sand: #e8d8c4; --latte: #d4b999; --caramel: #c8743a;
+  --caramel-soft: #f1d9c6; --cocoa: #7a4e33; --espresso: #2a1a12; --rust: #a3412a; --muted: #5e4636;
+  --display: "Bricolage", "Trebuchet MS", sans-serif; --sans: "Instrument", "Segoe UI", sans-serif; --mono: "JBMono", Consolas, monospace;
+}
+@page { size: A4; margin: 17mm 16mm 18mm;
+  @bottom-left { content: "Sigil · User guide"; font: 600 8pt "Instrument", sans-serif; color: #76604f; }
+  @bottom-right { content: counter(page); font: 700 8.5pt "JBMono", monospace; color: #2a1a12; } }
+@page cover { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 10.4pt/1.55 var(--sans); color: var(--espresso); background: #fff; }
+p { margin: 0 0 8pt; }
+strong { font-weight: 700; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+code { background: var(--cream); border: 1px solid var(--sand); border-radius: 4px; padding: 0 3px; }
+a { color: var(--cocoa); text-decoration-color: var(--caramel); }
+
+/* ---------- cover */
+.cover { page: cover; height: 297mm; position: relative; overflow: hidden; background: var(--cream);
+  background-image: radial-gradient(rgba(42,26,18,.13) 1.1px, transparent 1.5px); background-size: 18px 18px;
+  padding: 26mm 20mm 18mm; display: flex; flex-direction: column; }
+.cover .brand { display: flex; align-items: center; gap: 12px; font: 800 30pt/1 var(--display); letter-spacing: -.04em; }
+.cover .eyebrow { margin-top: 24mm; }
+.cover h1 { font: 800 58pt/0.94 var(--display); letter-spacing: -.045em; margin: 8mm 0 7mm; }
+.cover .lead { font-size: 14pt; line-height: 1.5; max-width: 140mm; color: var(--muted); }
+.cover .blob { position: absolute; right: -46mm; top: 6mm; width: 130mm; height: 130mm; background: var(--caramel-soft); border-radius: 42% 58% 61% 39% / 45% 41% 59% 55%; }
+.cover .card { position: absolute; right: 20mm; top: 30mm; width: 56mm; background: var(--paper); border: 2px solid var(--espresso); border-radius: 18px; box-shadow: 6px 6px 0 var(--espresso); padding: 12px; rotate: 4deg; }
+.cover .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.cover .grid i { aspect-ratio: 1; border-radius: 4px; display: block; }
+.cover .steps4 { position: relative; display: flex; align-items: center; gap: 9px; margin-top: 14mm; }
+.cover .steps4 span { display: flex; align-items: center; gap: 8px; padding: 9px 15px; border: 2px solid var(--espresso); border-radius: 999px; background: var(--paper); font: 750 12pt var(--display); box-shadow: 3px 3px 0 var(--espresso); }
+.cover .steps4 span b { color: var(--caramel); font-size: 10pt; }
+.cover .steps4 span.last { background: var(--espresso); color: var(--paper); box-shadow: 3px 3px 0 var(--caramel); }
+.cover .steps4 i { font-style: normal; font: 800 14pt var(--display); color: var(--cocoa); }
+.cover .team { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.cover .member { background: var(--paper); border: 2px solid var(--espresso); border-radius: 14px; padding: 10px 11px; box-shadow: 3px 3px 0 var(--espresso); }
+.cover .member b { display: block; font: 700 10.5pt var(--display); }
+.cover .member span { display: block; font-size: 8pt; color: var(--muted); }
+.cover .foot { margin-top: 8mm; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; gap: 10mm; }
+
+/* ---------- headings */
+.eyebrow { font: 700 8pt var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--cocoa); }
+h2 { font: 800 26pt/1.02 var(--display); letter-spacing: -.035em; margin: 0 0 4mm; break-after: avoid; }
+h2 .n { display: inline-block; min-width: 13mm; color: var(--caramel); }
+section.chapter { break-before: page; }
+.hl { display: inline-block; position: relative; z-index: 0; margin: 0 .08em; }
+.hl::before { content: ""; position: absolute; inset: .12em -.1em .02em; background: var(--caramel); border: 1.5px solid var(--espresso); border-radius: .2em; rotate: -2deg; z-index: -1; }
+h3 { font: 750 14pt/1.2 var(--display); letter-spacing: -.02em; margin: 7mm 0 2.5mm; break-after: avoid; }
+h4 { font: 700 11pt/1.25 var(--display); margin: 5mm 0 1.5mm; break-after: avoid; }
+.intro { font-size: 11.5pt; color: var(--muted); margin-bottom: 5mm; }
+
+/* ---------- blocks */
+.box { border: 2px solid var(--espresso); border-radius: 14px; padding: 10px 13px; background: var(--paper); box-shadow: 3px 3px 0 var(--espresso); margin: 4mm 0; break-inside: avoid; }
+.box.sand { background: var(--cream); }
+.box.caramel { background: var(--caramel-soft); }
+.box.dark { background: var(--espresso); color: var(--cream); box-shadow: 3px 3px 0 var(--caramel); }
+.box.warn { border-style: dashed; background: #f8eee4; box-shadow: none; }
+.box > :last-child { margin-bottom: 0; }
+.box .t { font: 750 11pt var(--display); margin-bottom: 1.5mm; display: block; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4mm 0; break-inside: avoid; }
+.kpi { border: 2px solid var(--espresso); border-radius: 12px; padding: 8px 10px; background: var(--paper); break-inside: avoid; }
+.kpi:nth-child(3n+2) { background: var(--cream); } .kpi:nth-child(3n) { background: var(--caramel-soft); }
+.kpi b { display: block; font: 800 19pt/1 var(--display); letter-spacing: -.03em; margin: 3px 0; }
+.kpi span { font-size: 8.4pt; color: var(--muted); }
+.kpi .eyebrow { font-size: 6.8pt; }
+table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.2pt; break-inside: auto; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th { text-align: left; font: 700 7.6pt var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--cocoa); border-bottom: 2px solid var(--espresso); padding: 5px 6px; }
+td { border-bottom: 1px solid var(--sand); padding: 5px 6px; vertical-align: top; }
+td:first-child { font-weight: 650; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-size: 8.6pt; white-space: nowrap; }
+.ok { color: var(--espresso); font-weight: 700; } .bad { color: var(--rust); font-weight: 700; }
+.pill { display: inline-block; padding: 0 7px; border-radius: 999px; font: 700 7.8pt var(--sans); border: 1.5px solid var(--espresso); white-space: nowrap; }
+.pill.good { background: var(--espresso); color: var(--paper); } .pill.badp { background: var(--rust); border-color: var(--rust); color: #fff; } .pill.neutral { background: var(--paper); }
+pre { font: 8.4pt/1.6 var(--mono); background: var(--espresso); color: var(--cream); border-radius: 12px; padding: 9px 12px; margin: 3mm 0 4mm; white-space: pre-wrap; word-break: break-word; break-inside: avoid; box-shadow: 3px 3px 0 var(--caramel); }
+pre .c { color: #b79f86; } pre .k { color: #e7a36d; } pre .s { color: #f4d9a8; }
+ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 3mm 0 5mm; }
+ol.steps > li { counter-increment: s; position: relative; padding: 0 0 3.2mm 11mm; break-inside: avoid; }
+ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 7.2mm; height: 7.2mm; border-radius: 50%; background: var(--espresso); color: var(--paper); font: 800 9.5pt/7.2mm var(--display); text-align: center; }
+ul { padding-left: 5mm; margin: 0 0 4mm; } li { margin-bottom: 1.3mm; }
+figure { width: 90%; margin: 4mm auto 5mm; break-inside: avoid; }
+h3 + p, h3 + figure { break-before: avoid; }
+h3 + p:has(+ figure) { break-after: avoid; }
+figure img { width: 100%; display: block; border: 2px solid var(--espresso); border-radius: 10px; box-shadow: 4px 4px 0 var(--espresso); }
+figcaption { font-size: 8.6pt; color: var(--muted); margin-top: 2.5mm; }
+figcaption b { color: var(--espresso); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+.two figure { width: auto; margin: 2mm 0 3mm; }
+.toc { columns: 2; column-gap: 10mm; margin-top: 6mm; }
+.toc a { display: flex; gap: 8px; padding: 3.2mm 0; border-bottom: 1px dashed var(--latte); text-decoration: none; color: var(--espresso); break-inside: avoid; font-weight: 650; }
+.toc a span { font: 800 11pt var(--display); color: var(--caramel); min-width: 9mm; }
+.toc a em { display: block; font-style: normal; font-weight: 400; font-size: 8.6pt; color: var(--muted); }
+.flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 4mm 0; }
+.flow div { border: 2px solid var(--espresso); border-radius: 12px; padding: 8px 9px; background: var(--paper); break-inside: avoid; }
+.flow div:nth-child(2) { background: var(--cream); } .flow div:nth-child(3) { background: var(--caramel-soft); } .flow div:nth-child(4) { background: var(--espresso); color: var(--cream); }
+.flow b { display: block; font: 800 16pt/1 var(--display); color: var(--caramel); }
+.flow strong { display: block; font: 750 11pt var(--display); margin: 2px 0 3px; }
+.flow span { font-size: 8.4pt; line-height: 1.4; display: block; }
+.legend { display: grid; grid-template-columns: auto 1fr; gap: 1.5mm 4mm; align-items: baseline; margin: 2mm 0 4mm; break-inside: avoid; }
+.legend b { font-family: var(--mono); }
+.small { font-size: 8.8pt; color: var(--muted); }
+.avoid { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ======================================================================== COVER -->
+<div class="cover">
+  <div class="blob"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font:600 8pt var(--mono)"><span>watermarked_v2.pt</span><span class="pill good">Marked</span></div>
+    <div class="grid" id="covergrid"></div>
+    <div style="margin-top:8px;font:600 7.5pt var(--sans);display:flex;gap:6px;align-items:center"><i style="width:10px;height:10px;border-radius:3px;background:var(--caramel);outline:1.5px solid var(--espresso)"></i>carries a signature bit</div>
+  </div>
+  <div class="brand">
+    <svg width="44" height="44" viewBox="0 0 38 38" aria-hidden="true"><rect x="1" y="1" width="36" height="36" rx="11" fill="#2a1a12"/><path d="M8 15c2.6-3.2 5.2-3.2 7.6 0s5 3.2 7.6 0 5-3.2 6.8 0" fill="none" stroke="#c8743a" stroke-width="2.8" stroke-linecap="round"/><path d="M8 23c2.6-3.2 5.2-3.2 7.6 0s5 3.2 7.6 0 5-3.2 6.8 0" fill="none" stroke="#fffcf7" stroke-width="2.8" stroke-linecap="round"/></svg>
+    sigil
+  </div>
+  <div class="eyebrow" style="position:relative;line-height:1.7">OWASP AI Model Watermarking<br>Final-year project 2026–27</div>
+  <h1 style="position:relative">User guide<br>&amp; product<br><span class="hl">explained.</span></h1>
+  <p class="lead" style="position:relative">How to install, run and present the Sigil demo, what every screen means, and how the hidden watermark and the zero-knowledge proof of ownership work underneath.</p>
+  <div class="steps4">
+    <span><b>01</b>Embed</span><i>→</i><span><b>02</b>Commit</span><i>→</i><span><b>03</b>Prove</span><i>→</i><span class="last"><b>04</b>Verify</span>
+  </div>
+  <div class="team">
+    <div class="member"><b>Sami Daire</b><span>231813</span><span>Project lead · ZK &amp; verification</span></div>
+    <div class="member"><b>Mohamed Ansari</b><span>231803</span><span>AI &amp; watermarking</span></div>
+    <div class="member"><b>Arfat Shaikh</b><span>231846</span><span>Frontend &amp; integration</span></div>
+    <div class="member"><b>Yash Bandiwadekar</b><span>231810</span><span>Backend developer</span></div>
+  </div>
+  <div class="foot"><span>Guided by Er. Fiza Shaikh (Co-Guide) and the Department Review Committee.</span><span>Demo build · October 2026. A student project aligned with the OWASP AI Model Watermarking incubator project; not official OWASP work.</span></div>
+</div>
+
+<!-- ======================================================================== CONTENTS -->
+<section>
+  <div class="eyebrow">Contents</div>
+  <h2>What's in this <span class="hl">guide</span></h2>
+  <p class="intro">Start with chapter 1 for the idea, chapter 5 to get it running, and chapter 7 for step-by-step walkthroughs. Chapters 8–11 are reference.</p>
+  <nav class="toc">
+    <a href="#c1"><span>1</span><div>Sigil in one page<em>The problem, the idea, the headline numbers</em></div></a>
+    <a href="#c2"><span>2</span><div>Key ideas in plain words<em>Every term the app uses</em></div></a>
+    <a href="#c3"><span>3</span><div>How it works<em>Embed, commit, prove, verify; why a thief can't win</em></div></a>
+    <a href="#c4"><span>4</span><div>What's in the package<em>The folders in the zip</em></div></a>
+    <a href="#c5"><span>5</span><div>Installing and starting<em>Quick start in 1 minute, or everything live</em></div></a>
+    <a href="#c6"><span>6</span><div>A tour of the app<em>Every page and control, with screenshots</em></div></a>
+    <a href="#c7"><span>7</span><div>Step-by-step walkthroughs<em>Presenting, verifying, attacking, showing it live</em></div></a>
+    <a href="#c8"><span>8</span><div>The SDK and command line<em>Watermark and verify your own models</em></div></a>
+    <a href="#c9"><span>9</span><div>Results at a glance<em>All measured numbers in one place</em></div></a>
+    <a href="#c10"><span>10</span><div>Pass and fail cases<em>What gets accepted, what gets rejected, and why</em></div></a>
+    <a href="#c11"><span>11</span><div>Honest limits<em>What the demo does not claim</em></div></a>
+    <a href="#c12"><span>12</span><div>Troubleshooting and FAQ<em>Fixes for common problems</em></div></a>
+    <a href="#c13"><span>13</span><div>Team and credits<em>Who built what</em></div></a>
+  </nav>
+  <div class="box sand" style="margin-top:8mm">
+    <span class="t">Conventions</span>
+    <p><code>Monospace</code> is something you type or a file name. <strong>Bold</strong> names a button or label on screen. Addresses like <code>/app/verify</code> are pages of the app at <code>http://127.0.0.1:8765</code>. Every number in this guide comes from the demo's saved results (<code>demo/results/</code>), the same ones the app shows.</p>
+  </div>
+</section>
+
+<!-- ======================================================================== 1 -->
+<section class="chapter" id="c1">
+  <div class="eyebrow">Chapter 1</div>
+  <h2><span class="n">1</span>Sigil in <span class="hl">one page</span></h2>
+  <p class="intro">Sigil hides a cryptographic watermark inside a neural network's weights, then proves who owns the model with a zero-knowledge proof. Anyone can check the proof; nobody learns the watermark.</p>
+
+  <h3>The problem</h3>
+  <p>A trained model is expensive: data, compute and expertise. Once a copy leaks, or a customer passes it on, the owner needs a way to say <em>"that model is mine"</em> and have a third party (a court, a marketplace, an auditor) check it.</p>
+  <p>A <strong>white-box watermark</strong> does part of this: during training, the owner nudges one layer's weights so that a secret key reads out a secret bit pattern (the signature). Later the owner extracts the pattern from a suspect copy. But this has three weaknesses, and the demo shows each one happening:</p>
+  <ul>
+    <li><strong>Checking reveals the secret.</strong> To verify, the checker normally needs the key and signature, and whoever has them can scrub the mark from the model.</li>
+    <li><strong>Anyone can claim anything.</strong> A thief can invent a key that "finds" their own message in the stolen model, or even in a model that was never watermarked (demo C: the thief reads out "MALLORY!" with zero errors).</li>
+    <li><strong>A valid proof isn't enough.</strong> A zero-knowledge proof only says "some computation was correct". Without binding it to the owner, the exact model and the moment of the claim, a forged or replayed proof also verifies (demo E).</li>
+  </ul>
+
+  <h3>What Sigil does</h3>
+  <div class="flow">
+    <div><b>01</b><strong>Embed</strong><span>A secret seed generates the key and a 64-bit signature. Training hides the signature in one layer. Accuracy barely moves.</span></div>
+    <div><b>02</b><strong>Commit</strong><span>Before release, the owner publishes a Poseidon hash of the seed, signs it with their Ed25519 key and gets a registry timestamp.</span></div>
+    <div><b>03</b><strong>Prove</strong><span>A Circom circuit re-derives the key and signature from the committed seed and checks the suspect's weights. SnarkJS turns that into a Groth16 proof.</span></div>
+    <div><b>04</b><strong>Verify</strong><span>Anyone checks the proof in milliseconds, off-chain or on an Ethereum-style chain. Zero watermark bits are revealed.</span></div>
+  </div>
+
+  <h3>Headline numbers</h3>
+  <div class="kpis">
+    <div class="kpi"><span class="eyebrow">Accuracy cost</span><b>−0.03 pp</b><span>98.69% clean → 98.66% watermarked</span></div>
+    <div class="kpi"><span class="eyebrow">Proof</span><b>3.73 s</b><span>to prove; 879-byte proof; verifies off-chain and on-chain (243,225 gas)</span></div>
+    <div class="kpi"><span class="eyebrow">Revealed to the verifier</span><b>0 of 64</b><span>watermark bits</span></div>
+    <div class="kpi"><span class="eyebrow">Forgeries accepted</span><b>0 / 20,000</b><span>thief seed search against the committed seed</span></div>
+    <div class="kpi"><span class="eyebrow">Attacks survived</span><b>13 / 14</b><span>pruning, quantisation, fine-tuning, overwriting; feature permutation is the known exception</span></div>
+    <div class="kpi"><span class="eyebrow">Misuse rejected</span><b>4 / 4</b><span>replay, wrong model, tampered proof, untrusted registry</span></div>
+  </div>
+
+  <h3>Who it's for</h3>
+  <ul>
+    <li><strong>Model owners</strong> who want to protect a model before releasing it.</li>
+    <li><strong>Verifiers</strong> (courts, marketplaces, auditors) who need to check an ownership claim without learning the owner's secrets.</li>
+    <li><strong>Examiners and researchers</strong>: the six research demos (A–F) walk through the attacks on naive schemes and how each fix closes them.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================== 2 -->
+<section class="chapter" id="c2">
+  <div class="eyebrow">Chapter 2</div>
+  <h2><span class="n">2</span>Key ideas in <span class="hl">plain words</span></h2>
+  <p class="intro">The app uses these terms everywhere. Each is explained without maths first; chapter 3 adds the detail.</p>
+  <table>
+    <thead><tr><th style="width:30%">Term</th><th>What it means here</th></tr></thead>
+    <tbody>
+      <tr><td>Weights</td><td>The numbers a neural network learns during training. The demo model is a small convolutional network for MNIST handwritten digits.</td></tr>
+      <tr><td>Watermarked layer</td><td>The layer that carries the mark: <code>conv2</code>. Its weights are averaged into a list of <strong>288 numbers</strong> (the "Uchida vector", after the method's inventor).</td></tr>
+      <tr><td>Signature</td><td>The secret bit pattern hidden in the layer: <strong>64 bits</strong> (T = 64) in the demo; 256 is the security setting.</td></tr>
+      <tr><td>Key X</td><td>A secret 64 × 288 table of +1/−1 values. Multiplying it by the layer's 288 numbers gives 64 results; each result's sign is one extracted bit.</td></tr>
+      <tr><td>Secret seed</td><td>A 248-bit random number that generates both the key and the signature. It never leaves the owner's machine (stored encrypted).</td></tr>
+      <tr><td>BER (bit error rate)</td><td>The fraction of the 64 bits that read out wrong. 0.000 means a perfect match; about 0.5 means random (no watermark).</td></tr>
+      <tr><td>Threshold θ</td><td>The acceptance rule: at most <strong>8 of 64</strong> bits may be wrong (θ = 0.125). In protocol v2 the circuit enforces it.</td></tr>
+      <tr><td>Commitment</td><td>A hash of the seed (plus the owner's key and the settings) published before release. It reveals nothing about the seed, and the seed can't be swapped for another one later.</td></tr>
+      <tr><td>Poseidon</td><td>A hash function designed to be cheap inside zero-knowledge circuits. Sigil's Python version matches circomlib bit-for-bit.</td></tr>
+      <tr><td>Owner identity</td><td>An Ed25519 key pair (elliptic-curve signatures). The owner signs their registration with it, and the seed's key and signature depend on it.</td></tr>
+      <tr><td>Registry receipt</td><td>A timestamp signed by a registry: "this registration existed at this time". When two parties claim the same model, the earliest valid registration wins.</td></tr>
+      <tr><td>Claim and nonce</td><td>The verifier opens a claim about a suspect file with a fresh random number (the nonce). The proof must include it, so an old proof can't be replayed.</td></tr>
+      <tr><td>w_hash</td><td>A hash of the suspect model's layer values, computed inside the proof <em>and</em> recomputed by the verifier from its own copy of the file. It ties the proof to that exact model.</td></tr>
+      <tr><td>zk-SNARK, Groth16</td><td>A short proof that a computation was done correctly on secret inputs, revealing nothing else. Groth16 is the proof system used: 3 elliptic-curve points (879 bytes as JSON).</td></tr>
+      <tr><td>Circom, SnarkJS</td><td>Circom describes the computation as a circuit (<code>circuits/ownership.circom</code>); SnarkJS creates and checks the proofs.</td></tr>
+      <tr><td>Trusted setup</td><td>Groth16 needs public parameters made once per circuit. Phase 1 uses the public Perpetual Powers of Tau ceremony; phase 2 is one contribution for Sigil's circuit.</td></tr>
+      <tr><td>On-chain verifier</td><td>A Solidity smart contract exported by SnarkJS that checks the same proof on an Ethereum-style chain. The demo runs it on a local Hardhat chain.</td></tr>
+      <tr><td>Protocol v1 / v2</td><td>v1 is the research baseline (demos A–E). v2 is the full fix (demo F and the SDK). See §3.7.</td></tr>
+      <tr><td>Replay (simulate) mode</td><td>The app shows the saved results and the Run buttons replay recorded logs; nothing executes. Live mode runs the real scripts on your machine.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ======================================================================== 3 -->
+<section class="chapter" id="c3">
+  <div class="eyebrow">Chapter 3</div>
+  <h2><span class="n">3</span>How it <span class="hl">works</span></h2>
+  <p class="intro">Four parties, four steps, and eleven checks. The full specification is <code>docs/protocol.md</code>.</p>
+
+  <h3>3.1 Who is involved</h3>
+  <table>
+    <thead><tr><th>Party</th><th>Holds</th><th>Trusted for</th></tr></thead>
+    <tbody>
+      <tr><td>Owner</td><td>The secret seed and an Ed25519 private key</td><td>Nothing: the protocol assumes the prover may be malicious (for example, claiming someone else's model)</td></tr>
+      <tr><td>Registry</td><td>An Ed25519 registry key</td><td>Issuing honest timestamps (receipts)</td></tr>
+      <tr><td>Verifier</td><td>The registry's public keys and its own copy of the suspect model</td><td>Nothing beyond running the checks</td></tr>
+      <tr><td>Thief</td><td>The stolen weights; may register their own seed and key, fine-tune, prune or overwrite</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 Step 1 · Embed the watermark</h3>
+  <ol class="steps">
+    <li>The owner creates an <strong>Ed25519 key pair</strong> (their identity) and a random <strong>seed</strong>.</li>
+    <li>From (seed, owner key), a Poseidon-based generator derives the <strong>key X</strong> (64 × 288 values of ±1) and the <strong>signature b</strong> (64 bits). Because both depend on the owner's key, a thief can't reuse someone else's seed with their own identity.</li>
+    <li>Training adds a small extra loss so that, for the <code>conv2</code> layer's 288-value vector <em>w</em>, the 64 signs of X · <em>w</em> spell out b. In the demo this costs 0.03 percentage points of accuracy (98.69% → 98.66%; 98.57% for the v2 model).</li>
+  </ol>
+
+  <h3>3.3 Step 2 · Commit and register (before release)</h3>
+  <ol class="steps">
+    <li>The owner computes the <strong>commitment</strong> C = Poseidon(seed, owner key hash, settings hash). The settings (64 bits, layer <code>conv2</code>, at most 8 errors, fixed-point scale) are inside it, so they can't be loosened later.</li>
+    <li>The owner signs a <strong>registration</strong>: public key, settings, commitment, the model file's SHA-256 and the time.</li>
+    <li>A <strong>registry</strong> checks the registration and signs a <strong>receipt</strong> with the time it saw it. The seed stays on the owner's machine, encrypted (scrypt + AES-256-GCM).</li>
+  </ol>
+
+  <h3>3.4 Step 3 · Prove ownership of a suspect model</h3>
+  <ol class="steps">
+    <li>The verifier opens a <strong>claim</strong> about a suspect file: it records the file's SHA-256 and a fresh random <strong>nonce</strong>.</li>
+    <li>The owner runs the circuit. <strong>Secret inputs:</strong> the seed and the suspect's layer values (as fixed-point integers). <strong>Public inputs:</strong> owner key hash, settings hash, commitment, w_hash, nonce.</li>
+    <li>Inside the circuit: re-derive X and b from the seed; recompute the commitment and check it equals the public one; hash the layer values into w_hash; extract the 64 bits; count mismatches with b; <strong>enforce at most 8</strong>; bind the nonce.</li>
+    <li>SnarkJS outputs a <strong>Groth16 proof</strong>: 879 bytes. The circuit has 116,822 constraints; on the demo laptop the witness takes 1.43 s and the proof 3.73 s.</li>
+  </ol>
+
+  <h3>3.5 Step 4 · Verify</h3>
+  <p>The verifier accepts only if <strong>every</strong> check passes. Each failure reports its own reason, which is what the app's <strong>What gets checked</strong> list shows.</p>
+  <table>
+    <thead><tr><th style="width:36%">Check (as shown in the app)</th><th>What it rules out</th></tr></thead>
+    <tbody>
+      <tr><td>Registration signed by the owner</td><td>A registration made up or edited by someone else</td></tr>
+      <tr><td>Registry receipt from a trusted registry</td><td>A fake or self-made timestamp</td></tr>
+      <tr><td>Registered before the claim</td><td>Registering a model only after the dispute started</td></tr>
+      <tr><td>Claim refers to this registration</td><td>Mixing a proof with another owner's registration</td></tr>
+      <tr><td>Claim refers to this suspect file</td><td>Proving something about a different file than the one in dispute</td></tr>
+      <tr><td>Proof is for the owner's key</td><td>Using someone else's identity</td></tr>
+      <tr><td>Same watermark configuration</td><td>Proving with looser settings (for example, more allowed errors)</td></tr>
+      <tr><td>Opens the published commitment</td><td>Using a seed other than the one committed before release</td></tr>
+      <tr><td>About this exact model (w_hash)</td><td>Reusing a proof about a different model; the verifier recomputes w_hash from its own copy</td></tr>
+      <tr><td>Made for this claim (nonce)</td><td>Replaying an old proof</td></tr>
+      <tr><td>Groth16 proof verifies</td><td>Tampered or invalid proof bytes</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.6 Why a thief can't win</h3>
+  <ul>
+    <li><strong>They can't open the owner's commitment</strong> without the seed, so they can't prove the owner's registration.</li>
+    <li><strong>Registering their own seed afterwards doesn't help:</strong> their own key reads 28 of 64 bits wrong on the stolen model (limit 8), so no proof is possible, and their registration would be later anyway.</li>
+    <li><strong>Searching for a lucky seed is hopeless at scale:</strong> each try succeeds with probability about 2.8 × 10⁻¹⁰. Demo D tried 20,000 seeds: 0 accepted, best 16 of 64 wrong. At T = 256 the odds become about 2⁻¹²⁰.</li>
+    <li><strong>Overwriting</strong> (embedding their own mark on top) can give both sides a valid proof. The registry timestamp settles it: the earliest valid registration wins (demo F6).</li>
+  </ul>
+
+  <h3>3.7 Protocol v1 vs v2</h3>
+  <table>
+    <thead><tr><th></th><th>v1 · research baseline (demos A–E)</th><th>v2 · the full fix (demo F, SDK)</th></tr></thead>
+    <tbody>
+      <tr><td>Commitment</td><td>SHA-256 of seed + owner name</td><td>Poseidon of seed + Ed25519 key hash + settings</td></tr>
+      <tr><td>Key and signature</td><td>Gaussian key from the seed (numpy); shown on screen for teaching</td><td>±1 key and signature from a Poseidon generator; never shown</td></tr>
+      <tr><td>Owner identity</td><td>A text label (<code>owner:yash</code>)</td><td>Ed25519 signature on the registration</td></tr>
+      <tr><td>Zero-knowledge proof</td><td>EZKL (Halo2/KZG) experiments, not bound to model or claim</td><td>Circom + Groth16; threshold, model (w_hash) and claim (nonce) bound in-circuit</td></tr>
+      <tr><td>Verification</td><td>Off-chain</td><td>Off-chain (SnarkJS) and on-chain (Solidity verifier)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ======================================================================== 4 -->
+<section class="chapter" id="c4">
+  <div class="eyebrow">Chapter 4</div>
+  <h2><span class="n">4</span>What's in the <span class="hl">package</span></h2>
+  <p class="intro">Unzipping <code>owasp-wm-demo.zip</code> gives one folder, <code>owasp-ai-model-watermarking</code>. These are the parts you'll use.</p>
+  <table>
+    <thead><tr><th style="width:36%">File or folder</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>Start-Demo-UI-Simulate.cmd</code></td><td>Windows: double-click to open the app in replay mode (needs only Python)</td></tr>
+      <tr><td><code>Start-Demo-UI.cmd</code></td><td>Windows: double-click to open the app in live mode (after the setup)</td></tr>
+      <tr><td><code>setup.ps1</code>, <code>setup.sh</code></td><td>One-command setup for live runs (Windows / macOS and Linux)</td></tr>
+      <tr><td><code>Sigil-User-Guide.pdf</code></td><td>This guide</td></tr>
+      <tr><td><code>DEMO.md</code></td><td>The short presentation runbook</td></tr>
+      <tr><td><code>demo/</code></td><td>Demo scripts A–F, the local server (<code>server.py</code>), saved results (<code>demo/results/</code>) and the model checkpoints (<code>demo/ckpt/</code>)</td></tr>
+      <tr><td><code>frontend/</code></td><td>The web app's source (React + TypeScript); <code>frontend/dist/</code> is the ready-built app the server shows</td></tr>
+      <tr><td><code>sdk/</code></td><td>The <code>sigil</code> Python SDK and command line (chapter 8)</td></tr>
+      <tr><td><code>circuits/</code></td><td>The ownership circuit, its verification keys and setup records, and the on-chain verifier project</td></tr>
+      <tr><td><code>dist/sigil-proving-keys-t64.zip</code></td><td>Proving keys for demo F, installed and checked by the setup</td></tr>
+      <tr><td><code>contract/</code></td><td>The API contract between server and UI, and the recorded logs replay mode plays back</td></tr>
+      <tr><td><code>docs/</code></td><td>Protocol specification, threat model, reports, and this guide's source</td></tr>
+      <tr><td><code>tests/</code>, <code>sdk/tests/</code></td><td>Automated tests (server, protocol, circuit, adapters)</td></tr>
+      <tr><td><code>REQUIREMENTS.md</code>, <code>WORKFLOW.md</code></td><td>Project requirements and the build workflow</td></tr>
+    </tbody>
+  </table>
+  <div class="box warn"><span class="t">Demo secrets are public on purpose</span><p>The owner keys and seeds in <code>demo/ckpt/</code> are committed so the saved results can be reproduced. Treat them as demo values. Real secrets created with the CLI go in <code>secrets/</code>, which is never committed or zipped.</p></div>
+</section>
+
+<!-- ======================================================================== 5 -->
+<section class="chapter" id="c5">
+  <div class="eyebrow">Chapter 5</div>
+  <h2><span class="n">5</span>Installing and <span class="hl">starting</span></h2>
+  <p class="intro">Two ways to run it. Option 1 is enough for viewing and presenting; Option 2 makes the Run buttons execute for real.</p>
+
+  <h3>5.1 What you need</h3>
+  <table>
+    <thead><tr><th style="width:28%">Item</th><th>Option 1 · replay</th><th>Option 2 · everything live</th></tr></thead>
+    <tbody>
+      <tr><td>Operating system</td><td colspan="2">Windows 10/11 (double-click launchers), macOS or Linux (terminal commands)</td></tr>
+      <tr><td>Python</td><td colspan="2">3.10 or newer from python.org. On Windows, tick <strong>"Add python.exe to PATH"</strong> in the installer.</td></tr>
+      <tr><td>Node.js</td><td>Not needed</td><td>20.19 or newer (nodejs.org), for live demo F (the circuit tools)</td></tr>
+      <tr><td>Internet</td><td>Not needed</td><td>During setup only (packages and tools download). The app itself never loads anything from the internet.</td></tr>
+      <tr><td>GPU</td><td colspan="2">Optional. Everything runs on a CPU; add <code>--gpu</code> to the setup to use an NVIDIA GPU.</td></tr>
+      <tr><td>Time</td><td>About 1 minute</td><td>About 5–15 minutes, mostly downloading</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.2 Option 1 · Quick start in replay mode</h3>
+  <ol class="steps">
+    <li><strong>Unzip</strong> <code>owasp-wm-demo.zip</code> anywhere, for example into Downloads.</li>
+    <li><strong>Windows:</strong> open the <code>owasp-ai-model-watermarking</code> folder and double-click <strong><code>Start-Demo-UI-Simulate.cmd</code></strong>.<br>
+        <strong>macOS / Linux:</strong> open a terminal in that folder and run <code>python3 demo/server.py --simulate --open</code>.</li>
+    <li>A console window opens and your browser opens <code>http://127.0.0.1:8765</code> on the home page. If the browser doesn't open, type that address yourself.</li>
+    <li><strong>Keep the console window open</strong> while you use the app. Closing it (or pressing Ctrl+C in it) stops the app.</li>
+  </ol>
+  <div class="box caramel"><span class="t">What replay mode means</span><p>Every page shows the saved results from real runs. The Run buttons replay the recorded output of those runs in the console, so presenting works on any laptop, with no installs and no risk. A banner at the top of the app says <strong>Simulate mode</strong> so nobody mistakes it for a live run.</p></div>
+
+  <h3>5.3 Option 2 · Everything live</h3>
+  <ol class="steps">
+    <li>Install <strong>Python 3.10+</strong> and <strong>Node.js 20.19+</strong>.</li>
+    <li>Open a terminal in the <code>owasp-ai-model-watermarking</code> folder (Windows 11: right-click the folder → <strong>Open in Terminal</strong>).</li>
+    <li>Run the setup:
+      <pre><span class="c"># Windows (PowerShell)</span>
+.\setup.ps1 --demo
+<span class="c"># if PowerShell blocks the script:</span>
+powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
+<span class="c"># macOS / Linux</span>
+./setup.sh --demo</pre>
+      It creates a private Python environment (<code>.venv</code>), installs a CPU build of PyTorch, the demo packages, the <code>sigil</code> SDK and the circuit tools, then installs the proving keys from <code>dist/</code>, checking each against the published records in <code>circuits/keys/</code>.</li>
+    <li>Start the app: double-click <strong><code>Start-Demo-UI.cmd</code></strong> (Windows) or run <code>.venv/bin/python demo/server.py --open</code> (macOS / Linux).</li>
+    <li>Check the sidebar's environment chip: it shows your GPU's name or <strong>CPU only</strong>. If it shows <strong>No ML stack: replay only</strong>, the setup didn't finish; run it again or use Option 1.</li>
+  </ol>
+  <h4>Setup options</h4>
+  <table>
+    <thead><tr><th style="width:30%">Option</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>--demo</code></td><td>Everything the live demo needs (the usual choice)</td></tr>
+      <tr><td><code>--gpu</code></td><td>With <code>--demo</code>: install the CUDA build of PyTorch if an NVIDIA GPU is present</td></tr>
+      <tr><td><code>--cpu</code></td><td>Install the CPU build even if a GPU is present</td></tr>
+      <tr><td><code>--no-tf</code></td><td>Skip TensorFlow/Keras (saves about 1 GB; only the Keras adapter needs it)</td></tr>
+      <tr><td><code>--minimal</code></td><td>Install nothing: the app with saved results only</td></tr>
+      <tr><td><code>--keys &lt;zip&gt;</code></td><td>Install proving keys from a specific zip</td></tr>
+      <tr><td><code>--zk-setup</code></td><td>Generate the proving keys on this machine instead (about 3 minutes)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.4 Stopping, ports and a backup</h3>
+  <ul>
+    <li><strong>Stop:</strong> close the console window, or press Ctrl+C in it.</li>
+    <li><strong>Port in use:</strong> start on another port, for example <code>python demo/server.py --port 8770</code>, and open <code>http://127.0.0.1:8770</code>.</li>
+    <li><strong>Backup during a presentation:</strong> keep a second terminal ready with <code>python demo/server.py --simulate --port 8766</code>. If a live run misbehaves, switch the browser to <code>http://127.0.0.1:8766</code>.</li>
+    <li>The server only listens on <code>127.0.0.1</code>: other computers on the network can't reach it.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================== 6 -->
+<section class="chapter" id="c6">
+  <div class="eyebrow">Chapter 6</div>
+  <h2><span class="n">6</span>A tour of <span class="hl">the app</span></h2>
+  <p class="intro">The app has a public-facing home page and a dashboard with four main pages plus the six research demos. Every address works as a bookmark or after a reload.</p>
+  <table>
+    <thead><tr><th style="width:26%">Address</th><th style="width:22%">Page</th><th>Use it to</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>Home</td><td>Introduce the project: how it works, robustness, the SDK, the team</td></tr>
+      <tr><td><code>/app</code></td><td>Overview</td><td>See the headline numbers, the models, the proof pipeline and recent activity</td></tr>
+      <tr><td><code>/app/embed</code></td><td>Embed watermark</td><td>Show how the models were watermarked (protocol v1 or v2)</td></tr>
+      <tr><td><code>/app/verify</code></td><td>Verify ownership</td><td>Check the ownership claim, switch off-chain/on-chain, try misuse</td></tr>
+      <tr><td><code>/app/robustness</code></td><td>Robustness lab</td><td>Show what each removal attack does to the model and the mark</td></tr>
+      <tr><td><code>/app/demo/A</code> … <code>F</code></td><td>Research demos</td><td>Tell the full research story, one demo per page</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.1 Home page</h3>
+  <figure><img src="img/home-hero.jpg" alt="Home page hero"><figcaption><b>Home page.</b> <strong>Open dashboard</strong> (top right) goes to the app; <strong>Watermark a model</strong> opens the Embed page; <strong>See how the proof works</strong> scrolls to the four steps. The navigation links jump to How it works, Robustness, SDK and Team.</figcaption></figure>
+  <div class="two">
+    <figure><img src="img/home-how.jpg" alt="How it works section"><figcaption><b>How it works:</b> the four moves from model to proof.</figcaption></figure>
+    <figure><img src="img/home-team.jpg" alt="Team section"><figcaption><b>Team:</b> the four members and their roles.</figcaption></figure>
+  </div>
+
+  <h3>6.2 The app frame: sidebar, banner and console</h3>
+  <figure><img src="img/overview.jpg" alt="Overview page with sidebar"><figcaption><b>The dashboard.</b> Sidebar on the left, the page in the middle, the console along the bottom. In replay mode, the dashed banner at the top says so.</figcaption></figure>
+  <h4>Sidebar</h4>
+  <ul>
+    <li><strong>sigil</strong> logo: back to the home page. <strong>Team Sigil</strong> card: shows replay or live mode.</li>
+    <li><strong>Pages:</strong> Overview, Embed watermark, Verify ownership, Robustness lab. The current page is highlighted in caramel.</li>
+    <li><strong>Research demos A–F</strong>, each with a status mark:
+      <div class="legend"><b>✓</b><span>up to date</span><b>!</b><span>stale: made with an older owner key (re-run it)</span><b>–</b><span>freshness unknown</span><b>○</b><span>no results yet</span><b>◌</b><span>spinning: being refreshed by the current run</span></div></li>
+    <li><strong>Environment chip:</strong> your GPU's name, <strong>CPU only</strong>, or <strong>No ML stack: replay only</strong> when PyTorch isn't installed.</li>
+    <li><strong>Run all live:</strong> re-verifies demo A, then runs B, C, D and E1 + E2. Demo F and E3 aren't part of it (run F from its own page; E3 stays precomputed).</li>
+    <li><strong>Motion:</strong> turns the animations off, useful on a slow projector laptop.</li>
+  </ul>
+  <h4>Console</h4>
+  <figure><img src="img/console-running.jpg" alt="Console during a run"><figcaption><b>A run in progress.</b> The console opens and streams the script's output. The sidebar shows spinners on the demos being refreshed, and the other Run buttons lock until the run ends. <strong>Cancel run</strong> stops it; <strong>Hide console</strong> collapses it (click the bar to reopen).</figcaption></figure>
+  <table>
+    <thead><tr><th style="width:36%">Console status</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Idle</td><td>Nothing has run in this session; the saved results are shown</td></tr>
+      <tr><td>◌ Running <em>name</em> · seconds</td><td>A run is streaming; the last line is shown next to the timer</td></tr>
+      <tr><td>✓ <em>name</em> finished</td><td>The run succeeded and the pages reloaded its results</td></tr>
+      <tr><td>■ <em>name</em> cancelled</td><td>You pressed Cancel run. Results from before the run are kept</td></tr>
+      <tr><td>✕ <em>name</em> failed (exit <em>n</em>)</td><td>The script stopped with an error; its output is in the console</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.3 Overview (<code>/app</code>)</h3>
+  <p>The four tiles summarise the project: the <strong>Groth16 proof</strong> time and size, the <strong>accuracy cost</strong> of the watermark, <strong>forgeries accepted</strong> in demo D's seed search, and <strong>attacks survived</strong> in demo B.</p>
+  <figure><img src="img/overview-models.jpg" alt="Models, proof pipeline and audit log"><figcaption><b>Models, proof pipeline and audit log.</b> The models table lists every checkpoint with its accuracy and owner BER; the last column links to the page that explains it. The pipeline card shows the four protocol steps for the v2 model. The audit log lists recent events from the saved records (commitments, registrations, runs).</figcaption></figure>
+  <table>
+    <thead><tr><th>Model</th><th>What it is</th><th class="num">Accuracy</th><th class="num">Owner BER</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><code>watermarked.pt</code></td><td>Protocol v1 watermarked model (demo A)</td><td class="num">98.66%</td><td class="num">0.000</td><td><span class="pill good">Ownership shown</span></td></tr>
+      <tr><td><code>watermarked_v2.pt</code></td><td>Protocol v2 watermarked model (demo F)</td><td class="num">98.57%</td><td class="num">0.000</td><td><span class="pill good">ZK-verified</span></td></tr>
+      <tr><td><code>clean.pt</code></td><td>Same network, never watermarked</td><td class="num">98.69%</td><td class="num">0.531</td><td><span class="pill badp">No match</span></td></tr>
+      <tr><td><code>null_0–3.pt</code></td><td>Four independently trained models, never watermarked</td><td class="num">≈ 98.8%</td><td class="num">0.406–0.594</td><td><span class="pill badp">No match</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.4 Embed watermark (<code>/app/embed</code>)</h3>
+  <p>Shows how the demo's models were watermarked. The switch at the top right picks the protocol.</p>
+  <figure><img src="img/embed-v2.jpg" alt="Embed page, protocol v2"><figcaption><b>Protocol v2 (demo F).</b> The four steps (Owner key → Committed seed → Embed → Register), the real configuration, the masked secret seed, and the signature drawn as 64 <em>hidden</em> squares: in v2 the signature is never shown, not even to the verifier. On the right, the public Poseidon commitment and the registry receipt time. Below, the same flow as <code>sigil</code> commands. <strong>Run demo F live</strong> re-runs it; <strong>Verify this model</strong> goes to the Verify page.</figcaption></figure>
+  <figure><img src="img/embed-v1.jpg" alt="Embed page, protocol v1"><figcaption><b>Protocol v1 (demo A).</b> The research baseline. Its 64 signature bits <em>are</em> drawn (dark = 1) because v1 is for teaching. <strong>Re-verify live</strong> re-checks the saved models without retraining. <strong>Retrain with a new seed…</strong> asks for confirmation first: it replaces the owner key and makes demos B–E stale until they are re-run.</figcaption></figure>
+
+  <h3>6.5 Verify ownership (<code>/app/verify</code>)</h3>
+  <figure><img src="img/verify-ok.jpg" alt="Verify page, honest proof"><figcaption><b>The honest claim.</b> Left: <strong>The claim</strong> (model, claimed owner, commitment, registration time) and the actual <code>proof.json</code> / <code>public.json</code> from the last demo F run, with the five public signals labelled. Right: the verdict stamp, <strong>Ownership verified</strong>, with "0 of 64 bits revealed".</figcaption></figure>
+  <div class="two">
+    <figure><img src="img/verify-onchain.jpg" alt="On-chain verdict"><figcaption><b>On-chain.</b> The same proof checked by the Solidity verifier on a local chain: verify gas 243,225, deploy 430,402, chain 31337. A tampered public signal is rejected there too. If the on-chain record belongs to an older proof, the card says so.</figcaption></figure>
+    <figure><img src="img/verify-rejected.jpg" alt="Rejected proof"><figcaption><b>A misuse.</b> Clicking <strong>tampered proof bytes</strong> shows what demo F's verifier said about that real attempt: the stamp turns red and shakes, with the reason. <strong>Back to the honest proof</strong> resets it.</figcaption></figure>
+  </div>
+  <figure><img src="img/verify-checks-failed.jpg" alt="Checks list with one failure"><figcaption><b>What gets checked.</b> The eleven checks from §3.5. During a misuse, the one that caught it turns red (here: Groth16 proof verifies).</figcaption></figure>
+  <h4>The four misuse buttons</h4>
+  <table>
+    <thead><tr><th style="width:27%">Button</th><th>What was attempted in demo F</th><th style="width:27%">Check that catches it</th></tr></thead>
+    <tbody>
+      <tr><td>replayed for another claim</td><td>Re-submit the owner's valid proof for a new claim (different nonce)</td><td>Made for this claim (nonce)</td></tr>
+      <tr><td>checked against a different model</td><td>Present the proof against another model file</td><td>About this exact model (w_hash)</td></tr>
+      <tr><td>tampered proof bytes</td><td>Change bytes inside the proof</td><td>Groth16 proof verifies</td></tr>
+      <tr><td>receipt from an untrusted registry</td><td>Back the registration with a receipt from a registry the verifier doesn't trust</td><td>Registry receipt from a trusted registry</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.6 Robustness lab (<code>/app/robustness</code>)</h3>
+  <figure><img src="img/robustness.jpg" alt="Robustness lab attack cards"><figcaption><b>Attack cards.</b> Each card is one attack a thief might use on the stolen model: the share of watermark bits still recovered, the BER, and the model's accuracy after the attack. A red card means the attack removed the mark.</figcaption></figure>
+  <figure><img src="img/robustness-sweep.jpg" alt="Pruning sweep chart"><figcaption><b>Pruning sweep.</b> Dark bars: watermark bits recovered. Caramel bars: model accuracy. Dashed line: the acceptance threshold (87.5% of bits). The mark outlives the model: at 65% pruning, accuracy has fallen to 65.7% while 100% of the bits are still recovered. Below the chart, <strong>All results</strong> lists every attack, and an <strong>Honest limits</strong> note explains what isn't covered.</figcaption></figure>
+
+  <h3>6.7 Research demos A–F (<code>/app/demo/A</code> … <code>F</code>)</h3>
+  <p>The research storyline, one page per demo, in presentation order. Each page has a title with the requirement it addresses, the panels with real results, a <strong>Run</strong> button, collapsible <strong>Presenter notes</strong> (what to say, including the caveats examiners ask about), and buttons to the previous and next demo. <strong>← →</strong> (or a presentation clicker's PageUp / PageDown) move between demos; Home and End jump to A and F.</p>
+  <table>
+    <thead><tr><th style="width:23%">Demo</th><th>Question it answers</th><th style="width:31%">Result</th></tr></thead>
+    <tbody>
+      <tr><td>A · Commit &amp; embed</td><td>Does hiding a 64-bit signature cost accuracy? Can the owner commit to it before release?</td><td>98.69% → 98.66%; owner BER 0.000; clean and null models 0.41–0.59</td></tr>
+      <tr><td>B · Removal attacks</td><td>Can a thief strip the mark (pruning, quantisation, fine-tuning, overwriting, permutation)?</td><td>13 of 14 attacks survived; feature permutation removes it unless the owner realigns</td></tr>
+      <tr><td>C · Ownership forgery</td><td>Without a commitment, can a thief claim the model?</td><td>Yes: a fitted fake key reads "MALLORY!" with 0 errors, even on never-watermarked models</td></tr>
+      <tr><td>D · Committed seed</td><td>Does committing to the seed stop forgery (without ZK)?</td><td>Free signature: thief wins 1,000/1,000. Seed-derived: 0 of 20,000 accepted</td></tr>
+      <tr><td>E · Zero-knowledge proofs</td><td>Is "add a ZK proof" enough on its own?</td><td>No: the thief's forged EZKL proof verifies under the owner's key (E2); hashing the parameters fixes it (E3) at a high cost</td></tr>
+      <tr><td>F · Protocol v2</td><td>Does the full design close every gap?</td><td>Owner proof accepted; thief can't prove; 4/4 misuse rejected; attacks; dispute won by the earliest registration</td></tr>
+    </tbody>
+  </table>
+  <div class="two">
+    <figure><img src="img/demo-A.jpg" alt="Demo A"><figcaption><b>Demo A.</b> The published commitment and the accuracy cost.</figcaption></figure>
+    <figure><img src="img/demo-B.jpg" alt="Demo B"><figcaption><b>Demo B.</b> Accuracy and owner BER under each attack.</figcaption></figure>
+    <figure><img src="img/demo-C.jpg" alt="Demo C"><figcaption><b>Demo C.</b> The thief's counterfeit key and why it looks real.</figcaption></figure>
+    <figure><img src="img/demo-D.jpg" alt="Demo D"><figcaption><b>Demo D.</b> Free vs seed-derived signature; the seed search.</figcaption></figure>
+    <figure><img src="img/demo-E.jpg" alt="Demo E"><figcaption><b>Demo E.</b> EZKL proofs; the forged proof that verifies.</figcaption></figure>
+    <figure><img src="img/demo-F.jpg" alt="Demo F"><figcaption><b>Demo F.</b> The full protocol: verdict, timings and every check.</figcaption></figure>
+  </div>
+  <figure><img src="img/demo-F-dispute.jpg" alt="Demo F overwrite dispute"><figcaption><b>Demo F, end of the page.</b> F5 runs attacks against the v2 proof (feature permutation: "No proof", 39/64 wrong). F6: the thief overwrites with their own mark and registers it later; both can prove, and the dispute rule awards the model to the owner, whose registration is earlier.</figcaption></figure>
+</section>
+
+<!-- ======================================================================== 7 -->
+<section class="chapter" id="c7">
+  <div class="eyebrow">Chapter 7</div>
+  <h2><span class="n">7</span>Step-by-step <span class="hl">walkthroughs</span></h2>
+  <p class="intro">W1–W5 work in replay and in live mode; W6 shows an examiner that the runs are real. Times are for presenting.</p>
+
+  <h3>W1 · The 5-minute presentation</h3>
+  <ol class="steps">
+    <li><strong>Home</strong> (<code>/</code>), 30 s: read the headline, "Prove it's yours. Reveal nothing." Point at the weight grid: the caramel cells carry signature bits. Click <strong>Open dashboard</strong>.</li>
+    <li><strong>Overview</strong>, 45 s: walk the four tiles: 3.73 s to prove, −0.03 pp accuracy, 0 of 20,000 forgeries, 13 of 14 attacks survived. In the models table, show that the clean and null models read "No match".</li>
+    <li><strong>Embed watermark</strong>, 45 s: on protocol v2, point out that the signature is drawn as hidden squares and only the commitment is public. Switch to v1 to show what a revealed signature looks like, then back.</li>
+    <li><strong>Verify ownership</strong>, 90 s: read the claim, show the proof is tiny (three curve points), then the green stamp. Switch to <strong>On-chain</strong>: 243,225 gas. Click <strong>tampered proof bytes</strong>: red stamp, and the failing check is highlighted. Click <strong>Back to the honest proof</strong>.</li>
+    <li><strong>Robustness lab</strong>, 60 s: the pruning chart: "the mark outlives the model". Point at the one red card (feature permutation) and say it's the known limit.</li>
+    <li>Close with the research demos if there is time (W5).</li>
+  </ol>
+
+  <h3>W2 · Verify a claim and show a rejection</h3>
+  <ol class="steps">
+    <li>Open <strong>Verify ownership</strong> from the sidebar.</li>
+    <li>Read <strong>The claim</strong> card: which model, whose key, which commitment, when it was registered.</li>
+    <li>In the proof box, note the five public signals: owner key hash, settings hash, commitment, w_hash, nonce. Nothing secret is in them.</li>
+    <li>Check the verdict: <strong>Ownership verified</strong>, 0 of 64 bits revealed. Scroll to <strong>What gets checked</strong>: all eleven are ✓.</li>
+    <li>Under <strong>Try a misuse</strong>, click each button in turn. For each, read the reason on the stamp card and find the red check in the list (see the table in §6.5).</li>
+    <li>Toggle <strong>Off-chain / On-chain</strong> to show the same proof checked by the smart contract.</li>
+  </ol>
+
+  <h3>W3 · Run a demo and cancel a run</h3>
+  <ol class="steps">
+    <li>Open a demo page, for example <strong>Demo F</strong>, and click its caramel <strong>Run</strong> button (or <strong>Run all live</strong> in the sidebar).</li>
+    <li>The console opens and streams the output. In live mode demo F takes about 1–2 minutes (86 s on a CPU-only laptop); in replay mode about 2 s.</li>
+    <li>While it runs, the sidebar shows spinners on the affected demos and the other Run buttons are locked.</li>
+    <li>To stop, click <strong>Cancel run</strong> in the console. The status turns to "cancelled" and the previous results stay.</li>
+    <li>When it finishes, the status shows ✓ and every page reloads the new results.</li>
+  </ol>
+  <div class="box warn"><span class="t">Don't run these live in front of an audience</span><p><strong>Retrain</strong> (demo A) creates a new owner seed and key, which makes demos B–E stale until re-run. <strong>E3</strong> needs about 32 GB of RAM and 10 GB of disk. Both ask for confirmation first; use replay mode or the saved results for them.</p></div>
+
+  <h3>W4 · Show what attacks do</h3>
+  <ol class="steps">
+    <li>Open <strong>Robustness lab</strong>.</li>
+    <li>Pick a card, for example <strong>int4 quantisation</strong>: 100% of bits recovered, accuracy 98.66%. The thief gains nothing.</li>
+    <li>Scroll to the <strong>Pruning sweep</strong>: as pruning grows, accuracy (caramel) collapses long before the bits (dark) drop below the dashed threshold.</li>
+    <li>Show the red <strong>feature permutation</strong> card: accuracy unchanged, 56.3% of bits (BER 0.438): removed. Then <strong>permutation + owner realign</strong>: back to 100%.</li>
+    <li>Click <strong>Run attacks live</strong> to re-run demo B (about 10 s live).</li>
+  </ol>
+
+  <h3>W5 · Present the research story A → F</h3>
+  <ol class="steps">
+    <li>Open <strong>Research demos → A</strong> in the sidebar. Use <strong>→</strong> (or a clicker) to advance.</li>
+    <li><strong>A:</strong> the owner commits, then embeds; accuracy is unchanged.</li>
+    <li><strong>B:</strong> the mark survives the usual attacks.</li>
+    <li><strong>C:</strong> but without a commitment, a thief forges ownership of anything ("MALLORY!").</li>
+    <li><strong>D:</strong> committing to the seed stops that: 0 of 20,000.</li>
+    <li><strong>E:</strong> adding a ZK proof naively isn't enough: the forged proof verifies too.</li>
+    <li><strong>F:</strong> protocol v2 binds everything (owner key, settings, commitment, model, claim) and closes every gap shown before. Open <strong>Presenter notes</strong> on each page for the exact wording and caveats.</li>
+  </ol>
+  <h3>W6 · Show the teacher it's really live</h3>
+  <p>Replay mode only <em>shows</em> saved results. In live mode every Run button really trains, attacks and proves on the laptop in front of the examiner, and the numbers on screen change. This is how to make that visible.</p>
+  <h4>The day before</h4>
+  <ol class="steps">
+    <li>On the presentation laptop, run the setup once (§5.3, Option 2). It needs the internet; the presentation itself doesn't.</li>
+    <li>Start with <strong><code>Start-Demo-UI.cmd</code></strong>, <em>not</em> the Simulate one. Check three things: there is <strong>no "Simulate mode" banner</strong>, the sidebar card says <strong>live mode</strong>, and the environment chip shows the GPU or <strong>CPU only</strong>.</li>
+    <li>Do one rehearsal run of demo F, so the first run in front of the teacher isn't the first run ever.</li>
+  </ol>
+  <h4>In front of the teacher</h4>
+  <ol class="steps">
+    <li><strong>Note the "before".</strong> On Overview, read out "0 / 20,000" forgeries. On Verify ownership, read out the first digits of <code>pi_a</code> in the proof box and the registration time.</li>
+    <li><strong>Let the teacher choose.</strong> Open <strong>Demo D</strong>, let the teacher pick the number of thief seeds (20,000 or 100,000) and click <strong>Run live</strong>. The console streams the real search (about 3 s for 20,000, about 17 s for 100,000). Afterwards the Overview tile reads, for example, "0 / 100,000". Measured on this laptop: 100,000 seeds in 16.8 s, 0 accepted.</li>
+    <li><strong>Generate a fresh proof.</strong> Open <strong>Demo F</strong> and click <strong>Run demo F live</strong> (about 80 s on a GPU laptop, 86 s CPU-only). Explain the six parts while the console streams them. When it finishes, the Verify page shows a <em>brand-new</em> proof: different <code>pi_a</code> digits, a new nonce, a new registration time, and new entries in the Overview audit log.</li>
+    <li><strong>Attack it live.</strong> On <strong>Robustness lab</strong>, click <strong>Run attacks live</strong> (about 10 s): pruning, quantisation and fine-tuning run again and the chart redraws.</li>
+    <li><strong>Optional, strongest:</strong> on <strong>Embed watermark → Protocol v1</strong>, click <strong>Retrain with a new seed…</strong> (about 35 s on a GPU). A new owner seed, a new commitment and new signature bits appear. Demos B–E are then marked <strong>!</strong> (stale) until you click <strong>Run all live</strong> (about 30 s), which recomputes them with the new key. Do this last.</li>
+  </ol>
+  <div class="box warn"><span class="t">What stays precomputed, and why</span><p><strong>E3</strong> needs about 32 GB of RAM, so it's shown from the saved run. The <strong>on-chain</strong> check runs separately from <code>circuits/onchain</code>: after a live demo F run, the On-chain view says it was made for an earlier proof. That's expected; the off-chain verdict is the live one. Live runs overwrite <code>demo/results/</code>; to get the shipped results back, unzip the package again.</p></div>
+
+</section>
+
+<!-- ======================================================================== 8 -->
+<section class="chapter" id="c8">
+  <div class="eyebrow">Chapter 8</div>
+  <h2><span class="n">8</span>The SDK and <span class="hl">command line</span></h2>
+  <p class="intro">The <code>sigil</code> SDK is what the app demonstrates, packaged for real use. It is installed by <code>setup.ps1 --demo</code> / <code>setup.sh --demo</code>. Run the commands from the activated environment (<code>.venv\Scripts\activate</code> on Windows, <code>source .venv/bin/activate</code> elsewhere), or as <code>python -m sigil.cli …</code>.</p>
+
+  <h3>8.1 Commands</h3>
+  <table>
+    <thead><tr><th style="width:15%">Role</th><th style="width:31%">Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Owner</td><td><code>sigil keygen</code></td><td>Create the owner's Ed25519 key, encrypted (<code>secrets/owner.key</code>)</td></tr>
+      <tr><td>Owner</td><td><code>sigil seed --bits 64 --layer conv2</code></td><td>Create the secret seed for a configuration, encrypted (<code>secrets/seed.json</code>); prints the commitment. Options: <code>--m</code> (layer vector length, default 288), <code>--max-err</code> (default T/8)</td></tr>
+      <tr><td>Owner</td><td><code>sigil register model.pt</code></td><td>Sign a registration for the watermarked file (<code>registration.json</code>). With <code>--registry-key</code>, also timestamp it locally</td></tr>
+      <tr><td>Owner</td><td><code>sigil detect model.pt</code></td><td>Check the watermark in a file: bits wrong, BER, accepted</td></tr>
+      <tr><td>Owner</td><td><code>sigil prove suspect.pt --claim claim.json</code></td><td>Make the zero-knowledge proof for a claim (writes a <code>bundle/</code> folder)</td></tr>
+      <tr><td>Verifier</td><td><code>sigil claim registration.json --suspect suspect.pt</code></td><td>Open a claim with a fresh nonce (<code>claim.json</code>)</td></tr>
+      <tr><td>Verifier</td><td><code>sigil verify bundle --suspect … --registration … --receipt … --trusted-registry &lt;hex&gt;</code></td><td>Run every check of §3.5 and print the verdict with reasons</td></tr>
+      <tr><td>Registry</td><td><code>sigil registry-keygen</code>, <code>sigil receipt registration.json</code></td><td>Create a registry key; timestamp a registration</td></tr>
+      <tr><td>Toolchain</td><td><code>sigil zk-setup</code>, <code>sigil zk-info</code></td><td>Build the circuit's proving keys (about 3 min); print the circuit's size</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Add <code>--json</code> before the command for machine-readable output. Passphrases are asked for at a prompt, or read from <code>SIGIL_PASSPHRASE</code> (owner) and <code>SIGIL_REGISTRY_PASSPHRASE</code> (registry).</p>
+
+  <h3>8.2 An end-to-end session</h3>
+  <pre><span class="c"># --- owner, before release ---</span>
+sigil keygen
+sigil registry-keygen                          <span class="c"># a local registry, for testing</span>
+sigil seed --bits 64 --layer conv2
+<span class="c"># train with sigil.embed.embed_torch(...) (see 8.3), save model.pt</span>
+sigil detect model.pt                          <span class="c"># expect: accepted, 0 bits wrong</span>
+sigil register model.pt --registry-key secrets/registry.key
+<span class="c">#   -> registration.json and registration.receipt.json</span>
+
+<span class="c"># --- later: a verifier checks a suspect copy ---</span>
+sigil claim registration.json --suspect suspect.pt              <span class="c"># verifier</span>
+sigil prove suspect.pt --claim claim.json                       <span class="c"># owner -> bundle/</span>
+sigil verify bundle --suspect suspect.pt --registration registration.json \
+      --receipt registration.receipt.json --trusted-registry &lt;registry public key hex&gt;</pre>
+
+  <h3>8.3 From Python</h3>
+  <pre><span class="k">from</span> sigil <span class="k">import</span> protocol <span class="k">as</span> P
+<span class="k">from</span> sigil.identity <span class="k">import</span> KeyPair
+<span class="k">from</span> sigil.embed <span class="k">import</span> embed_torch
+
+owner = KeyPair.generate()
+cfg   = P.Config(T=<span class="s">64</span>, layer=<span class="s">"conv2"</span>)          <span class="c"># M=288, max_err=8 by default</span>
+seed  = P.new_seed()
+pkh   = P.pk_hash(owner.public_bytes)
+commitment = P.commitment(seed, pkh, cfg)        <span class="c"># publish this before release</span>
+
+<span class="c"># train a torch.nn.Module with the watermark on cfg.layer</span>
+model, detection = embed_torch(model, (x_train, y_train), cfg, seed, pkh, epochs=<span class="s">2</span>)
+print(detection.errors, detection.accepted)</pre>
+
+  <h3>8.4 Model formats and safety</h3>
+  <ul>
+    <li><strong>Formats:</strong> PyTorch <code>.pt</code>, Keras <code>.h5</code> / <code>.keras</code> and <code>.onnx</code>. The same weights give the identical layer vector in every format.</li>
+    <li><strong>Safe loading:</strong> PyTorch files load with <code>weights_only=True</code>, Keras with <code>safe_mode=True</code> (Lambda layers refused), ONNX through <code>onnx.checker</code> with size limits. <code>--trust</code> turns this off: <strong>only for your own files, never for a suspect's</strong>.</li>
+    <li><strong>ONNX caveat:</strong> exporters fold BatchNorm into the convolution before it, changing that layer. Verify from the original <code>.pt</code> / <code>.keras</code> file, or export without constant folding.</li>
+    <li><strong>Secrets:</strong> keep <code>secrets/</code> off shared drives and out of chats. The key and signature are derived in memory and never written to disk.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================== 9 -->
+<section class="chapter" id="c9">
+  <div class="eyebrow">Chapter 9</div>
+  <h2><span class="n">9</span>Results at a <span class="hl">glance</span></h2>
+  <p class="intro">MNIST classifier, watermark in <code>conv2</code> (288 values), T = 64 bits, accept at ≤ 8 wrong (θ = 0.125). Saved results from the last full run on the team's laptop (RTX 4060).</p>
+
+  <h3>Demo A · Accuracy and detection</h3>
+  <table>
+    <thead><tr><th>Model</th><th class="num">Accuracy</th><th class="num">Owner BER</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Clean (never watermarked)</td><td class="num">98.69%</td><td class="num">0.531</td><td class="bad">No match</td></tr>
+      <tr><td>Watermarked (v1)</td><td class="num">98.66%</td><td class="num">0.000</td><td class="ok">Ownership shown</td></tr>
+      <tr><td>Null models 0–3</td><td class="num">98.75–98.80%</td><td class="num">0.484 · 0.594 · 0.406 · 0.453</td><td class="bad">No match</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Demo B · Removal attacks (thief uses 10,000 samples of their own)</h3>
+  <table>
+    <thead><tr><th>Attack</th><th class="num">Model accuracy</th><th class="num">Owner BER</th><th>Watermark</th></tr></thead>
+    <tbody>
+      <tr><td>None (stolen as-is)</td><td class="num">98.66%</td><td class="num">0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Prune 20% / 40%</td><td class="num">98.60% / 97.28%</td><td class="num">0.000 / 0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Prune 65% / 80%</td><td class="num">65.73% / 33.35%</td><td class="num">0.000 / 0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Prune 90% / 95%</td><td class="num">9.41% / 8.52%</td><td class="num">0.016 / 0.016</td><td class="ok">Survives</td></tr>
+      <tr><td>int8 / int4 quantisation</td><td class="num">98.65% / 98.66%</td><td class="num">0.000 / 0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Fine-tune all layers (FTAL) 1 / 5 epochs</td><td class="num">98.61% / 98.84%</td><td class="num">0.000 / 0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Reset the last layer, re-train all (RTAL) 5 epochs</td><td class="num">98.47%</td><td class="num">0.000</td><td class="ok">Survives</td></tr>
+      <tr><td>Overwrite with own mark, 3 epochs</td><td class="num">98.62%</td><td class="num">0.047</td><td class="ok">Survives</td></tr>
+      <tr><td>Feature permutation</td><td class="num">98.66%</td><td class="num">0.438</td><td class="bad">Removed</td></tr>
+      <tr><td>Permutation + owner realign</td><td class="num">98.66%</td><td class="num">0.000</td><td class="ok">Survives</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Demos C and D · Forgery</h3>
+  <table>
+    <tbody>
+      <tr><td style="width:42%">C: thief's fitted key on the stolen model</td><td>Reads "MALLORY!", BER 0.000. Also 0.000 on the clean and all four null models</td></tr>
+      <tr><td>C: does the fake key look real?</td><td>Yes: entry distribution KS distance 0.0104, below the 0.0142 critical value; a large-margin variant matches the owner's margins (1.43 vs 1.42)</td></tr>
+      <tr><td>D0: owner with committed seed</td><td>Commitment matches, BER 0.000: verified</td></tr>
+      <tr><td>D1: commitment, but free signature</td><td>Thief wins 1,000 of 1,000 (the signature isn't tied to the seed)</td></tr>
+      <tr><td>D2: signature derived from the seed</td><td>0 of 20,000 thief seeds accepted (best BER 0.250); 2.8 × 10⁻¹⁰ per try; ≈ 2³² work, about 114 single-core hours for a 50% chance at T = 64; ≈ 2¹²⁰ at T = 256</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Demo E · EZKL zero-knowledge experiments</h3>
+  <table>
+    <thead><tr><th>Variant</th><th class="num">Prove</th><th class="num">Verify</th><th class="num">Proof</th><th class="num">Proving key</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>E1 private parameters</td><td class="num">1.1 s</td><td class="num">19 ms</td><td class="num">≈ 60 KB</td><td class="num">138 MB</td><td>Proof of extraction</td></tr>
+      <tr><td>E2 thief, same setup</td><td class="num">1.1 s</td><td class="num">17 ms</td><td class="num">≈ 60 KB</td><td class="num">138 MB</td><td class="bad">Forged proof verifies under the owner's key</td></tr>
+      <tr><td>E3 Poseidon-hashed parameters</td><td class="num">39–47 s</td><td class="num">0.56–0.58 s</td><td class="num">≈ 66 KB</td><td class="num">10.5 GB</td><td>Thief's hash doesn't match; precomputed (≈ 32 GB RAM)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Demo F · Protocol v2 (Circom + Groth16)</h3>
+  <table>
+    <tbody>
+      <tr><td style="width:42%">Circuit</td><td><code>ownership_T64_M288_E8_W24</code>, 116,822 constraints</td></tr>
+      <tr><td>Watermarked v2 model</td><td>Accuracy 98.57%; owner detection 0 of 64 wrong</td></tr>
+      <tr><td>Owner proof</td><td>Witness 1.43 s, prove 3.73 s, 879-byte proof; all checks pass: <span class="ok">accepted</span></td></tr>
+      <tr><td>On-chain (local Hardhat chain 31337)</td><td>Verify 243,225 gas; deploy 430,402 gas; a tampered public signal is rejected</td></tr>
+      <tr><td>Thief</td><td>Own key: 28 of 64 wrong, no proof possible. Owner's commitment: can't be opened</td></tr>
+      <tr><td>Misuse</td><td>4 of 4 rejected (replay, different model, tampered proof, untrusted registry)</td></tr>
+      <tr><td>F5 attacks with proof</td><td>Prune 65%: accuracy 50.26%, 0 wrong, accepted. Prune 90%: 2.01%, 1 wrong, accepted. Fine-tune all layers 5 epochs: 98.88%, 0 wrong, accepted. Feature permutation: 98.57%, 39 wrong, <span class="bad">no proof</span></td></tr>
+      <tr><td>F6 overwrite dispute</td><td>Owner (registered first) 1 of 64 wrong, proof accepted; thief (registered later) 0 of 64 wrong, proof accepted: <strong>winner: owner</strong>, by the earliest registration</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ======================================================================== 10 -->
+<section class="chapter" id="c10">
+  <div class="eyebrow">Chapter 10</div>
+  <h2><span class="n">10</span>Pass and <span class="hl">fail</span> cases</h2>
+  <p class="intro">The demo deliberately shows failures as well as successes. All of them are real recorded runs.</p>
+  <h3>Accepted (should pass, and does)</h3>
+  <ul>
+    <li>The owner's proof for the watermarked v2 model: all eleven checks pass, off-chain and on-chain.</li>
+    <li>The owner's mark after pruning (up to 95%), int8/int4 quantisation, fine-tuning and overwriting.</li>
+    <li>The owner's mark after feature permutation, <em>once the owner realigns the channels</em>.</li>
+  </ul>
+  <h3>Rejected (should fail, and does)</h3>
+  <table>
+    <thead><tr><th style="width:36%">Case</th><th>Where to see it</th><th style="width:30%">Why it fails</th></tr></thead>
+    <tbody>
+      <tr><td>Replayed proof</td><td>Verify → Try a misuse</td><td>Nonce mismatch</td></tr>
+      <tr><td>Proof checked against another model</td><td>Verify → Try a misuse</td><td>w_hash mismatch</td></tr>
+      <tr><td>Tampered proof bytes</td><td>Verify → Try a misuse</td><td>The zk-SNARK doesn't verify</td></tr>
+      <tr><td>Receipt from an untrusted registry</td><td>Verify → Try a misuse</td><td>Registry receipt invalid</td></tr>
+      <tr><td>Thief proving with their own key</td><td>Demo F (F3)</td><td>28 of 64 bits wrong (&gt; 8)</td></tr>
+      <tr><td>Thief opening the owner's commitment</td><td>Demo F (F3)</td><td>They don't have the seed</td></tr>
+      <tr><td>Thief's seed search</td><td>Overview tile, demo D</td><td>0 of 20,000 accepted</td></tr>
+      <tr><td>Never-watermarked models</td><td>Overview models table, demo A</td><td>BER 0.41–0.59, far above 0.125</td></tr>
+      <tr><td>Tampered public signal on-chain</td><td>Verify → On-chain</td><td>The Solidity verifier rejects it</td></tr>
+    </tbody>
+  </table>
+  <h3>Shown failing on purpose: weaknesses of naive schemes</h3>
+  <ul>
+    <li><strong>Demo C:</strong> without a commitment, the thief's forgery succeeds, even on models that were never watermarked.</li>
+    <li><strong>Demo D1:</strong> committing to a seed but keeping the signature free: the thief wins every time.</li>
+    <li><strong>Demo E2:</strong> a zero-knowledge proof that isn't bound to the owner's parameters: the thief's forged proof verifies.</li>
+    <li><strong>Feature permutation</strong> (demo B, F5): removes the white-box mark unless the owner realigns first.</li>
+    <li><strong>Overwriting</strong> (demo F6): both parties produce valid proofs; only the registry timestamp settles it.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================== 11 -->
+<section class="chapter" id="c11">
+  <div class="eyebrow">Chapter 11</div>
+  <h2><span class="n">11</span>Honest <span class="hl">limits</span></h2>
+  <p class="intro">What the demo does not claim. These are also in the app's Presenter notes, because examiners ask about them.</p>
+  <ul>
+    <li><strong>White-box only.</strong> The verifier needs the suspect's weights. A copy made only by querying the model's outputs (model extraction) isn't covered by a white-box mark (OWASP limitation L1).</li>
+    <li><strong>Feature permutation</strong> reorders channels at no accuracy cost and removes the mark unless the owner realigns before proving.</li>
+    <li><strong>T = 64 is a demo size.</strong> Forging by seed search costs about 2³² tries (about 114 single-core hours for a 50% chance): feasible with GPUs. Timestamps stay essential; T = 256 raises it to about 2¹²⁰.</li>
+    <li><strong>The threshold is indicative.</strong> 8 of 64 is not a calibrated false-positive rate; four null models can't give one.</li>
+    <li><strong>Overwriting</strong> produces two valid marks. The registry timestamp, not the watermark, decides who was first.</li>
+    <li><strong>Trusted setup.</strong> Phase 1 uses the public Perpetual Powers of Tau; its full transcript check was too slow for the demo laptop and is recorded as pending in the setup files. Phase 2 has a single contributor. Groth16 is sound if at least one contributor in each phase discarded their randomness.</li>
+    <li><strong>Research demos C and E.</strong> Demo C runs ZKROWNN's <em>relation</em>, not ZKROWNN's code (ZKROWNN assumes a semi-honest prover). E3 is the halfway fix and needs about 32 GB of RAM, so it is precomputed.</li>
+    <li><strong>Demo identities are public.</strong> Seeds and keys in <code>demo/ckpt/</code> are committed for reproducibility: anyone with the repository can produce the demo owner's proofs.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================== 12 -->
+<section class="chapter" id="c12">
+  <div class="eyebrow">Chapter 12</div>
+  <h2><span class="n">12</span>Troubleshooting <span class="hl">and FAQ</span></h2>
+  <table>
+    <thead><tr><th style="width:36%">Problem</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Double-clicking the launcher shows "python is not recognized"</td><td>Install Python 3.10+ from python.org and tick "Add python.exe to PATH", then try again.</td></tr>
+      <tr><td>The browser didn't open</td><td>Open <code>http://127.0.0.1:8765</code> yourself. The console window must stay open.</td></tr>
+      <tr><td>"Can't reach the demo server"</td><td>The server isn't running, or port 8765 is taken: start it again, or use <code>python demo/server.py --port 8770</code>.</td></tr>
+      <tr><td>PowerShell refuses to run <code>setup.ps1</code></td><td><code>powershell -ExecutionPolicy Bypass -File setup.ps1 --demo</code></td></tr>
+      <tr><td>Sidebar says "No ML stack: replay only"</td><td>PyTorch isn't installed for the Python the server uses. Run the setup (Option 2), start with <code>Start-Demo-UI.cmd</code>, or present in replay mode.</td></tr>
+      <tr><td>Demo F says the circuit isn't set up</td><td>Re-run the setup (it installs <code>dist/sigil-proving-keys-t64.zip</code>), or run <code>.venv\Scripts\python -m sigil.cli zk-setup</code> (about 3 minutes).</td></tr>
+      <tr><td>Antivirus blocks <code>tools/bin/circom.exe</code></td><td>It's the official circom 2.2.3 release from github.com/iden3/circom. Allow it, or present demo F in replay mode.</td></tr>
+      <tr><td>A demo shows "!" (stale) in the sidebar</td><td>It was made with an older owner key (after a Retrain). Re-run it, or <strong>Run all live</strong>.</td></tr>
+      <tr><td>The page looks old or the fonts look plain</td><td>Hard-refresh with Ctrl+F5. The fonts are bundled; nothing is loaded from the internet.</td></tr>
+      <tr><td>Animations stutter on the projector laptop</td><td>Switch <strong>Motion</strong> off in the sidebar.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Frequently asked</h3>
+  <h4>Does it need the internet, or send data anywhere?</h4>
+  <p>No. The app and the server run on your machine and listen only on <code>127.0.0.1</code>. Only the optional setup downloads packages.</p>
+  <h4>Is replay mode faking the results?</h4>
+  <p>No. The pages show the saved results of real runs, and the console replays their recorded output. The banner says it is replay mode. Note that the recorded console logs and the saved result files come from runs made at slightly different times, so a few printed values can differ by a bit or two (for example, demo F6's owner shows 0 of 64 wrong in the replayed log and 1 of 64 in the saved results). Live mode always shows the current run.</p>
+  <h4>Can I watermark my own model?</h4>
+  <p>Yes, with the SDK (chapter 8): PyTorch training via <code>embed_torch</code>, Keras via the Keras adapter, and detection and verification from <code>.pt</code>, <code>.h5</code>/<code>.keras</code> or <code>.onnx</code> files.</p>
+  <h4>What exactly does the verifier learn?</h4>
+  <p>Five public values: hashes of the owner key and settings, the commitment, the hash of the suspect model's layer, and the nonce the verifier chose itself. Not the seed, the key or a single signature bit.</p>
+  <h4>Why is it called Sigil?</h4>
+  <p>A sigil is a seal: a mark that shows something belongs to someone. Here the seal is hidden in the weights and proven without being shown.</p>
+</section>
+
+<!-- ======================================================================== 13 -->
+<section class="chapter" id="c13">
+  <div class="eyebrow">Chapter 13</div>
+  <h2><span class="n">13</span>Team <span class="hl">and credits</span></h2>
+  <table>
+    <thead><tr><th>Member</th><th>Roll no.</th><th>Role</th><th>Built</th></tr></thead>
+    <tbody>
+      <tr><td>Sami Daire</td><td class="num">231813</td><td>Project lead · ZK &amp; verification</td><td>Circom circuits, SnarkJS verification, the protocol and its integration</td></tr>
+      <tr><td>Mohamed Ansari</td><td class="num">231803</td><td>AI &amp; watermarking</td><td>Embedding and detection in PyTorch and TensorFlow; the attacks of the Robustness lab</td></tr>
+      <tr><td>Arfat Shaikh</td><td class="num">231846</td><td>Frontend &amp; integration</td><td>The React dashboard, wiring it to the backend APIs, packaging the Python SDK</td></tr>
+      <tr><td>Yash Bandiwadekar</td><td class="num">231810</td><td>Backend developer</td><td>The backend services, the demo server and the APIs for watermark tracking and verification history</td></tr>
+    </tbody>
+  </table>
+  <p>Guided by Er. Fiza Shaikh (Co-Guide) and the Department Review Committee.</p>
+
+  <h3>Built on</h3>
+  <ul>
+    <li><strong>Uchida et al.</strong>, "Embedding Watermarks into Deep Neural Networks" (white-box watermark).</li>
+    <li><strong>Lukas et al.</strong>, "SoK: How Robust is Image Classification Deep Neural Network Watermarking?" (IEEE S&amp;P 2022): the attack suite of demo B.</li>
+    <li><strong>Circom</strong> and <strong>SnarkJS</strong> (iden3), <strong>circomlib</strong>'s Poseidon; the <strong>Perpetual Powers of Tau</strong> (Privacy &amp; Scaling Explorations).</li>
+    <li><strong>EZKL</strong> for the demo E experiments; <strong>Hardhat</strong> for the local chain; <strong>PyTorch</strong>, <strong>TensorFlow/Keras</strong> and <strong>ONNX</strong>.</li>
+    <li>The <strong>OWASP AI Model Watermarking</strong> incubator project, whose goals this student project follows. Sigil is not official OWASP work.</li>
+  </ul>
+  <div class="box dark" style="margin-top:10mm">
+    <span class="t" style="color:var(--caramel)">In one sentence</span>
+    <p style="font:700 15pt/1.3 var(--display)">Sigil lets a model's owner prove "this model is mine" to anyone, with a 879-byte proof that reveals nothing about the watermark.</p>
+  </div>
+</section>
+
+<script>
+  // Cover weight grid: deterministic shades, a few caramel "signature" cells.
+  (function () {
+    var shades = ["#EFE3D3", "#E3D0B9", "#D4B999", "#C2A07E", "#A98466", "#8E6A52"], seed = 11, g = document.getElementById("covergrid");
+    var marks = { 3: 1, 10: 1, 17: 1, 22: 1, 29: 1, 36: 1, 44: 1, 51: 1, 58: 1 };
+    for (var i = 0; i < 64; i++) {
+      seed = (seed * 16807) % 2147483647;
+      var c = document.createElement("i");
+      c.style.background = marks[i] ? "#c8743a" : shades[Math.floor(seed / 2147483647 * shades.length)];
+      if (marks[i]) c.style.outline = "1.5px solid #2a1a12";
+      g.appendChild(c);
+    }
+  })();
+</script>
+</body>
+</html>

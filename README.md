@@ -37,7 +37,7 @@ The demo is evaluated against **project requirements R1 (robustness) and R2 (non
 
 ## Quick start on a new machine
 
-**Presenting the demo?** See **[DEMO.md](DEMO.md)**: setup on a new machine in minutes, plus a presentation runbook.
+**Presenting the demo?** See **[DEMO.md](DEMO.md)**: setup on a new machine in minutes, plus a presentation runbook. The illustrated user guide (install, every screen, walkthroughs, SDK, results, honest limits) is **[Sigil-User-Guide.pdf](Sigil-User-Guide.pdf)**; its source is `docs/guide/` (rebuild with `docs/guide/build.py`).
 
 | You want | Do this | Time (≈50 Mbps) |
 |---|---|---|

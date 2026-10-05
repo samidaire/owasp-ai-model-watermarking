@@ -1,7 +1,8 @@
 # Running the demo
 
 This covers the presentation build: demos A–F in the Cocoa Pop UI. Everything runs locally; nothing is sent to a
-cloud service.
+cloud service. **The full illustrated guide is [`Sigil-User-Guide.pdf`](Sigil-User-Guide.pdf)** (install, every
+screen, walkthroughs, SDK, results, limits).
 
 | Demo | What it shows | Live run |
 |---|---|---|
@@ -71,6 +72,18 @@ Then start the app: double-click `Start-Demo-UI.cmd` (Windows), or run `.venv/bi
 - **Say** what's in each demo's **Presenter notes**. The caveats there are the honest limits examiners will
   ask about.
 - **Motion:** the toggle in the sidebar turns the animations off if the projector machine is slow.
+
+**Showing the teacher it's really live** (needs Option 2 and `Start-Demo-UI.cmd`, so no "Simulate mode" banner):
+1. Note the "before": Overview says 0 / 20,000 forgeries; Verify shows the proof's first `pi_a` digits.
+2. Demo D: let the teacher pick 20,000 or 100,000 thief seeds and click **Run live** (~3 s / ~17 s).
+   The Overview tile changes to the new count.
+3. Demo F: **Run demo F live** (~80 s). The Verify page then shows a brand-new proof (new `pi_a`, nonce and
+   registration time).
+4. Robustness lab: **Run attacks live** (~10 s).
+5. Optional, last: **Retrain with a new seed…** (~35 s), then **Run all live** (~30 s) to recompute B–E.
+
+E3 and the on-chain check stay precomputed; after a live demo F run the On-chain view says it was made for an
+earlier proof. Live runs overwrite `demo/results/`; unzip the package again to restore the shipped results.
 
 **What not to run live:**
 - **Retrain:** it replaces the owner key and makes B–E stale.
