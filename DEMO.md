@@ -43,6 +43,12 @@ them all at once. Use this mode as the fallback during the presentation.
 
 Every address works as a link or after a reload.
 
+Every dashboard page has a **Model under test** bar. Pick a model and press **Test this model** (4–15 s): it
+measures the model's accuracy, reads the watermark with both owners' keys and, if the owner's mark is there, makes
+and verifies a zero-knowledge proof for that exact file. The menu has the owner's models, six stolen copies made live
+from the owner's model (pruned 65%/90%, int8, fine-tuned, channels permuted, overwritten), the never-watermarked
+models, and any `.pt`/`.h5`/`.keras`/`.onnx` file you put in `demo/models/` (live mode only).
+
 ### Option 2: everything live (about 5–15 minutes, mostly downloading)
 
 Unzip `owasp-wm-demo.zip`, open a terminal in the `owasp-ai-model-watermarking` folder, and run:
@@ -72,6 +78,8 @@ Then start the app: double-click `Start-Demo-UI.cmd` (Windows), or run `.venv/bi
 - **Navigate** with the sidebar. Inside the research demos, ← → (or a presentation clicker's PageUp /
   PageDown) moves between A–F.
 - **Run** with the caramel buttons. The console at the bottom streams the run live; **Cancel run** stops it.
+- **Test a model:** pick one in the **Model under test** bar and press **Test this model**. Good contrasts:
+  *pruned 90%* (2% accuracy, ownership still proven), *channels permuted* (mark gone), *clean.pt* (never marked).
 - **Misuse:** on Verify ownership, each "Try a misuse" button re-runs the verifier on the saved proof with one thing
   changed (about 1 s); the console prints every check, the failing one marked `[XX]`.
 - **Say** what's in each demo's **Presenter notes**. The caveats there are the honest limits examiners will
@@ -84,8 +92,10 @@ Then start the app: double-click `Start-Demo-UI.cmd` (Windows), or run `.venv/bi
    The Overview tile changes to the new count.
 3. Demo F: **Run demo F live** (~80 s). The Verify page then shows a brand-new proof (new `pi_a`, nonce and
    registration time).
-4. Robustness lab: **Run attacks live** (~10 s).
-5. Optional, last: **Retrain with a new seed…** (~35 s), then **Run all live** (~30 s) to recompute B–E.
+4. Let the teacher pick any model in the **Model under test** bar and press **Test this model**: a stolen copy is
+   attacked and tested in front of them.
+5. Robustness lab: **Run attacks live** (~10 s).
+6. Optional, last: **Retrain with a new seed…** (~35 s), then **Run all live** (~30 s) to recompute B–E.
 
 E3 and the on-chain check stay precomputed; after a live demo F run the On-chain view says it was made for an
 earlier proof. Live runs overwrite `demo/results/`; unzip the package again to restore the shipped results.

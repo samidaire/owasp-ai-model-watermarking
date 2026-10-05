@@ -55,7 +55,7 @@ export function Robustness({ s, ctl }: PageProps) {
         <p className="muted" style={{ margin: 0, fontSize: 16, maxWidth: 640 }}>Attack the stolen model the way a thief would, then check whether the owner's watermark survives.</p>
       </div></div>
       <StolenCopies s={s} ctl={ctl} />
-      <h2 className="h-sm">The full attack suite (demo B)</h2>
+      <h2 className="h-sm">The full attack suite (demo B, on the v1 model)</h2>
       <Empty what="the attack suite" action={<RunButton ctl={ctl} step="attacks" primary />} />
     </>
   );
@@ -85,6 +85,7 @@ export function Robustness({ s, ctl }: PageProps) {
       </div>
 
       <StolenCopies s={s} ctl={ctl} />
+      <h2 className="h-sm">The full attack suite (demo B, on the v1 model)</h2>
 
       <div className="statgrid">
         {others.map((r, i) => {

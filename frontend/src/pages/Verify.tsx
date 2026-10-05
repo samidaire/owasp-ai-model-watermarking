@@ -61,7 +61,8 @@ function ModelVerdict({ s, ctl }: PageProps) {
   const text = r.verdict === "proven"
     ? `The owner proved in zero knowledge that ${r.label} carries their watermark. The verifier learned 0 of the 64 watermark bits.`
     : r.verdict === "no_proof"
-      ? `The owner's watermark isn't in ${r.label}: ${r.v2?.errors ?? "?"} of 64 bits read wrong (more than ${r.v2?.max_err ?? 8}). No valid proof can exist, so none was made.`
+      ? `The protocol v2 owner's watermark isn't in ${r.label}: ${r.v2?.errors ?? "?"} of 64 bits read wrong (more than ${r.v2?.max_err ?? 8}). No valid proof can exist, so none was made.`
+        + (r.v1?.accepted ? ` It does carry the v1 owner's mark (BER ${r.v1.ber.toFixed(3)}): a different owner and key.` : "")
       : r.verdict === "unreadable" ? `This file can't be tested: ${r.error}.` : `The proof was rejected: ${r.proof?.reasons.join("; ")}.`;
   const rows: [string, boolean, string?][] = [];
   rows.push(["Watermarked layer readable (conv2, 288 values)", r.readable, r.readable ? undefined : r.error ?? undefined]);

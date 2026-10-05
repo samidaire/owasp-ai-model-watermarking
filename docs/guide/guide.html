@@ -156,7 +156,7 @@ figcaption b { color: var(--espresso); }
     <a href="#c3"><span>3</span><div>How it works<em>Embed, commit, prove, verify; why a thief can't win</em></div></a>
     <a href="#c4"><span>4</span><div>What's in the package<em>The folders in the zip</em></div></a>
     <a href="#c5"><span>5</span><div>Installing and starting<em>Quick start in 1 minute, or everything live</em></div></a>
-    <a href="#c6"><span>6</span><div>A tour of the app<em>Every page and control, with screenshots</em></div></a>
+    <a href="#c6"><span>6</span><div>A tour of the app<em>Every page, the model menu and every control</em></div></a>
     <a href="#c7"><span>7</span><div>Step-by-step walkthroughs<em>Presenting, verifying, attacking, showing it live</em></div></a>
     <a href="#c8"><span>8</span><div>The SDK and command line<em>Watermark and verify your own models</em></div></a>
     <a href="#c9"><span>9</span><div>Results at a glance<em>All measured numbers in one place</em></div></a>
@@ -337,6 +337,7 @@ figcaption b { color: var(--espresso); }
       <tr><td><code>Sigil-User-Guide.pdf</code></td><td>This guide</td></tr>
       <tr><td><code>DEMO.md</code></td><td>The short presentation runbook</td></tr>
       <tr><td><code>demo/</code></td><td>Demo scripts A–F, the local server (<code>server.py</code>), saved results (<code>demo/results/</code>) and the model checkpoints (<code>demo/ckpt/</code>)</td></tr>
+      <tr><td><code>demo/models/</code></td><td>Put your own model files here (<code>.pt</code>, <code>.h5</code>, <code>.keras</code>, <code>.onnx</code>): they appear in the app's <strong>Model under test</strong> menu</td></tr>
       <tr><td><code>frontend/</code></td><td>The web app's source (React + TypeScript); <code>frontend/dist/</code> is the ready-built app the server shows</td></tr>
       <tr><td><code>sdk/</code></td><td>The <code>sigil</code> Python SDK and command line (chapter 8)</td></tr>
       <tr><td><code>circuits/</code></td><td>The ownership circuit, its verification keys and setup records, and the on-chain verifier project</td></tr>
@@ -468,26 +469,44 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
     </tbody>
   </table>
 
-  <h3>6.3 Overview (<code>/app</code>)</h3>
-  <figure><img src="img/overview-empty.jpg" alt="Overview before anything has run"><figcaption><b>The starting state.</b> Every page begins empty: "Nothing has run yet", tiles at "—", every demo marked ○ in the sidebar. <strong>Run all live</strong> runs demos A–E and <strong>Run demo F live</strong> makes the zero-knowledge proof; each page fills in as its run finishes. Pages that are still empty show the Run button that fills them.</figcaption></figure>
-  <p>Once demos have run, the four tiles summarise the project: the <strong>Groth16 proof</strong> time and size, the <strong>accuracy cost</strong> of the watermark, <strong>forgeries accepted</strong> in demo D's seed search, and <strong>attacks survived</strong> in demo B.</p>
-  <figure><img src="img/overview-models.jpg" alt="Models, proof pipeline and audit log"><figcaption><b>Models, proof pipeline and audit log.</b> The models table lists every checkpoint with its accuracy and owner BER; the last column links to the page that explains it. The pipeline card shows the four protocol steps for the v2 model. The audit log lists recent events from the saved records (commitments, registrations, runs).</figcaption></figure>
+  <h3>6.3 The model under test</h3>
+  <p>Every dashboard page starts with the <strong>Model under test</strong> bar. Pick a model from the menu, press <strong>Test this model</strong>, and the result appears in the bar and on every page. The menu remembers your choice.</p>
+  <figure><img src="img/modelbar.jpg" alt="The Model under test bar"><figcaption><b>The model bar.</b> Here the stolen copy "pruned 90%" has been tested: its accuracy has collapsed to 2%, but 63 of the 64 watermark bits still read correctly, so the owner's proof of ownership goes through. <strong>Details</strong> opens the full verdict on the Verify page.</figcaption></figure>
   <table>
-    <thead><tr><th>Model</th><th>What it is</th><th class="num">Accuracy</th><th class="num">Owner BER</th><th>Status</th></tr></thead>
+    <thead><tr><th style="width:27%">Menu group</th><th>Models</th></tr></thead>
     <tbody>
-      <tr><td><code>watermarked.pt</code></td><td>Protocol v1 watermarked model (demo A)</td><td class="num">98.66%</td><td class="num">0.000</td><td><span class="pill good">Ownership shown</span></td></tr>
-      <tr><td><code>watermarked_v2.pt</code></td><td>Protocol v2 watermarked model (demo F)</td><td class="num">98.57%</td><td class="num">0.000</td><td><span class="pill good">ZK-verified</span></td></tr>
-      <tr><td><code>clean.pt</code></td><td>Same network, never watermarked</td><td class="num">98.69%</td><td class="num">0.531</td><td><span class="pill neutral">Not claimed (correct)</span></td></tr>
-      <tr><td><code>null_0–3.pt</code></td><td>Four independently trained models, never watermarked</td><td class="num">≈ 98.8%</td><td class="num">0.406–0.594</td><td><span class="pill neutral">Not claimed (correct)</span></td></tr>
+      <tr><td>Owner's models</td><td><code>watermarked_v2.pt</code>, the owner's registered model (protocol v2), and <code>watermarked.pt</code>, the research baseline's model (protocol v1, a different owner key)</td></tr>
+      <tr><td>Stolen copies (attacked live)</td><td>The owner's v2 model after a thief's attack: pruned 65%, pruned 90%, int8 quantised, fine-tuned 5 epochs, channels permuted, overwritten by a thief. Each copy is made when you test it, from <code>watermarked_v2.pt</code>, with a fixed random seed, so it's the same copy every time</td></tr>
+      <tr><td>Never watermarked</td><td><code>clean.pt</code> and the four null models</td></tr>
+      <tr><td>Your models</td><td>Any <code>.pt</code>, <code>.h5</code>, <code>.keras</code> or <code>.onnx</code> file you put in <code>demo/models/</code> (live mode)</td></tr>
     </tbody>
   </table>
+  <h4>What a test does (<code>demo/10_test_model.py</code>, about 4–15 s)</h4>
+  <ol class="steps">
+    <li><strong>Builds the model:</strong> loads the file, or makes the stolen copy now.</li>
+    <li><strong>Measures its accuracy</strong> on the 10,000 MNIST test images (when it's the demo's network).</li>
+    <li><strong>Reads the watermark</strong> from layer <code>conv2</code> with both owners' keys: protocol v2 (accept at ≤ 8 of 64 bits wrong) and v1 (accept at BER ≤ 0.125).</li>
+    <li><strong>Proves ownership</strong> if the v2 mark is there: the verifier opens a claim about this exact file with a fresh nonce, the owner makes a Groth16 proof, and the verifier runs every check. If the mark isn't there, no valid proof can exist, and none is attempted.</li>
+  </ol>
+  <p>Where the result shows: the bar on every page; the <strong>Models</strong> table and audit log on Overview; a watermark readout on Embed; the full verdict and every check on Verify; and the attack-and-test cards on Robustness. <strong>Clear results</strong> empties these too.</p>
 
-  <h3>6.4 Embed watermark (<code>/app/embed</code>)</h3>
-  <p>Shows how the demo's models were watermarked. The switch at the top right picks the protocol.</p>
+  <h3>6.4 Overview (<code>/app</code>)</h3>
+  <figure><img src="img/overview-empty.jpg" alt="Overview before anything has run"><figcaption><b>The starting state.</b> Every page begins empty: "Nothing has run yet", tiles at "—", every demo marked ○ in the sidebar. <strong>Run all live</strong> runs demos A–E and <strong>Run demo F live</strong> makes the zero-knowledge proof; each page fills in as its run finishes. Pages that are still empty show the Run button that fills them.</figcaption></figure>
+  <p>Once demos have run, the four tiles summarise the project: the <strong>Groth16 proof</strong> time and size, the <strong>accuracy cost</strong> of the watermark, <strong>forgeries accepted</strong> in demo D's seed search, and <strong>attacks survived</strong> in demo B.</p>
+  <figure><img src="img/overview-models.jpg" alt="Models, proof pipeline and audit log"><figcaption><b>Models, proof pipeline and audit log.</b> The Models table lists every model in the menu with its last test: accuracy, how many of the owner's 64 bits read wrong, and the verdict. <strong>Select</strong> makes a row the model under test. The pipeline card shows the four protocol steps for the v2 model. The audit log lists recent events (commitments, registrations, runs, model tests).</figcaption></figure>
+  <p>The full list of model test results is in chapter 9.</p>
+
+  <h3>6.5 Embed watermark (<code>/app/embed</code>)</h3>
+  <p>Shows how the demo's models were watermarked. The switch at the top right picks the protocol. Under the steps, the <strong>watermark readout</strong> of the model under test shows how many of the 64 bits each owner's key reads back, against the acceptance line.</p>
   <figure><img src="img/embed-v2.jpg" alt="Embed page, protocol v2"><figcaption><b>Protocol v2 (demo F).</b> The four steps (Owner key → Committed seed → Embed → Register), the real configuration, the masked secret seed, and the signature drawn as 64 <em>hidden</em> squares: in v2 the signature is never shown, not even to the verifier. On the right, the public Poseidon commitment and the registry receipt time. Below, the same flow as <code>sigil</code> commands. <strong>Run demo F live</strong> re-runs it; <strong>Verify this model</strong> goes to the Verify page.</figcaption></figure>
   <figure><img src="img/embed-v1.jpg" alt="Embed page, protocol v1"><figcaption><b>Protocol v1 (demo A).</b> The research baseline. Its 64 signature bits <em>are</em> drawn (dark = 1) because v1 is for teaching. <strong>Re-verify live</strong> re-checks the saved models without retraining. <strong>Retrain with a new seed…</strong> asks for confirmation first: it replaces the owner key and makes demos B–E stale until they are re-run.</figcaption></figure>
 
-  <h3>6.5 Verify ownership (<code>/app/verify</code>)</h3>
+  <h3>6.6 Verify ownership (<code>/app/verify</code>)</h3>
+  <p>The top of the page is the verdict for the <strong>model under test</strong>; below it, demo F's recorded claim in full detail, with the misuse buttons.</p>
+  <div class="two">
+    <figure><img src="img/verify-model-proven.jpg" alt="Verdict for a stolen copy"><figcaption><b>Verdict for a model.</b> The stolen copy "pruned 65%": accuracy 50.26%, 0 of 64 bits wrong, proof made in about 3.5 s, every check passed.</figcaption></figure>
+    <figure><img src="img/verify-model-permuted.jpg" alt="Verdict when the mark is gone"><figcaption><b>When the mark is gone.</b> The "channels permuted" copy: 39 of 64 bits wrong, so no valid proof can exist. The checks list shows exactly where it stops.</figcaption></figure>
+  </div>
   <figure><img src="img/verify-ok.jpg" alt="Verify page, honest proof"><figcaption><b>The honest claim.</b> Left: <strong>The claim</strong> (model, claimed owner, commitment, registration time) and the actual <code>proof.json</code> / <code>public.json</code> from the last demo F run, with the five public signals labelled. Right: the verdict stamp, <strong>Ownership verified</strong>, with "0 of 64 bits revealed". <strong>Verify this proof live</strong> runs every check again and prints them in the console.</figcaption></figure>
   <div class="two">
     <figure><img src="img/verify-onchain.jpg" alt="On-chain verdict"><figcaption><b>On-chain.</b> The same proof checked by the Solidity verifier on a local chain: verify gas 243,225, deploy 430,402, chain 31337. A tampered public signal is rejected there too. If the on-chain record belongs to an older proof, the card says so.</figcaption></figure>
@@ -506,11 +525,13 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
     </tbody>
   </table>
 
-  <h3>6.6 Robustness lab (<code>/app/robustness</code>)</h3>
+  <h3>6.7 Robustness lab (<code>/app/robustness</code>)</h3>
+  <figure><img src="img/robustness-copies.jpg" alt="Attack and test cards"><figcaption><b>Attack the owner's model, then test it.</b> Each card makes one stolen copy of <code>watermarked_v2.pt</code> now and tests it, showing the verdict, the accuracy and the bits wrong. Pruning, quantisation, fine-tuning and overwriting all leave the mark provable; channel permutation doesn't.</figcaption></figure>
+  <p>Below, the full attack suite of demo B on the v1 model:</p>
   <figure><img src="img/robustness.jpg" alt="Robustness lab attack cards"><figcaption><b>Attack cards.</b> Each card is one attack a thief might use on the stolen model: the share of watermark bits still recovered, the BER, and the model's accuracy after the attack. A red card means the attack removed the mark.</figcaption></figure>
   <figure><img src="img/robustness-sweep.jpg" alt="Pruning sweep chart"><figcaption><b>Pruning sweep.</b> Dark bars: watermark bits recovered. Caramel bars: model accuracy. Dashed line: the acceptance threshold (87.5% of bits). The mark outlives the model: at 65% pruning, accuracy has fallen to 65.7% while 100% of the bits are still recovered. Below the chart, <strong>All results</strong> lists every attack, and an <strong>Honest limits</strong> note explains what isn't covered.</figcaption></figure>
 
-  <h3>6.7 Research demos A–F (<code>/app/demo/A</code> … <code>F</code>)</h3>
+  <h3>6.8 Research demos A–F (<code>/app/demo/A</code> … <code>F</code>)</h3>
   <p>The research storyline, one page per demo, in presentation order. Each page has a title with the requirement it addresses, the panels with real results, a <strong>Run</strong> button, collapsible <strong>Presenter notes</strong> (what to say, including the caveats examiners ask about), and buttons to the previous and next demo. <strong>← →</strong> (or a presentation clicker's PageUp / PageDown) move between demos; Home and End jump to A and F.</p>
   <table>
     <thead><tr><th style="width:23%">Demo</th><th>Question it answers</th><th style="width:31%">Result</th></tr></thead>
@@ -557,7 +578,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
     <li>Read <strong>The claim</strong> card: which model, whose key, which commitment, when it was registered.</li>
     <li>In the proof box, note the five public signals: owner key hash, settings hash, commitment, w_hash, nonce. Nothing secret is in them.</li>
     <li>Check the verdict: <strong>Ownership verified</strong>, 0 of 64 bits revealed. Scroll to <strong>What gets checked</strong>: all eleven are ✓.</li>
-    <li>Under <strong>Try a misuse</strong>, click each button in turn. Each one runs the verifier again: read the reason on the stamp card, find the red check in the list, and point at the <code>[XX]</code> line in the console (see the table in §6.5).</li>
+    <li>Under <strong>Try a misuse</strong>, click each button in turn. Each one runs the verifier again: read the reason on the stamp card, find the red check in the list, and point at the <code>[XX]</code> line in the console (see the table in §6.6).</li>
     <li>Toggle <strong>Off-chain / On-chain</strong> to show the same proof checked by the smart contract.</li>
   </ol>
 
@@ -605,9 +626,19 @@ powershell -ExecutionPolicy Bypass -File setup.ps1 --demo
     <li><strong>Let the teacher choose.</strong> Open <strong>Demo D</strong>, let the teacher pick the number of thief seeds (20,000 or 100,000) and click <strong>Run live</strong>. The console streams the real search (about 3 s for 20,000, about 17 s for 100,000). Afterwards the Overview tile reads, for example, "0 / 100,000". Measured on this laptop: 100,000 seeds in 16.8 s, 0 accepted.</li>
     <li><strong>Generate a fresh proof.</strong> Open <strong>Demo F</strong> and click <strong>Run demo F live</strong> (about 80 s on a GPU laptop, 86 s CPU-only). Explain the six parts while the console streams them. When it finishes, the Verify page shows a <em>brand-new</em> proof: different <code>pi_a</code> digits, a new nonce, a new registration time, and new entries in the Overview audit log.</li>
     <li><strong>Misuse it live.</strong> On Verify ownership, click the misuse buttons: each one changes the new proof and runs the verifier on it in about a second, with every check printed in the console.</li>
+    <li><strong>Let the teacher pick a model.</strong> In the <strong>Model under test</strong> bar, they choose any model, for example a stolen copy, and press <strong>Test this model</strong>: the copy is attacked and tested in front of them (W7).</li>
     <li><strong>Attack it live.</strong> On <strong>Robustness lab</strong>, click <strong>Run attacks live</strong> (about 10 s): pruning, quantisation and fine-tuning run again and the chart redraws.</li>
     <li><strong>Optional, strongest:</strong> on <strong>Embed watermark → Protocol v1</strong>, click <strong>Retrain with a new seed…</strong> (about 35 s on a GPU). A new owner seed, a new commitment and new signature bits appear. Demos B–E are then marked <strong>!</strong> (stale) until you click <strong>Run all live</strong> (about 30 s), which recomputes them with the new key. Do this last.</li>
   </ol>
+  <h3>W7 · Pick a model and test it</h3>
+  <ol class="steps">
+    <li>In the <strong>Model under test</strong> bar, open the menu and pick a model, or let the teacher pick one.</li>
+    <li>Press <strong>Test this model</strong>. The console shows the model being built (stolen copies are made now), its accuracy, both owners' watermark readouts, and, if the mark is there, the proof and every verifier check.</li>
+    <li>Read the result in the bar, then open <strong>Details</strong> (the Verify page) for the stamp and the checks list.</li>
+    <li>Good contrasts to show: <strong>pruned 90%</strong> (the model is ruined, 2% accuracy, yet ownership is proven); <strong>channels permuted</strong> (accuracy intact, mark gone: not proven); <strong>clean.pt</strong> (never watermarked: not proven); <strong>watermarked.pt</strong> (carries the v1 owner's mark, not the v2 owner's).</li>
+    <li>To test your own file, copy it into <code>demo/models/</code>; it appears under "Your models" when the window regains focus (live mode).</li>
+  </ol>
+
   <div class="box warn"><span class="t">What stays precomputed, and why</span><p><strong>E3</strong> needs about 32 GB of RAM, so it's shown from the saved run. The <strong>on-chain</strong> check runs separately from <code>circuits/onchain</code>: after a live demo F run, the On-chain view says it was made for an earlier proof. That's expected; the off-chain verdict is the live one. Live runs overwrite <code>demo/results/</code>; to get the shipped results back, unzip the package again.</p></div>
 
 </section>
@@ -708,6 +739,24 @@ print(detection.errors, detection.accepted)</pre>
     </tbody>
   </table>
 
+  <h3>Model under test · every built-in model</h3>
+  <table>
+    <thead><tr><th>Model</th><th class="num">Accuracy</th><th class="num">v2 owner: bits wrong</th><th class="num">v1 owner BER</th><th>Verdict (protocol v2 proof)</th></tr></thead>
+    <tbody>
+      <tr><td><code>watermarked_v2.pt</code></td><td class="num">98.57%</td><td class="num">0/64</td><td class="num">0.516</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>pruned 65%</td><td class="num">50.26%</td><td class="num">0/64</td><td class="num">0.516</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>pruned 90%</td><td class="num">2.01%</td><td class="num">1/64</td><td class="num">0.516</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>int8 quantised</td><td class="num">98.57%</td><td class="num">0/64</td><td class="num">0.516</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>fine-tuned 5 epochs</td><td class="num">98.80%</td><td class="num">0/64</td><td class="num">0.516</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>overwritten by a thief</td><td class="num">98.85%</td><td class="num">1/64</td><td class="num">0.547</td><td class="ok">Ownership proven</td></tr>
+      <tr><td>channels permuted</td><td class="num">98.57%</td><td class="num">39/64</td><td class="num">0.484</td><td class="bad">Not proven</td></tr>
+      <tr><td><code>watermarked.pt</code> (v1)</td><td class="num">98.66%</td><td class="num">31/64</td><td class="num">0.000</td><td class="bad">Not proven (it carries the v1 owner's mark)</td></tr>
+      <tr><td><code>clean.pt</code></td><td class="num">98.69%</td><td class="num">26/64</td><td class="num">0.531</td><td class="bad">Not proven</td></tr>
+      <tr><td><code>null_0–3.pt</code></td><td class="num">98.75–98.80%</td><td class="num">28–31/64</td><td class="num">0.406–0.594</td><td class="bad">Not proven</td></tr>
+    </tbody>
+  </table>
+  <p class="small">Proofs take 3.5–3.6 s on the team's laptop. A stolen copy is proven when at most 8 of the 64 bits read wrong.</p>
+
   <h3>Demos C and D · Forgery</h3>
   <table>
     <tbody>
@@ -754,6 +803,7 @@ print(detection.errors, detection.accepted)</pre>
     <li>The owner's proof for the watermarked v2 model: all eleven checks pass, off-chain and on-chain.</li>
     <li>The owner's mark after pruning (up to 95%), int8/int4 quantisation, fine-tuning and overwriting.</li>
     <li>The owner's mark after feature permutation, <em>once the owner realigns the channels</em>.</li>
+    <li><strong>Model under test:</strong> the owner's model and its stolen copies (pruned 65% and 90%, int8, fine-tuned, overwritten): ownership proven with a fresh proof each time.</li>
   </ul>
   <h3>Rejected (should fail, and does)</h3>
   <table>
@@ -768,6 +818,8 @@ print(detection.errors, detection.accepted)</pre>
       <tr><td>Thief's seed search</td><td>Overview tile, demo D</td><td>0 of 20,000 accepted</td></tr>
       <tr><td>Never-watermarked models</td><td>Overview models table, demo A</td><td>BER 0.41–0.59, far above 0.125</td></tr>
       <tr><td>Tampered public signal on-chain</td><td>Verify → On-chain</td><td>The Solidity verifier rejects it</td></tr>
+      <tr><td>A copy with its channels permuted</td><td>Model under test → channels permuted</td><td>39 of 64 bits wrong: no proof possible</td></tr>
+      <tr><td>Another owner's model, clean and null models</td><td>Model under test</td><td>26–31 of 64 bits wrong: no proof possible</td></tr>
     </tbody>
   </table>
   <h3>Shown failing on purpose: weaknesses of naive schemes</h3>
@@ -811,6 +863,8 @@ print(detection.errors, detection.accepted)</pre>
       <tr><td>Sidebar says "No ML stack: replay only"</td><td>PyTorch isn't installed for the Python the server uses. Run the setup (Option 2), start with <code>Start-Demo-UI.cmd</code>, or present in replay mode.</td></tr>
       <tr><td>Demo F says the circuit isn't set up</td><td>Re-run the setup (it installs <code>dist/sigil-proving-keys-t64.zip</code>), or run <code>.venv\Scripts\python -m sigil.cli zk-setup</code> (about 3 minutes).</td></tr>
       <tr><td>Antivirus blocks <code>tools/bin/circom.exe</code></td><td>It's the official circom 2.2.3 release from github.com/iden3/circom. Allow it, or present demo F in replay mode.</td></tr>
+      <tr><td>A file in <code>demo/models/</code> says "Can't test this file"</td><td>It has no <code>conv2</code> layer of 288 values, so the watermark can't be in it. Only models of the demo's architecture can carry this mark.</td></tr>
+      <tr><td>Testing your own file says "no recording"</td><td>Replay mode can only replay the built-in models. Start the app in live mode (<code>Start-Demo-UI.cmd</code>).</td></tr>
       <tr><td>Every page is empty</td><td>That's the starting state (or someone pressed Clear). Run a demo or <strong>Run all live</strong>, or press <strong>Show saved results</strong> in the sidebar.</td></tr>
       <tr><td>A demo shows "!" (stale) in the sidebar</td><td>It was made with an older owner key (after a Retrain). Re-run it, or <strong>Run all live</strong>.</td></tr>
       <tr><td>The page looks old or the fonts look plain</td><td>Hard-refresh with Ctrl+F5. The fonts are bundled; nothing is loaded from the internet.</td></tr>
@@ -824,7 +878,7 @@ print(detection.errors, detection.accepted)</pre>
   <h4>Is replay mode faking the results?</h4>
   <p>No. Pages start empty; pressing Run replays the recorded output of a real run in the console, then shows that run's saved results. The banner says it is replay mode. Note that the recorded console logs and the saved result files come from runs made at slightly different times, so a few printed values can differ by a bit or two (for example, demo F6's owner shows 0 of 64 wrong in the replayed log and 1 of 64 in the saved results). Live mode always shows the current run.</p>
   <h4>Can I watermark my own model?</h4>
-  <p>Yes, with the SDK (chapter 8): PyTorch training via <code>embed_torch</code>, Keras via the Keras adapter, and detection and verification from <code>.pt</code>, <code>.h5</code>/<code>.keras</code> or <code>.onnx</code> files.</p>
+  <p>Yes, with the SDK (chapter 8): PyTorch training via <code>embed_torch</code>, Keras via the Keras adapter, and detection and verification from <code>.pt</code>, <code>.h5</code>/<code>.keras</code> or <code>.onnx</code> files. To <em>test</em> a file in the app, copy it into <code>demo/models/</code>: it appears in the Model under test menu.</p>
   <h4>What exactly does the verifier learn?</h4>
   <p>Five public values: hashes of the owner key and settings, the commitment, the hash of the suspect model's layer, and the nonce the verifier chose itself. Not the seed, the key or a single signature bit.</p>
   <h4>Why is it called Sigil?</h4>

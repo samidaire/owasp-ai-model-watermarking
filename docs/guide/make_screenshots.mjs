@@ -71,9 +71,19 @@ await scrollTo("#team", "start", -20); await shot("home-team");
 
 // The starting state: nothing has run yet (no stored view), then every saved result shown for the tour
 await go("/app");
-await js(`localStorage.removeItem("sigil.shown"); localStorage.removeItem("sigil.clearedAt");`);
+await js(`["sigil.shown", "sigil.shownModels", "sigil.clearedAt", "sigil.model"].forEach((k) => localStorage.removeItem(k));`);
 await go("/app"); await shot("overview-empty");
 await js(`localStorage.setItem("sigil.shown", JSON.stringify(["train","attacks","forgery","committed_seed","zk","zk_hashed","protocol_v2"]));`);
+const MODELS = ["watermarked_v2","watermarked_v1","prune65","prune90","int8","finetune","permute","overwrite","clean","null_0","null_1","null_2","null_3"];
+await js(`localStorage.setItem("sigil.shownModels", JSON.stringify(${JSON.stringify(MODELS)})); localStorage.setItem("sigil.model", "watermarked_v2");`);
+const useModel = (id) => js(`localStorage.setItem("sigil.model", "${id}");`);
+/** Scroll so the first `sel` whose text contains `text` is at the top. */
+const scrollToText = (sel, text, dy = 0) =>
+  js(`const el = [...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.textContent.includes(${JSON.stringify(text)})); el.scrollIntoView({behavior: "instant", block: "start"}); window.scrollBy({top: ${dy}, behavior: "instant"}); await new Promise(r => setTimeout(r, 900));`);
+
+// The model bar with a tested stolen copy
+await useModel("prune90"); await go("/app"); await scrollTo(".modelbar", "start", -24); await shot("modelbar");
+await useModel("watermarked_v2");
 
 // Overview
 await go("/app"); await shot("overview");
@@ -84,16 +94,21 @@ await go("/app/embed"); await scrollTo(".page h1", "start", -150); await shot("e
 await click(".segbar button", "v1"); await scrollTo(".page h1", "start", -150); await shot("embed-v1");
 
 // Verify
-await go("/app/verify"); await scrollTo(".page h1", "start", -150); await shot("verify-ok");
-await click(".segbar button", "On-chain"); await scrollTo(".page h1", "start", -150); await shot("verify-onchain");
+await useModel("prune65"); await go("/app/verify"); await scrollTo(".modelbar", "start", -16); await shot("verify-model-proven");
+await useModel("permute"); await go("/app/verify"); await scrollTo(".modelbar", "start", -16); await shot("verify-model-permuted");
+await useModel("watermarked_v2");
+await go("/app/verify"); await scrollToText(".page h2", "The recorded claim", -24); await shot("verify-ok");
+await click(".segbar button", "On-chain"); await scrollToText(".page h2", "The recorded claim", -24); await shot("verify-onchain");
 await click(".segbar button", "Off-chain");
 // a misuse button re-runs the verifier (replayed in simulate mode): verdict above, every check in the console
-await click(".page button", "tampered proof bytes"); await sleep(2600); await scrollTo(".page h1", "start", -150); await shot("verify-rejected");
+await click(".page button", "tampered proof bytes"); await sleep(2600); await scrollToText(".page h2", "The recorded claim", -24); await shot("verify-rejected");
 await click(".console button", "Hide console");
 await scrollTo(".page .stp.fail", "center", 80); await shot("verify-checks-failed");
 
 // Robustness
-await go("/app/robustness"); await scrollTo(".page h1", "start", -150); await shot("robustness");
+await go("/app/robustness"); await scrollToText(".page h2", "Attack the owner", -40); await shot("robustness-copies");
+await js(`document.querySelectorAll(".page .statgrid")[1].scrollIntoView({behavior: "instant", block: "start"}); window.scrollBy({top: -60, behavior: "instant"}); await new Promise(r => setTimeout(r, 900));`);
+await shot("robustness");
 await scrollTo(".vbars", "center"); await sleep(1200); await shot("robustness-sweep");
 
 // Research demos
