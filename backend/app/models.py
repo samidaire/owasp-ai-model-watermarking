@@ -308,6 +308,7 @@ class JobRow(Base):
     code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     simulated: Mapped[bool] = mapped_column(Boolean, default=False)
     tries: Mapped[int] = mapped_column(Integer)
+    model: Mapped[str | None] = mapped_column(String(300), nullable=True)   # model_test: the catalogue id
     cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
     timed_out: Mapped[bool] = mapped_column(Boolean, default=False)
     timeout: Mapped[float | None] = mapped_column(Float, nullable=True)

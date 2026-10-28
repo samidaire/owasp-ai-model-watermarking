@@ -44,6 +44,7 @@ read_json = server.read_json
 sim_log_for = server.sim_log_for
 parse_object = server.Handler.parse_object
 safe_join = server.Handler.safe_join
+model_catalogue = server.model_catalogue    # the "Model under test" menu: GET /api/models, the model_test step
 
 child_env = demo_common.child_env
 is_noise = demo_common.is_noise

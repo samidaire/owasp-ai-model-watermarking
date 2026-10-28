@@ -44,7 +44,7 @@ def row_info(row: JobRow) -> dict:
     """v1 JobInfo for a job known only from the database."""
     return {"id": row.id, "step": row.step, "running": row.status in ("queued", "running"), "code": row.code,
             "started": row.started, "ended": row.ended, "lines": row.lines, "cancelled": row.cancelled,
-            "timed_out": row.timed_out}
+            "timed_out": row.timed_out, "model": row.model}
 
 
 # ---------------------------------------------------------------------------------------------- persistence
@@ -182,15 +182,26 @@ class SimJob(PersistentMixin, legacy.SimJob):
     """--simulate: replays contract/fixtures/logs/<step>.log (demo/server.py's choice of log, incl. `tries`)."""
 
     def _run(self) -> int:
-        delay = self.manager.settings.sim_delay
-        logfile, wanted = legacy.sim_log_for(self.step, self.tries)
         self.push(f"[SIMULATED] Replaying recorded output of step '{self.step}'. Nothing is executed; results/ is unchanged.")
+        if self.model is not None:           # model_test: one recording per built-in model (demo/server.py's rule)
+            logfile = legacy.SIM_LOGS / f"{self.step}_{legacy.model_catalogue.safe_name(self.model)}.log"
+            if not logfile.exists():
+                self.push(f"[SIMULATED] There's no recording for {self.model!r}: replay mode can only show the built-in models.")
+                self.push("[SIMULATED] To test your own file, start the server without --simulate.")
+                return 1
+            self.push(f"[SIMULATED] Replaying {legacy.rel(logfile)}")
+            return self._replay(logfile)
+        logfile, wanted = legacy.sim_log_for(self.step, self.tries)
         if logfile is None:
             self.push(f"[SIMULATED] no recorded log at {legacy.rel(wanted)}")
             return 1
         note = "" if logfile == wanted else \
             f" (no recording for tries={self.tries:,}; numbers below are from a {legacy.DEFAULT_TRIES:,}-try run)"
         self.push(f"[SIMULATED] Replaying {legacy.rel(logfile)}{note}")
+        return self._replay(logfile)
+
+    def _replay(self, logfile: Path) -> int:
+        delay = self.manager.settings.sim_delay
         for line in logfile.read_text(encoding="utf-8").splitlines():
             self.push(line)
             if self.stop.wait((0.5 if line.startswith("$ python") else 0.025) * delay):
@@ -219,16 +230,18 @@ class JobManager:
     def busy(self) -> bool:
         return self.current is not None and not self.current.done
 
-    def submit(self, step: str, tries: int = legacy.DEFAULT_TRIES, *, queue_if_busy: bool = False,
-               user_id: int | None = None, source: str = "v1"):
-        """Start a job now, or (v2) queue it behind the running one. Raises Busy (v1's 409) otherwise."""
+    def submit(self, step: str, tries: int = legacy.DEFAULT_TRIES, *, model: str | None = None,
+               queue_if_busy: bool = False, user_id: int | None = None, source: str = "v1"):
+        """Start a job now, or (v2) queue it behind the running one. Raises Busy (v1's 409) otherwise.
+        `model` is a catalogue id the caller has already resolved (never a path)."""
         with self.lock:
             busy = self.busy()
             if busy and not queue_if_busy:
                 raise Busy(self.current)
-            cmds = [[c.replace("{tries}", str(tries)) for c in cmd] for cmd in legacy.STEPS[step]]
+            cmds = [[c.replace("{tries}", str(tries)).replace("{model}", model or "") for c in cmd]
+                    for cmd in legacy.STEPS[step]]
             cls = SimJob if self.settings.simulate else LiveJob
-            job = cls(step, cmds, tries=tries, timeout=legacy.STEP_INFO[step]["timeout"])
+            job = cls(step, cmds, tries=tries, timeout=legacy.STEP_INFO[step]["timeout"], model=model)
             job.manager, job.source, job.user_id = self, source, user_id
             job.simulated = bool(self.settings.simulate)
             job.queued = busy
@@ -236,9 +249,9 @@ class JobManager:
             self._prune()
             self.store.put("create", {
                 "id": job.id, "step": step, "kind": "demo", "source": source, "status": status_of(job),
-                "code": None, "simulated": job.simulated, "tries": tries, "cancelled": False, "timed_out": False,
-                "timeout": job.timeout, "started": job.started, "ended": None, "lines": 0, "submitted_by": user_id,
-                "created_at": datetime.now(timezone.utc)})
+                "code": None, "simulated": job.simulated, "tries": tries, "model": model, "cancelled": False,
+                "timed_out": False, "timeout": job.timeout, "started": job.started, "ended": None, "lines": 0,
+                "submitted_by": user_id, "created_at": datetime.now(timezone.utc)})
             if busy:
                 self.queue.append(job)
             else:

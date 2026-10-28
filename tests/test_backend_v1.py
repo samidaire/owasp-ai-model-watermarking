@@ -309,6 +309,53 @@ def test_protocol_v2_step_mirrors_the_demo_server(port):
     wait_for_line(port, job["id"], "[SIMULATED] Replaying contract/fixtures/logs/protocol_v2.log")
 
 
+def test_models_and_model_tests_mirror_the_demo_server(port):
+    """"Model under test" (main 842bd55): GET /api/models and results.model_tests, as demo/server.py serves them."""
+    status, _, body = call(port, "GET", "/api/models")
+    assert status == 200 and body == {"api_version": 1, "models": legacy.model_catalogue.catalogue()}
+    _, _, s = call(port, "GET", "/api/state")
+    assert s["results"]["model_tests"]["clean"]["verdict"] == "no_proof"
+
+
+def test_model_test_needs_a_known_model(port):
+    for bad in (None, "", "../../secrets/owner.key", "file:nope.pt", 7):
+        extra = {} if bad is None else {"model": bad}
+        status, _, err = run(port, step="model_test", **extra)
+        assert status == 400 and "unknown model" in err["error"], bad
+
+
+def test_model_test_replays_that_models_recording_and_persists_the_model(port, app):
+    status, _, job = run(port, step="model_test", model="permute")
+    assert status == 202 and job["model"] == "permute"
+    done = wait_done(port, job["id"], timeout=20)
+    assert done["code"] == 0 and done["model"] == "permute"
+    out = "\n".join(done["output"])
+    assert "MODEL TEST: watermarked_v2 · channels permuted" in out and "NOT PROVEN" in out
+    mgr = app.state.jobs
+    for t in list(mgr.threads):
+        t.join(5)
+    mgr.store.flush()
+    mgr.jobs.pop(job["id"])                          # served from the database now
+    status, _, detail = call(port, "GET", f"/api/jobs/{job['id']}")
+    assert status == 200 and detail["model"] == "permute" and detail["output"] == done["output"]
+
+
+def test_a_users_file_is_listed_but_not_replayed_in_simulate_mode(port):
+    mc = legacy.model_catalogue
+    mc.USER_DIR.mkdir(exist_ok=True)
+    f = mc.USER_DIR / "pytest_backend_dropped_model.pt"
+    f.write_bytes(b"not really a model")
+    try:
+        _, _, body = call(port, "GET", "/api/models")
+        assert "file:pytest_backend_dropped_model.pt" in [m["id"] for m in body["models"]]
+        status, _, job = run(port, step="model_test", model="file:pytest_backend_dropped_model.pt")
+        assert status == 202
+        done = wait_done(port, job["id"], timeout=20)
+        assert done["code"] == 1 and any("no recording" in line for line in done["output"])
+    finally:
+        f.unlink()
+
+
 # ---------------------------------------------------------------------------------- SSE
 def _sse_events(raw: bytes):
     events = []

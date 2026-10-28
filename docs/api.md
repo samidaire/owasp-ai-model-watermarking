@@ -22,7 +22,8 @@ Running the backend: [backend.md](backend.md). v1 details: [UI_INTEGRATION.md §
 |---|---|---|---|
 | GET | `/api/state` | Everything to render panels A–F (`DemoState`, incl. `results.protocol_v2`) | 200 |
 | GET | `/api/steps` | Step catalogue: labels, durations, timeouts, confirmations | 200 |
-| POST | `/api/run` | Start a step `{step, tries?}`; one job at a time | 202, 400, 403, 409, 413, 415 |
+| GET | `/api/models` | The "Model under test" menu (`ModelsResponse`) | 200 |
+| POST | `/api/run` | Start a step `{step, tries?, model?}` (`model_test` needs a `model` id from `/api/models`); one job at a time | 202, 400, 403, 409, 413, 415 |
 | POST | `/api/jobs/{id}/cancel` | Stop a running job (`{}`) | 202, 400, 403, 404, 409, 415 |
 | GET | `/api/jobs/{id}` | Job status + all output | 200, 404 |
 | GET | `/api/jobs/{id}/stream` | SSE: one event per line (`id` = index), `: keepalive`, `event: done`; `Last-Event-ID` resumes | 200, 404 |

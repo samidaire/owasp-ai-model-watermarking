@@ -25,6 +25,25 @@
         }
       }
     },
+    "/api/models": {
+      "get": {
+        "tags": [
+          "v1 demo (unauthenticated, localhost)"
+        ],
+        "summary": "Models the \"Model under test\" menu offers (ModelsResponse)",
+        "operationId": "get_models_api_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/steps": {
       "get": {
         "tags": [
@@ -59,7 +78,7 @@
                   "step": {
                     "type": "string",
                     "title": "Step",
-                    "description": "evaluate | retrain | attacks | forgery | committed | zk | zk_hashed | all"
+                    "description": "a step id from GET /api/steps"
                   },
                   "tries": {
                     "anyOf": [
@@ -72,6 +91,18 @@
                     ],
                     "title": "Tries",
                     "description": "committed only: 20000 or 100000"
+                  },
+                  "model": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Model",
+                    "description": "model_test only: a model id from GET /api/models"
                   }
                 },
                 "type": "object",
@@ -6125,6 +6156,18 @@
             "type": "boolean",
             "title": "Timed Out"
           },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "the model id a model_test job tests; null for other steps"
+          },
           "output": {
             "items": {
               "type": "string"
@@ -6200,6 +6243,18 @@
           "timed_out": {
             "type": "boolean",
             "title": "Timed Out"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "the model id a model_test job tests; null for other steps"
           }
         },
         "type": "object",

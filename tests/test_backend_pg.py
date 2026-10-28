@@ -39,7 +39,7 @@ def test_postgres_16_with_the_alembic_schema(engine):
     with engine.connect() as conn:
         version = conn.execute(text("SHOW server_version")).scalar()
         assert version.startswith("16."), version
-        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0001"
+        assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar() == "0002"
         assert compare_metadata(MigrationContext.configure(conn, opts={"compare_type": True}), Base.metadata) == []
     cols = {c["name"]: c for c in inspect(engine).get_columns("audit_events")}
     assert cols["details"]["type"].__class__.__name__ == "JSONB"

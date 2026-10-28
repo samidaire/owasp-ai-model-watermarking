@@ -38,6 +38,7 @@ class JobInfo(BaseModel):
     lines: int
     cancelled: bool
     timed_out: bool
+    model: str | None = Field(default=None, description="the model id a model_test job tests; null for other steps")
 
 
 class JobDetail(JobInfo):
@@ -45,8 +46,9 @@ class JobDetail(JobInfo):
 
 
 class RunRequest(BaseModel):
-    step: str = Field(description="evaluate | retrain | attacks | forgery | committed | zk | zk_hashed | all")
+    step: str = Field(description="a step id from GET /api/steps")
     tries: int | None = Field(default=None, description="committed only: 20000 or 100000")
+    model: str | None = Field(default=None, description="model_test only: a model id from GET /api/models")
 
 
 class ErrorBody(BaseModel):
@@ -87,6 +89,16 @@ def start_probe(app) -> None:
 
 
 # ---------------------------------------------------------------------------------------------- state
+def model_tests(results: Path) -> dict:
+    """results/model_tests/*.json keyed by model id (demo/server.py's model_tests, for the configured folder)."""
+    out = {}
+    for p in sorted((results / "model_tests").glob("*.json")):
+        r = legacy.read_json(p)
+        if isinstance(r, dict) and isinstance(r.get("model"), str):
+            out[r["model"]] = r
+    return out
+
+
 def demo_state(app) -> dict:
     s = app.state.settings
     results = Path(s.results_dir)
@@ -105,6 +117,7 @@ def demo_state(app) -> dict:
             "ezkl": {f"{v}_{w}": legacy.read_json(results / f"ezkl_{v}_{w}" / "summary.json")
                      for v in ("private", "hashed") for w in ("owner", "thief")},
             "protocol_v2": legacy.read_json(results / "protocol_v2.json"),     # demo F (may be null)
+            "model_tests": model_tests(results),
         },
         "job": job.info() if job else None,
     }
@@ -121,6 +134,11 @@ def _audit(app, action: str, job_id: str, details: dict):
 @router.get("/api/state", summary="Everything needed to render every panel (DemoState)")
 def get_state(request: Request):
     return v1_json(demo_state(request.app))
+
+
+@router.get("/api/models", summary="Models the \"Model under test\" menu offers (ModelsResponse)")
+def get_models():
+    return v1_json({"api_version": legacy.API_VERSION, "models": legacy.model_catalogue.catalogue()})
 
 
 @router.get("/api/steps", summary="Step catalogue: labels, durations, timeouts, confirmations (StepsResponse)")
@@ -147,14 +165,19 @@ async def run_step(request: Request):
         tries = -1
     if tries not in legacy.TRIES_ALLOWED:
         return v1_error(400, f"tries must be one of {legacy.TRIES_ALLOWED}")
+    model = None
+    if any("{model}" in arg for cmd in legacy.STEPS[step] for arg in cmd):
+        model = body.get("model")
+        if not isinstance(model, str) or legacy.model_catalogue.resolve(model) is None:   # only catalogue ids, never paths
+            return v1_error(400, f"unknown model {model!r}: see GET /api/models")
     manager = request.app.state.jobs
     try:
-        job = manager.submit(step, tries, source="v1")
+        job = manager.submit(step, tries, model=model, source="v1")
     except Busy as b:
         return v1_error(409, "another demo is running", job=b.job.info())
     mode = "SIMULATE " if request.app.state.settings.simulate else ""
     log.info("%srun %s (job %s)", mode, step, job.id, extra={"job_id": job.id, "step": step, "event": "demo.run"})
-    await run_in_threadpool(_audit, request.app, "demo.run", job.id, {"step": step, "tries": tries,
+    await run_in_threadpool(_audit, request.app, "demo.run", job.id, {"step": step, "tries": tries, "model": model,
                                                                       "simulated": job.simulated})
     return v1_json(job.info(), 202)
 

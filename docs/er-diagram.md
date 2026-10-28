@@ -139,6 +139,7 @@ erDiagram
         string status "queued running succeeded failed cancelled timed_out interrupted"
         int code
         bool simulated
+        string model "model_test: catalogue id"
         bool cancelled
         bool timed_out
         float started

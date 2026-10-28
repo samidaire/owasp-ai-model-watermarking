@@ -11,7 +11,7 @@ log and signed reports. `demo/server.py` stays as the fallback until Gate 1.
 
 ```
 backend/
-├── alembic.ini, migrations/          Alembic (DB-01); 0001 = schema + append-only audit triggers
+├── alembic.ini, migrations/          Alembic (DB-01); 0001 = schema + append-only audit triggers, 0002 = jobs.model
 ├── requirements.txt
 ├── testing.py                        helpers for tests/test_backend_*.py (embedded PostgreSQL, live uvicorn)
 └── app/
@@ -113,7 +113,7 @@ alembic -c backend/alembic.ini revision --autogenerate -m "describe the change" 
 ```
 
 `0001_initial_schema` creates every table of [the ER diagram](er-diagram.md) plus the triggers that make
-`audit_events` append-only. A test (`test_migrations_create_exactly_the_orm_schema`, and its PostgreSQL twin)
+`audit_events` append-only; `0002_job_model` adds `jobs.model` (the model a `model_test` job tests). A test (`test_migrations_create_exactly_the_orm_schema`, and its PostgreSQL twin)
 fails if the models and the migrations drift apart.
 
 ### Backup and restore
@@ -141,6 +141,7 @@ reuses, rather than re-implements:
 | `Job.run()`, `cancel()`, the timeout watchdog, `kill_tree` | every job: crash-safe, cancel = code −2, timeout = code −3, process tree killed |
 | `sim_log_for` | simulate mode's choice of recorded log (incl. `tries`) |
 | `host_of`, `origin_allowed`, `safe_join`, `parse_object`, `read_json`, `CONTENT_TYPES` | the middleware, `/results`, request parsing, `/api/state` |
+| `model_catalogue` (`catalogue`, `resolve`, `safe_name`) | `/api/models`, the `model` of a `model_test` run (catalogue ids only, never paths), its simulate-mode recording |
 | `demo_common` (`child_env`, `is_noise`, `scrub_paths`, `current_commitment`) | live runs and log scrubbing |
 
 Same status codes and bodies: 202 / 400 / 403 / 404 / 409 (`another demo is running` with the running job) /
