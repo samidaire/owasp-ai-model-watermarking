@@ -19,6 +19,7 @@ from .db import make_engine, make_sessionmaker, run_migrations
 from .jobs import JobManager, JobStore, recover_interrupted
 from .logs import configure as configure_logging
 from .logs import log
+from .monitor import Monitor
 from .registry import Registry
 from .security import SecurityMiddleware
 from .v2 import api_router
@@ -90,10 +91,14 @@ async def lifespan(app: FastAPI):
     else:
         app.state.env = {"status": "error", "error": "environment probe disabled (SIGIL_PROBE_ENV=0)"}
 
+    app.state.monitor = Monitor(app)
+    app.state.monitor.start()
+
     log.info("backend started", extra={"event": "startup"})
     try:
         yield
     finally:
+        await app.state.monitor.stop()
         await asyncio.to_thread(app.state.jobs.shutdown)
         await asyncio.to_thread(store.close)
         engine.dispose()
