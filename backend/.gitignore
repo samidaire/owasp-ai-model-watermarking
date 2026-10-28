@@ -1,0 +1,3 @@
+# Runtime state (SQLite file, registry key and passphrase, uploads, embedded test PostgreSQL): never commit
+var/
+.env
