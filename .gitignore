@@ -64,3 +64,7 @@ demo/results/**/extract.onnx
 /demo/models/*
 !/demo/models/README.md
 /demo/results/model_tests/file_*.json
+
+# M5 robustness: datasets and checkpoints are regenerated, never committed (results JSON/CSV/SVG are)
+experiments/data/
+experiments/ckpt/

@@ -1,0 +1,81 @@
+# M5 robustness: CIFAR-10 ResNet-18 (WM-01, WM-07, WM-09, ROB-01..ROB-04, ROB-07).  Schema: sigil.robustness.config/v1
+# Run:  python experiments/robustness/cifar_run.py train|nulls|attack|tradeoff   (or: all)
+schema: sigil.robustness.config/v1
+version: 1
+name: cifar_resnet18
+dataset: cifar10
+data_split:
+  owner: "train[0:40000]"
+  attacker: "train[40000:50000]"     # 10k, disjoint from the owner's (ROB-04)
+  test: "test_batch (10k)"
+model: experiments/robustness/cifar_common.ResNet18 (CIFAR stem 3x3, no max-pool)
+seeds: [0, 1, 2]                      # init + batch order 2000+s; attack seed 200+s
+owner_training:                       # SGD + Nesterov, OneCycle, bf16 autocast, standard crop+flip augmentation
+  epochs: 20
+  lr: 0.1
+  batch_size: 256
+  optimizer: sgd
+  momentum: 0.9
+  weight_decay: 0.0005
+  schedule: onecycle
+  amp: true
+watermark:
+  layer: layer3.1.conv2               # 256 in-channels x 3 x 3  ->  M = 2304
+  producer: layer3.1.conv1            # feeds layer3.1.conv2 (through layer3.1.bn1) - permutation attack
+  M: 2304
+  scale_bits: 16
+  w_bits: 24
+  lam: 1.0
+  configs:
+    - {T: 64, max_err: 8}
+    - {T: 256, max_err: 32}            # the security configuration (DEC-03); WM-09 target <= 1.0 pp
+dual:                                 # white-box (T=256) + committed trigger set; used for extraction rows
+  T: 256
+  max_err: 32
+  seeds: [0]
+triggerset: {n: 100, grid: 8, per_batch: 16, fpr: 1.0e-6}
+nulls:                                # WM-07: never watermarked; fewer epochs than the owner models (documented)
+  count: 10
+  seed_base: 7000
+  training: {epochs: 5, lr: 0.1, batch_size: 256, optimizer: sgd, momentum: 0.9, weight_decay: 0.0005, schedule: onecycle, amp: true}
+attacks:                              # run on every white-box model (T=64 and T=256, all seeds)
+  prune_ratios: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  recovery_ratios: [0.3, 0.5, 0.7, 0.9]
+  recovery: {epochs: 2, lr: 0.01, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  channel_ratios: [0.25, 0.5]
+  channel_recovery_ratios: [0.5]
+  quantisation:
+    - {bits: 8, granularity: channel, act_bits: 8}
+    - {bits: 4, granularity: channel, act_bits: 8}
+    - {bits: 8, granularity: tensor}
+    - {bits: 4, granularity: tensor}
+  finetune: {epochs: 5, lr: 0.01, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  retrain: {epochs: 5, lr: 0.02, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  overwrite:
+    lam: 1.0
+    fit: {epochs: 5, lr: 0.01, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  permutation:
+    finetune: {epochs: 5, lr: 0.01, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  kmeans: [16, 4]
+  svd_linear: [0.5, 0.1]
+  svd_all: [0.5]
+dual_attacks:                         # on the dual model: trigger-set evidence + distillation + extraction (ROB-03)
+  prune_ratios: [0.5, 0.9]
+  quantisation:
+    - {bits: 8, granularity: channel, act_bits: 8}
+    - {bits: 4, granularity: channel, act_bits: 8}
+  finetune: {epochs: 5, lr: 0.01, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  retrain: {epochs: 5, lr: 0.02, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: cosine, amp: true}
+  distill:
+    temperature: 4.0
+    fit: {epochs: 30, lr: 0.05, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: onecycle, amp: true}
+  extraction:                         # fresh ResNet-18 student; queries beyond the 10k pool are augmented views
+    - {budget: 1000, output: probs, fit: {epochs: 100, lr: 0.05, batch_size: 128, optimizer: sgd, weight_decay: 0.0005, schedule: onecycle, amp: true}}
+    - {budget: 5000, output: probs, fit: {epochs: 40, lr: 0.05, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: onecycle, amp: true}}
+    - {budget: 10000, output: probs, fit: {epochs: 30, lr: 0.05, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: onecycle, amp: true}}
+    - {budget: 50000, output: probs, fit: {epochs: 10, lr: 0.05, batch_size: 256, optimizer: sgd, weight_decay: 0.0005, schedule: onecycle, amp: true}}
+tradeoff:                             # ROB-07 on CIFAR: accuracy and robustness vs lambda at T=256 (seed 0)
+  T: 256
+  max_err: 32
+  lams: [0.1, 0.3, 1.0, 3.0]
+  seeds: [0]

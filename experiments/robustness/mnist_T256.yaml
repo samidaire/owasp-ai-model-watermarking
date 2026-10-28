@@ -1,0 +1,68 @@
+# M5 robustness: MNIST attack matrix at the security configuration T=256 (ROB-05 T=256 column, WM-09).  Schema: sigil.robustness.config/v1
+# Run:  python experiments/robustness/mnist_matrix.py --config experiments/robustness/mnist_T256.yaml   (then mnist_zk.py --config ...)
+schema: sigil.robustness.config/v1
+version: 1
+name: mnist_T256_matrix
+ckpt_prefix: mnist_T256                # checkpoints <prefix>_<kind>_s<seed>.pt
+clean_prefix: mnist                    # the clean reference does not depend on T: reuse mnist_clean_s<seed>.pt
+out: mnist_T256_matrix                 # results/mnist_T256_matrix.json, results/mnist_T256_zk.json
+dataset: mnist
+data_split:
+  owner: "train[0:50000]"             # owner's training data
+  attacker: "train[50000:60000]"      # 10k in-domain samples, disjoint from the owner's (ROB-04)
+  test: "t10k (10k)"
+model: demo/wm_core.Net (conv1 32 -> conv2 64 -> fc1 128 -> fc2 10)
+seeds: [0, 1, 2, 3, 4]               # model seed s: init + batch order 1000+s; attack seed 100+s
+owner_training:                       # the demo recipe (demo/01_train.py, experiments/wm02_parity.py)
+  epochs: 3
+  lr: 0.001
+  batch_size: 128
+  optimizer: adam
+watermark:                            # protocol v2 (docs/protocol.md), the demo configuration
+  T: 256
+  M: 288
+  layer: conv2
+  max_err: 32                         # theta = 32/256 = 0.125, as for T=64 (WM-07)
+  scale_bits: 16
+  w_bits: 24
+  lam: 1.0                            # mean-BCE regulariser weight
+  producer: conv1                     # conv2's input channels come from conv1 (permutation attack)
+triggerset:                           # WM-06, only in the "dual" model (white-box + trigger set)
+  n: 100
+  grid: 7
+  per_batch: 16                       # triggers appended to every 128-sample batch
+  fpr: 1.0e-6                         # accept iff matches >= k with P[Bin(n, 1/10) >= k] <= fpr  (k = 28)
+models: [wm]                          # white-box only; the dual-mark study is in mnist.yaml
+zk_seed: 0                            # attacked models of this seed are saved for mnist_zk.py (ROB-05)
+attacks:
+  prune_ratios: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  recovery_ratios: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  recovery: {epochs: 1, lr: 0.001, batch_size: 128, optimizer: adam}
+  channel_ratios: [0.25, 0.5, 0.75]
+  channel_recovery_ratios: [0.5]
+  fineprune:
+    ratios: [0.5, 0.8]
+    fit: {epochs: 3, lr: 0.001, batch_size: 128, optimizer: adam}
+  quantisation:
+    - {bits: 8, granularity: channel, act_bits: 8}
+    - {bits: 4, granularity: channel, act_bits: 8}
+    - {bits: 8, granularity: tensor}
+    - {bits: 4, granularity: tensor}
+  finetune: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}    # FTLL, FTAL (as demo/02_attacks.py)
+  retrain: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}     # RTLL, RTAL
+  overwrite:
+    lam: 1.0
+    fit: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}
+  permutation:
+    finetune: {epochs: 5, lr: 0.001, batch_size: 128, optimizer: adam}
+  kmeans: [16, 4]
+  svd_linear: [0.5, 0.25, 0.1]
+  svd_all: [0.5, 0.25]
+  distill:
+    temperature: 4.0
+    fit: {epochs: 10, lr: 0.001, batch_size: 128, optimizer: adam}
+  extraction:                          # black-box: student sees only the victim's outputs on these queries
+    - {budget: 1000, output: probs, fit: {epochs: 60, lr: 0.001, batch_size: 64, optimizer: adam}}
+    - {budget: 5000, output: probs, fit: {epochs: 20, lr: 0.001, batch_size: 128, optimizer: adam}}
+    - {budget: 10000, output: probs, fit: {epochs: 15, lr: 0.001, batch_size: 128, optimizer: adam}}
+    - {budget: 10000, output: labels, fit: {epochs: 15, lr: 0.001, batch_size: 128, optimizer: adam}}

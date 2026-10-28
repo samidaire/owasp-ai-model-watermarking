@@ -1,0 +1,16 @@
+# WM-07: null-model calibration of theta on MNIST.  Schema: sigil.robustness.config/v1
+# Run:  python experiments/robustness/mnist_nulls.py
+schema: sigil.robustness.config/v1
+version: 1
+name: mnist_nulls
+dataset: mnist
+null_models: 30                       # independently trained, never watermarked; init + batch-order seed 5000+i
+owner_training: {epochs: 3, lr: 0.001, batch_size: 128, optimizer: adam}   # same recipe as the owner's models
+owner_seeds: [0, 1, 2, 3, 4]          # the owner identities of mnist_matrix (labels m5/mnist/owner/<s>)
+configs:                              # max_err = T/8 throughout (theta = 0.125)
+  - {T: 64, M: 288, layer: conv2, max_err: 8}
+  - {T: 128, M: 288, layer: conv2, max_err: 16}
+  - {T: 256, M: 288, layer: conv2, max_err: 32}
+pooled_keys: 1000                     # extra independent (seed, owner key) pairs per null model, T=64
+realign_against_owner: true           # also score nulls after owner-side realignment (ROB-06 false positives)
+triggerset: {n: 100, grid: 7, fpr: 1.0e-6}
