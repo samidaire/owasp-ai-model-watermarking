@@ -1,0 +1,48 @@
+{
+ "schema": "sigil.robustness.results/v1",
+ "experiment": "mnist_repro",
+ "first": {
+  "file": "results/mnist_matrix.json",
+  "env": {
+   "git": {
+    "commit": "02e2b9d1167aa6642f9266255eee28480168f717",
+    "dirty": true
+   },
+   "torch": "2.14.1+cu130",
+   "numpy": "2.5.3",
+   "python": "3.12.13",
+   "device": "cuda",
+   "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "cudnn_deterministic": true,
+   "platform": "Windows-11-10.0.26200-SP0",
+   "started_at": "2026-10-04T21:30:22+00:00"
+  }
+ },
+ "second": {
+  "file": "results/mnist_matrix_repro.json",
+  "env": {
+   "git": {
+    "commit": "fb7a9bf4d1b6e48a017ab2b14f09e212a1c9ad75",
+    "dirty": false
+   },
+   "torch": "2.14.1+cu130",
+   "numpy": "2.5.3",
+   "python": "3.12.13",
+   "device": "cuda",
+   "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+   "cudnn_deterministic": true,
+   "platform": "Windows-11-10.0.26200-SP0",
+   "started_at": "2026-10-04T22:03:59+00:00"
+  }
+ },
+ "rows_compared": 100,
+ "rows_identical": 100,
+ "fields": [
+  "acc",
+  "errors",
+  "ber",
+  "survived",
+  "trigger_matches"
+ ],
+ "differences": []
+}

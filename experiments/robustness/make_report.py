@@ -478,11 +478,17 @@ def main():
                   + (" CIFAR-10 ResNet-18 (BatchNorm after the conv): " + "; ".join(
                       f"{k}: mean/std {pm(c['mean_over_std_of_null_vectors'])}, bits predicted "
                       f"{c['share_of_bits_predicted_by_rowsum_sign']['mean'] * 100:.0f} %" for k, c in ccm) + "." if ccm else ""), ""]
-        L += ["**θ per configuration:** max_err = T/8 (θ = 0.125) is kept for every configuration: no null model came "
-              "close to it, and the pooled study matches the binomial model, so the binomial reference is the FPR to quote "
-              "and the empirical bound is the evidence that the binomial model applies." if
-              all(b["owner_key_vs_nulls"]["false_positives"] == 0 for b in mn["configs"].values()) else
-              "**θ per configuration:** at least one null model was accepted — see the table; θ must be tightened.", ""]
+        pz = mn["pooled_T64"]
+        binom_like = abs(pz["errors"]["mean"] - pz["binomial_mean"]) < 0.5 and abs(pz["errors"]["std"] - pz["binomial_std"]) < 0.3
+        no_fp = all(b["owner_key_vs_nulls"]["false_positives"] == 0 for b in mn["configs"].values()) and pz["false_positives"] == 0
+        margin = min(b["owner_key_vs_nulls"]["min_errors"] - b["protocol_config"]["max_err"] for b in mn["configs"].values())
+        L += [("**θ per configuration:** max_err = T/8 (θ = 0.125) is kept for T = 64, 128 and 256: no null pair was "
+               f"accepted, the closest null stayed {margin} bits above max_err, and the pooled errors over independent keys "
+               + (f"match Bin(T, ½) (mean {pz['errors']['mean']:.2f} vs {pz['binomial_mean']:.0f}, std "
+                  f"{pz['errors']['std']:.2f} vs {pz['binomial_std']:.2f}). The binomial reference is therefore the FPR to "
+                  "quote per random key, and the Clopper–Pearson bounds are the empirical evidence behind it."
+                  if binom_like else "do not match Bin(T, ½) closely — quote the empirical Clopper–Pearson bound, not the binomial."))
+              if no_fp else "**θ per configuration:** at least one null pair was accepted — see the table; θ must be tightened.", ""]
 
     # ---------------- CIFAR
     if ct_train:
@@ -534,6 +540,22 @@ def main():
         L += table(["T", "λ", "Accuracy cost (pp)", "Owner BER = 0", "BER after 90% pruning", "BER after FTAL",
                     "BER after overwrite", "Survived (prune/FTAL/overwrite)"], rows)
         L += ["", f"![MNIST trade-off]({fig_tradeoff_mnist(tr)})", ""]
+        # ROB-06: pick (T, lambda) automatically from this robustness profile within the WM-09 accuracy budget
+        budget = 0.5
+        ok = [r for r in tr["summary"] if r["acc_cost_pp"]["mean"] <= budget and r["owner_ber0"] == r["n"]]
+        if ok:
+            def score(r):
+                surv = r["prune90_survived"] + r["ftal_survived"] + r["overwrite_survived"]
+                worst = max(r["prune90_ber"]["mean"], r["ftal_ber"]["mean"], r["overwrite_ber"]["mean"])
+                return (surv, r["T"], -worst, -r["lam"])
+            best = max(ok, key=score)
+            L += [f"**ROB-06 recommended MNIST configuration** (selected by `make_report.py` from this table: every probe "
+                  f"survived in the most seeds, then the largest T, then the lowest worst-case BER, then the smallest λ, "
+                  f"among configurations with mean accuracy cost ≤ {budget} pp and owner BER 0 in every seed): **T = {best['T']}, "
+                  f"λ = {best['lam']}** — accuracy cost {pm(best['acc_cost_pp'])} pp, survived "
+                  f"{best['prune90_survived']}/{best['ftal_survived']}/{best['overwrite_survived']} of {best['n']} "
+                  "(90% pruning / FTAL / overwrite). Combine it with the trigger set (dual-mark policy, §9) and owner-side "
+                  "realignment before detection.", ""]
         t256 = next((r for r in tr["summary"] if r["T"] == 256 and r["lam"] == 1.0), None)
         if t256:
             L += [f"**WM-09 (MNIST, T = 256, λ = 1, {t256['n']} seeds):** accuracy cost {pm(t256['acc_cost_pp'])} pp — "
@@ -544,6 +566,13 @@ def main():
         L += ["**CIFAR-10 λ sweep** (one seed, so differences under ~0.3 pp are within seed noise):", ""]
         L += table(["T", "λ", "Accuracy (%)", "Cost (pp)", "Owner errors", "BER after 90% pruning", "BER after FTAL"], rows)
         L += ["", f"![CIFAR trade-off]({fig_tradeoff_cifar(ct)})", ""]
+        okc = [r for r in ct["rows"] if r["acc_cost_pp"] <= 1.0 and r["errors"] == 0]
+        if okc:
+            bc = max(okc, key=lambda r: (int(r["prune90_survived"]) + int(r["ftal_survived"]),
+                                         -max(r["prune90_ber"], r["ftal_ber"]), -r["lam"]))
+            L += [f"**ROB-06 recommended CIFAR-10 configuration** (same rule, budget 1.0 pp, one seed): **T = {bc['T']}, "
+                  f"λ = {bc['lam']}** on `{ct['config']['watermark']['layer']}` (cost {bc['acc_cost_pp']:+.2f} pp, BER after "
+                  f"90% pruning {bc['prune90_ber']:.3f}, after FTAL {bc['ftal_ber']:.3f}).", ""]
 
     # ---------------- ZK
     if zk or zk256:
@@ -593,7 +622,15 @@ def main():
                   f"using only the owner's own copy, restores detection in {realigned['survived']}/{realigned['n']} seeds"
                   + (f", and still in {s[k]['survived']}/{s[k]['n']} seeds after the thief also fine-tunes the permuted model"
                      if (k := next((n for n in s if n.startswith("permutation + FTAL") and n.endswith("realign")), None)) else "")
-                  + ". Realignment must then be shown not to create false positives: see the realigned nulls in §4."]
+                  + "."]
+            rn = (mn or {}).get("realigned_nulls_T64")
+            if rn:
+                base = mn["configs"]["T64"]["owner_key_vs_nulls"]
+                L += [f" Realignment does pull unrelated models slightly towards the owner's key — the {rn['n']} realigned "
+                      f"(null model, owner) pairs have {pm(rn['errors'], 1, 1)} errors (minimum {rn['min_errors']}) against "
+                      f"{pm(base['errors'], 1, 1)} without realignment — but none comes near max_err "
+                      f"({rn['false_positives']} false positives), so realigning before detection does not create a false "
+                      "claim at this θ."]
         ow = next((st for n, st in s.items() if st["family"] == "overwrite"), None)
         if ow:
             L += ["", f"**Overwriting** with the thief's own key leaves {pm(ow['errors'], 1, 1)} owner errors "
