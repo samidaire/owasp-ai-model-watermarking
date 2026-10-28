@@ -85,7 +85,7 @@ def test_job_detail_matches_the_fixture(env):
             break
         time.sleep(0.05)
     assert_shape(fixture, detail)
-    assert set(detail) == set(fixture) | {"cancelled", "timed_out"}
+    assert set(detail) == set(fixture) | {"cancelled", "timed_out", "model"}   # optional JobInfo fields (contract/types.ts)
     assert isinstance(detail["output"], list) and all(isinstance(x, str) for x in detail["output"])
 
 
