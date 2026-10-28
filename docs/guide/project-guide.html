@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sigil Project Guide</title>
+<meta name="author" content="Sigil team: Sami Daire, Mohamed Ansari, Arfat Shaikh, Yash Bandiwadekar">
+<meta name="description" content="How Sigil works, who owns what, and how to run the demo.">
+<!-- Source of docs/Sigil-Project-Guide.pdf. Rebuild (Windows, Microsoft Edge):
+     msedge --headless=new --no-pdf-header-footer --print-to-pdf=docs\Sigil-Project-Guide.pdf docs\guide\project-guide.html -->
+<style>
+/* Layout: one A4 reading column on the app's Cocoa Pop palette; espresso rules, caramel accents,
+   and the hard offset shadow only on the four role cards. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Instrument Sans"; src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 800; }
+
+:root {
+  --page: #ffffff;
+  --cream: #f4ebdf;
+  --sand: #e8d8c4;
+  --ink: #2a1a12;       /* espresso */
+  --ink-2: #5e4636;
+  --muted: #76604f;
+  --accent: #c8743a;    /* caramel */
+  --accent-text: #7a4e33;
+  --accent-soft: #f6e4d3;
+  --warn: #a3412a;      /* rust */
+  --code-bg: #2a1a12;
+  --code-fg: #f4ebdf;
+  --code-dim: #c9b49f;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@page { size: A4; margin: 15mm 15mm 16mm; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 10.5pt; line-height: 1.5; }
+.wrap { max-width: 180mm; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; color: var(--ink); break-after: avoid; }
+h1 { font-weight: 800; font-size: 46pt; line-height: .95; letter-spacing: -.035em; }
+h2 { font-weight: 800; font-size: 20pt; line-height: 1.1; letter-spacing: -.02em; }
+h3 { font-weight: 650; font-size: 12pt; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--accent-text); text-decoration: none; }
+code { font-family: var(--mono); font-size: .86em; background: var(--cream); padding: .05em .3em; border-radius: 3px; }
+.eyebrow { font-family: var(--mono); font-size: 8pt; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
+/* sections, options and step lists are block layout: grid containers fragment badly across printed pages */
+.section { margin-top: 18pt; }
+.section > * + * { margin-top: 10pt; }
+.section > header { display: grid; gap: 4pt; break-after: avoid; }
+.note { font-size: 9pt; color: var(--muted); }
+.avoid-break { break-inside: avoid; }
+
+/* header */
+.top { display: grid; gap: 10pt; border-bottom: 2px solid var(--ink); padding-bottom: 14pt; }
+.mark { color: var(--accent); }
+.lede { font-size: 12.5pt; color: var(--ink-2); line-height: 1.45; max-width: 150mm; }
+.facts { display: flex; flex-wrap: wrap; gap: 6pt; }
+.facts span { font-family: var(--mono); font-size: 8pt; border: 1.5px solid var(--ink); border-radius: 999px; padding: 2pt 7pt; font-variant-numeric: tabular-nums; }
+.contents { font-size: 9pt; color: var(--muted); }
+.contents a { font-weight: 600; margin-right: 10pt; }
+
+/* the idea */
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14pt; }
+.trio > div { display: grid; gap: 3pt; align-content: start; border-top: 2px solid var(--ink); padding-top: 7pt; }
+.trio p { font-size: 9.8pt; color: var(--ink-2); }
+.finding { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 9pt 12pt; border-radius: 0 6px 6px 0; display: grid; gap: 3pt; break-inside: avoid; }
+.finding p { font-size: 10pt; }
+
+/* numbered steps (real sequences only) */
+ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+ol.steps > li + li { margin-top: 7pt; }
+ol.steps > li { counter-increment: s; display: grid; grid-template-columns: 22pt minmax(0, 1fr); gap: 9pt; align-items: start; break-inside: avoid; }
+ol.steps > li::before {
+  content: counter(s); display: grid; place-items: center; width: 19pt; height: 19pt; border-radius: 50%;
+  background: var(--ink); color: #fff; font-family: var(--mono); font-weight: 600; font-size: 9pt;
+}
+ol.steps b { font-family: var(--display); font-weight: 650; font-size: 11pt; }
+ol.steps p { font-size: 10pt; color: var(--ink-2); }
+ol.steps .k { font-family: var(--sans); font-weight: 650; font-size: inherit; color: var(--ink); }
+
+/* tables */
+.table-wrap { border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; font-size: 9.6pt; }
+th, td { text-align: left; padding: 4pt 9pt; border-bottom: 1px solid var(--sand); vertical-align: top; }
+th { font-family: var(--mono); font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--cream); }
+tr:last-child td { border-bottom: 0; }
+td.t { font-family: var(--mono); font-size: 8.5pt; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+td.d { white-space: nowrap; font-weight: 600; }
+.letter { display: inline-grid; place-items: center; width: 15pt; height: 15pt; border: 1.5px solid var(--ink); border-radius: 4px; font-family: var(--mono); font-weight: 600; font-size: 8pt; margin-right: 6pt; }
+
+/* roles */
+.roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12pt; }
+.role { border: 2px solid var(--ink); border-radius: 9px; box-shadow: 3.5pt 3.5pt 0 var(--ink); padding: 10pt 12pt; display: grid; gap: 6pt; align-content: start; break-inside: avoid; background: #fff; }
+.role .area { font-family: var(--mono); font-size: 7.5pt; letter-spacing: .04em; color: var(--accent-text); text-transform: uppercase; margin-top: 1pt; }
+.role dl { margin: 0; display: grid; gap: 5pt; }
+.role dt { font-size: 7.5pt; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.role dd { margin: 0; font-size: 9.6pt; color: var(--ink-2); }
+
+/* run it */
+.option > * + * { margin-top: 6pt; }
+.section > .option + .option { margin-top: 14pt; }
+.option h3 { break-after: avoid; }
+.option h3 span { font-family: var(--mono); font-size: 8pt; font-weight: 400; color: var(--muted); margin-left: 4pt; }
+pre { margin: 3pt 0 0; background: var(--code-bg); color: var(--code-fg); border-radius: 6px; padding: 7pt 10pt; font-family: var(--mono); font-size: 8.4pt; line-height: 1.55; white-space: pre-wrap; break-inside: avoid; }
+pre .c { color: var(--code-dim); }
+.ok { display: inline-block; margin-top: 3pt; font-family: var(--mono); font-size: 8.5pt; color: var(--accent-text); }
+.callout { border: 1.5px dashed var(--warn); border-radius: 6px; padding: 7pt 10pt; font-size: 9.8pt; display: grid; gap: 2pt; break-inside: avoid; }
+.callout strong { color: var(--warn); }
+
+/* limits */
+ul.limits { margin: 0; padding-left: 14pt; display: grid; gap: 4pt; }
+ul.limits li { color: var(--ink-2); break-inside: avoid; }
+ul.limits b { color: var(--ink); }
+footer { margin-top: 14pt; border-top: 2px solid var(--ink); padding-top: 7pt; font-size: 9pt; color: var(--muted); break-inside: avoid; }
+.page-break { break-before: page; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Final-year project · aligned with the OWASP AI Model Watermarking project (not official OWASP work)</div>
+    <h1>Sigil<span class="mark">.</span></h1>
+    <p class="lede">Sigil hides a secret mark inside a neural network's weights. If someone copies the model, the owner can prove it's theirs with a zero-knowledge proof that reveals nothing about the mark.</p>
+    <div class="facts">
+      <span>64-bit mark in one layer</span>
+      <span>accuracy 98.69% → 98.66%</span>
+      <span>proof made in ~4 s</span>
+      <span>checked in ~0.4 s</span>
+    </div>
+    <div class="contents">Contents: <a href="#idea">The idea</a><a href="#how">How it works</a><a href="#demos">The six demos</a><a href="#roles">Who does what</a><a href="#run">Run it</a><a href="#limits">Limits</a></div>
+  </header>
+
+  <section class="section" id="idea">
+    <header>
+      <div class="eyebrow">The idea</div>
+      <h2>Prove it's yours without giving away the secret</h2>
+    </header>
+    <div class="trio">
+      <div>
+        <h3>The problem</h3>
+        <p>Trained models are valuable and easy to copy. If someone republishes your model as theirs, you need proof of ownership that doesn't hand them your secret.</p>
+      </div>
+      <div>
+        <h3>The mark</h3>
+        <p>While training, a small extra loss makes one layer's weights carry a 64-bit signature. The model works the same, and only the owner's secret key can read the bits.</p>
+      </div>
+      <div>
+        <h3>The proof</h3>
+        <p>The owner makes a zero-knowledge proof (Circom + Groth16). The verifier learns one fact: the registered owner's mark is in this exact file. Nothing else.</p>
+      </div>
+    </div>
+    <div class="finding">
+      <h3>Our research finding</h3>
+      <p>In earlier zero-knowledge ownership schemes the prover chooses the key, so a thief can fit a fake key to someone else's model and still get a valid proof (demos C and E). Sigil fixes this: the key and signature come from a secret seed that was committed and timestamped when the model was registered, and the circuit re-derives them itself. A key can't be invented afterwards (demos D and F).</p>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <header>
+      <div class="eyebrow">How it works</div>
+      <h2>Five steps, from training to a verdict</h2>
+    </header>
+    <ol class="steps">
+      <li><div><b>Create an identity.</b><p>The owner makes an Ed25519 key pair and a secret random seed. Both stay encrypted on the owner's machine.</p></div></li>
+      <li><div><b>Embed the mark.</b><p>The watermark key and the 64-bit signature are derived from the seed and the owner's key, then trained into one layer.</p></div></li>
+      <li><div><b>Register.</b><p>The owner publishes a signed record: a commitment (hash) of the seed, the settings and the model file's SHA-256. A registry timestamps it, and the earliest registration wins a dispute.</p></div></li>
+      <li><div><b>Open a claim.</b><p>Someone who suspects a copy opens a claim on that file, with a fresh random number (a nonce) so an old proof can't be reused.</p></div></li>
+      <li><div><b>Prove and verify.</b><p>The owner proves the committed mark is in the suspect file, with at most 8 of the 64 bits wrong. The verifier recomputes the file's fingerprint and checks the signature, the timestamp, the nonce and the proof. Every failed check gives its own reason.</p></div></li>
+    </ol>
+  </section>
+
+  <section class="section" id="demos">
+    <header>
+      <div class="eyebrow">The six demos</div>
+      <h2>The story the app tells, A to F</h2>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Demo</th><th>What it shows</th><th>Live run</th></tr></thead>
+        <tbody>
+          <tr><td class="d"><span class="letter">A</span>Commit &amp; embed</td><td>The owner publishes a hash of the secret seed and embeds the mark. Accuracy drops by about 0.03 points.</td><td class="t">~5 s</td></tr>
+          <tr><td class="d"><span class="letter">B</span>Removal attacks</td><td>Pruning, quantisation, fine-tuning, overwriting and permutation, and which of them remove the mark.</td><td class="t">~10 s</td></tr>
+          <tr><td class="d"><span class="letter">C</span>Ownership forgery</td><td>Without a commitment, a thief fits a fake key ("MALLORY!") to the owner's model.</td><td class="t">~3 s</td></tr>
+          <tr><td class="d"><span class="letter">D</span>Committed seed</td><td>The fix without zero knowledge: 0 of 20,000 forgery attempts succeed.</td><td class="t">~3 s</td></tr>
+          <tr><td class="d"><span class="letter">E</span>Zero-knowledge proofs</td><td>With EZKL, the thief's forged proof verifies under the owner's own key. This is why the commitment matters.</td><td class="t">~10 s</td></tr>
+          <tr><td class="d"><span class="letter">F</span>Protocol v2</td><td>The full fix: a real Circom + Groth16 proof, every verifier check, the thief, misuse attempts, attacks and the overwrite dispute.</td><td class="t">~80 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="roles">
+    <header>
+      <div class="eyebrow">Who does what</div>
+      <h2>Four owners, one system</h2>
+      <p class="note">Roles follow the project plan (REQUIREMENTS.md). Everyone should be able to explain any part; these are the areas each person answers for.</p>
+    </header>
+    <div class="roles">
+      <article class="role">
+        <div><h3>Sami Daire</h3><div class="area">Project lead · ZK proofs · verification</div></div>
+        <dl>
+          <div><dt>Owns</dt><dd>Protocol v2 (seed commitment, owner identity, registration and timestamps), the Circom circuit and its Groth16 setup, the verifier's checks, the on-chain verifier, and putting the pieces together.</dd></div>
+          <div><dt>Explains</dt><dd>Demos C, D, E and F. Why a committed seed stops forgery, and what the proof does and doesn't show.</dd></div>
+        </dl>
+      </article>
+      <article class="role">
+        <div><h3>Mohamed Ansari</h3><div class="area">AI &amp; watermarking · robustness</div></div>
+        <dl>
+          <div><dt>Owns</dt><dd>Embedding the mark in PyTorch, Keras and ONNX models, the attack suite, setting the acceptance threshold from 30 never-watermarked models, and the trigger-set mark.</dd></div>
+          <div><dt>Explains</dt><dd>Demos A and B and the Robustness lab. Which attacks the mark survives, which remove it, and what accuracy the thief gives up.</dd></div>
+        </dl>
+      </article>
+      <article class="role">
+        <div><h3>Arfat Shaikh</h3><div class="area">Frontend · SDK &amp; CLI · design</div></div>
+        <dl>
+          <div><dt>Owns</dt><dd>The web app (home page, dashboard, demo pages, the Model under test bar), packaging the <code>sigil</code> SDK and its command line, and the example notebooks.</dd></div>
+          <div><dt>Explains</dt><dd>The walk-through of the app, and how a developer would use the SDK on their own model.</dd></div>
+        </dl>
+      </article>
+      <article class="role">
+        <div><h3>Yash Bandiwadekar</h3><div class="area">Backend · FastAPI · PostgreSQL</div></div>
+        <dl>
+          <div><dt>Owns</dt><dd>The demo server (one job at a time, cancel, timeouts, local-only security) and the FastAPI + PostgreSQL backend: accounts and roles, registry, verification history, a tamper-evident audit log, reports and deployment monitoring.</dd></div>
+          <div><dt>Explains</dt><dd>How the app talks to the server, what gets stored, and why the server only listens on this machine.</dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="run">
+    <header>
+      <div class="eyebrow">Run it</div>
+      <h2>Operate the project, step by step</h2>
+      <p class="note">Run every command from the project folder (the one with DEPLOY.md). Everything runs locally; nothing is sent to a cloud service.</p>
+    </header>
+
+    <div class="option">
+      <h3>Option 1: replay mode <span>no install · about 1 min · needs Python 3.10+</span></h3>
+      <p>Run buttons replay recorded real runs. Use this as the backup during a presentation.</p>
+      <pre><span class="c"># or double-click Start-Demo-UI-Simulate.cmd</span>
+python demo\server.py --simulate</pre>
+    </div>
+
+    <div class="option">
+      <h3>Option 2: live mode <span>5–15 min setup · needs Python 3.10+ and Node.js 20.19+</span></h3>
+      <ol class="steps">
+        <li><div><b>Install.</b><p>Creates <code>.venv</code> and installs PyTorch, the SDK, the circuit tools and the proving keys.</p>
+<pre>.\setup.ps1 --demo              <span class="c"># macOS / Linux: ./setup.sh --demo</span></pre></div></li>
+        <li><div><b>Check.</b><p>Runs the tests, starts the app and makes a real proof.</p>
+<pre>.venv\Scripts\python scripts\verify_deploy.py</pre>
+<span class="ok">It must end with: ALL CHECKS PASSED</span></div></li>
+        <li><div><b>Start.</b><p>Double-click <code>Start-Demo-UI.cmd</code>, or run:</p>
+<pre>.venv\Scripts\python demo\server.py --open</pre></div></li>
+        <li><div><b>Open the app.</b><p>Go to <code>http://127.0.0.1:8765</code> and press <span class="k">Open dashboard</span>. The sidebar shows the GPU, or "CPU only".</p></div></li>
+      </ol>
+    </div>
+
+    <div class="option">
+      <h3>Presenting the demo</h3>
+      <ol class="steps">
+        <li><div><p>Press <span class="k">Clear results</span> so every page starts empty. Everything that appears next comes from runs the audience watches.</p></div></li>
+        <li><div><p>Press <span class="k">Run all live</span> (fills demos A–E, about 30 s), then <span class="k">Run demo F live</span> (about 80 s; makes and verifies a real proof).</p></div></li>
+        <li><div><p>Follow the route: Overview → Embed watermark → Verify ownership (try a misuse) → Robustness lab → demos A–F. The ← → keys move between demos.</p></div></li>
+        <li><div><p>In the <span class="k">Model under test</span> bar, pick a model and press <span class="k">Test this model</span>. Good contrasts: <i>pruned 90%</i> (ownership still proven), <i>channels permuted</i> (mark gone), <i>clean.pt</i> (never marked).</p></div></li>
+        <li><div><p>Press <span class="k">Clear results</span> again before the next group.</p></div></li>
+      </ol>
+      <div class="callout">
+        <p><strong>Don't run live:</strong> Retrain (it replaces the owner key) and E3 (it needs about 32 GB of RAM).</p>
+        <p><strong>Backup:</strong> keep <code>python demo\server.py --simulate --port 8766</code> ready in a second terminal.</p>
+      </div>
+    </div>
+
+    <div class="option">
+      <h3>For developers: the command line</h3>
+      <pre><span class="c"># owner</span>
+sigil keygen                                     <span class="c"># owner key, encrypted</span>
+sigil seed --bits 64 --layer conv2               <span class="c"># secret seed + settings</span>
+sigil embed model.pt --arch mymodels:Net --data train.npz
+sigil register model.wm.pt --registry-key secrets/registry.key
+<span class="c"># verifier opens a claim, owner proves, verifier checks and gets a report</span>
+sigil claim registration.json --suspect suspect.pt
+sigil prove suspect.pt --claim claim.json --out bundle
+sigil report bundle --suspect suspect.pt --registration registration.json --receipt registration.receipt.json --trusted-registry &lt;registry key&gt;</pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>If you see</th><th>Do this</th></tr></thead>
+        <tbody>
+          <tr><td>"Can't reach the demo server"</td><td>Start the server. If port 8765 is taken, add <code>--port 8770</code>.</td></tr>
+          <tr><td>"No ML stack: replay only"</td><td>Start with the <code>.venv</code> Python (Option 2), or present in replay mode.</td></tr>
+          <tr><td>Demo F says the circuit isn't set up</td><td>Re-run <code>setup.ps1 --demo</code>; it installs the proving keys.</td></tr>
+          <tr><td>Antivirus blocks <code>circom.exe</code></td><td>It's the official circom 2.2.3 release. Allow it, or show demo F in replay mode.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="limits">
+    <header>
+      <div class="eyebrow">Limits</div>
+      <h2>What we tell examiners up front</h2>
+    </header>
+    <ul class="limits">
+      <li><b>Model extraction removes the mark.</b> Training a fresh copy from the model's answers loses the weight mark, and in our tests the trigger-set mark too.</li>
+      <li><b>Permutation hides it.</b> Reordering a layer's channels hides the mark unless the owner realigns the model first.</li>
+      <li><b>64 bits is the demo size.</b> A thief's seed search costs about 2<sup>32</sup> tries at 64 bits, which a GPU can do. The secure 256-bit setting raises it to about 2<sup>120</sup> (proof in about 12 s). Timestamps still decide disputes.</li>
+      <li><b>Groth16 needs a trusted setup.</b> We use a public Powers of Tau file plus our own contribution.</li>
+    </ul>
+  </section>
+
+  <footer>
+    More detail in the repository: <code>DEMO.md</code> (presenter runbook), <code>Sigil-User-Guide.pdf</code> (illustrated guide), <code>docs/protocol.md</code> (the protocol) and <code>OWASP AI Model Watermarking.pptx</code> (slides).
+  </footer>
+
+</div>
+</body>
+</html>
