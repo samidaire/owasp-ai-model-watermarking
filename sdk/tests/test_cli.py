@@ -77,3 +77,29 @@ def test_cli_prove_and_verify_demo_f(tmp_path, monkeypatch, capsys):
     v = json.loads(capsys.readouterr().out)
     assert not v["accepted"] and any("different" in r for r in v["reasons"])
     assert reg["commitment"]
+
+    # SDK-05: every file of the flow matches its schema; the bundle names its verification key
+    manifest = json.loads((tmp_path / "bundle" / "bundle.json").read_text())
+    assert manifest["circuit"] == Z.artifacts(P.Config()).name
+    pytest.importorskip("jsonschema")
+    from sigil import schemas
+    for name, path in (("registration", "registration.json"), ("receipt", "registration.receipt.json"),
+                       ("claim", "bundle/claim.json"), ("proof", "bundle/proof.json"),
+                       ("public", "bundle/public.json"), ("bundle", "bundle/bundle.json")):
+        schemas.validate(name, json.loads((tmp_path / path).read_text()))
+
+    # report: the same verification, written up; exit code follows the verdict
+    assert main(["--json", "report", *args, "--suspect", model, "--out", "report.md"]) == 0
+    r = json.loads(capsys.readouterr().out)
+    text = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert r["accepted"] and r["checks"]["bundle_vkey_matches"] and "**Verdict: OWNERSHIP PROVEN**" in text
+    assert main(["--json", "report", *args, "--suspect", clean, "--out", "bad.md"]) == 1
+    capsys.readouterr()
+    assert "NOT PROVEN" in (tmp_path / "bad.md").read_text(encoding="utf-8")
+
+    # a bundle made for another verification key is rejected with its own reason
+    (tmp_path / "bundle" / "bundle.json").write_text(json.dumps({**manifest, "vkey_sha256": "0" * 64}))
+    assert main(["--json", "verify", *args, "--suspect", model]) == 1
+    v = json.loads(capsys.readouterr().out)
+    assert v["checks"]["bundle_vkey_matches"] is False
+    assert "the bundle was made for a different verification key" in v["reasons"]

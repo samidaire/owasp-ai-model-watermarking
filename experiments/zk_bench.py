@@ -2,14 +2,18 @@
 
 For each configuration that has been set up (sigil.zk.circom.setup), measures over --runs proofs:
 constraints, witness time, proving time, verification time, proof and key sizes, and the peak memory
-of the SnarkJS (node) processes. Writes experiments/results/zk_bench.json and docs/reports/zk_bench.md.
+of the SnarkJS (node) processes. A configuration that is only compiled (`sigil zk-info`) is listed with
+its size from the .r1cs header and the Powers of Tau it would need. Writes experiments/results/zk_bench.json
+and docs/reports/zk_bench.md.
 
     .venv/Scripts/python experiments/zk_bench.py --runs 3
 """
 import argparse
 import json
+import math
 import platform
 import statistics
+import struct
 import subprocess
 import sys
 import tempfile
@@ -24,11 +28,33 @@ from sigil import protocol as P
 from sigil.zk import circom as Z
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.stdout.reconfigure(encoding="utf-8")       # the report prints θ; Windows consoles default to cp1252
 ap = argparse.ArgumentParser()
 ap.add_argument("--runs", type=int, default=3)
 args = ap.parse_args()
 
-CONFIGS = [P.Config(), P.Config(T=256, max_err=32)]
+CONFIGS = [P.Config(), P.Config(T=256, max_err=32),
+           P.Config(M=2304, layer="layer3.1.conv2")]     # one ResNet-18 layer (CIFAR-10, experiments/robustness)
+
+
+def r1cs_header(path: Path) -> dict:
+    """Constraint and wire counts from a .r1cs header (snarkjs r1cs info runs out of memory on large circuits)."""
+    with open(path, "rb") as f:
+        if f.read(4) != b"r1cs":
+            raise ValueError(f"{path} is not an r1cs file")
+        _, sections = struct.unpack("<II", f.read(8))
+        for _ in range(sections):
+            kind, size = struct.unpack("<IQ", f.read(12))
+            if kind == 1:
+                n8, = struct.unpack("<I", f.read(4))
+                f.read(n8)
+                wires, pub_out, pub_in, _ = struct.unpack("<IIII", f.read(16))
+                f.read(8)
+                constraints, = struct.unpack("<I", f.read(4))
+                return {"constraints": constraints, "wires": wires,
+                        "ptau_power": math.ceil(math.log2(constraints + pub_in + pub_out + 1))}
+            f.seek(size, 1)
+    raise ValueError(f"{path}: no header section")
 
 
 def embed_like(seed, pkh, cfg, scale=0.02):
@@ -65,11 +91,16 @@ class PeakNodeRSS:
         self._t.join()
 
 
-rows = []
+rows, sized = [], []
 for cfg in CONFIGS:
     art = Z.artifacts(cfg)
     if not (art.zkey.exists() and art.vkey.exists()):
-        print(f"skip {art.name}: not set up")
+        if art.r1cs.exists():
+            sized.append({"circuit": art.name, "T": cfg.T, "M": cfg.M, "max_err": cfg.max_err, "layer": cfg.layer,
+                          **r1cs_header(art.r1cs), "r1cs_bytes": art.r1cs.stat().st_size})
+            print(json.dumps(sized[-1]))
+        else:
+            print(f"skip {art.name}: not compiled or set up")
         continue
     info = Z.r1cs_info(art)
     transcript = json.loads(art.transcript.read_text()) if art.transcript.exists() else {}
@@ -106,7 +137,7 @@ env = {"cpu": platform.processor() or platform.machine(), "logical_cpus": psutil
        "node": subprocess.run(["node", "--version"], capture_output=True, text=True).stdout.strip(),
        "python": sys.version.split()[0]}
 git = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip()
-out = {"env": env, "git_commit": git, "rows": rows}
+out = {"env": env, "git_commit": git, "rows": rows, "compiled_not_set_up": sized}
 (ROOT / "experiments" / "results").mkdir(parents=True, exist_ok=True)
 (ROOT / "experiments" / "results" / "zk_bench.json").write_text(json.dumps(out, indent=2))
 
@@ -123,6 +154,12 @@ for r in rows:
                  f"{r['proof_json_bytes']:,} B | {mb(r['zkey_bytes'])} | {r['vkey_bytes']:,} B | {mb(r['peak_node_rss_bytes'])} |")
 lines += ["", "A Groth16 proof is three curve points (2 in G1, 1 in G2): 256 bytes uncompressed in binary form; "
               "the JSON encoding above is larger. Verification time includes starting node."]
+if sized:
+    lines += ["", "**Compiled but not set up** (size from the .r1cs header; no proving key on this machine):", "",
+              "| Circuit | Layer | Constraints | Wires | ptau needed | .r1cs |", "|---|---|---|---|---|---|"]
+    for r in sized:
+        lines.append(f"| T={r['T']}, M={r['M']}, θ={r['max_err']}/{r['T']} | `{r['layer']}` | {r['constraints']:,} | "
+                     f"{r['wires']:,} | 2^{r['ptau_power']} | {mb(r['r1cs_bytes'])} |")
 (ROOT / "docs" / "reports").mkdir(parents=True, exist_ok=True)
 (ROOT / "docs" / "reports" / "zk_bench.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("\n".join(lines))

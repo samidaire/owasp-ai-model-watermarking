@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:public:v2",
+  "title": "Public signals of an ownership proof (bundle public.json)",
+  "description": "The circuit's five public inputs, in order (sigil.verify.expected_public_signals). The verifier recomputes each one from the registration, the claim and the suspect file.",
+  "type": "array",
+  "prefixItems": [
+    {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "title": "pk_hash"},
+    {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "title": "config_hash"},
+    {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "title": "commitment"},
+    {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "title": "w_hash",
+     "description": "Poseidon hash of the suspect model's quantised Uchida vector"},
+    {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "title": "nonce", "description": "the claim's nonce"}
+  ],
+  "minItems": 5,
+  "items": false
+}

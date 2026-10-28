@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:registration:v2",
+  "title": "sigil registration (protocol v2)",
+  "description": "The public record an owner publishes at embedding time, signed with the owner's Ed25519 key over the canonical JSON of every other field (docs/protocol.md; sigil.records.make_registration). Contains no secret.",
+  "type": "object",
+  "required": ["schema", "owner_public_key", "pk_hash", "config", "config_hash", "commitment", "model_sha256",
+               "created_at", "owner_signature"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "sigil.registration/v2"},
+    "owner_public_key": {"$ref": "#/$defs/hex32", "description": "Ed25519 public key, 32 bytes as hex"},
+    "pk_hash": {"$ref": "#/$defs/field", "description": "Poseidon hash of the owner public key"},
+    "config": {"$ref": "#/$defs/config"},
+    "config_hash": {"$ref": "#/$defs/field", "description": "Poseidon hash pinning every config field"},
+    "commitment": {"$ref": "#/$defs/field", "description": "C = Poseidon(seed, pk_hash, config_hash)"},
+    "model_sha256": {"$ref": "#/$defs/hex32", "description": "SHA-256 of the watermarked model file"},
+    "created_at": {"$ref": "#/$defs/time"},
+    "owner_signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "field": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,76})$",
+              "description": "A BN254 scalar field element as a decimal string"},
+    "hex32": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "time": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+             "description": "UTC, ISO 8601, optional fractional seconds"},
+    "signature": {"type": "string", "pattern": "^[A-Za-z0-9+/]{86}==$",
+                  "description": "Ed25519 signature, 64 bytes as base64"},
+    "config": {
+      "type": "object",
+      "description": "Public watermark parameters (sigil.protocol.Config.to_dict)",
+      "required": ["protocol", "T", "M", "layer", "scale_bits", "w_bits", "max_err", "norm", "prg_bits"],
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {"const": 2},
+        "T": {"type": "integer", "minimum": 1, "maximum": 1024, "description": "signature length in bits"},
+        "M": {"type": "integer", "minimum": 1, "maximum": 65536, "description": "Uchida vector length"},
+        "layer": {"type": "string", "minLength": 1, "description": "name of the watermarked layer"},
+        "scale_bits": {"type": "integer", "minimum": 1, "maximum": 63},
+        "w_bits": {"type": "integer", "minimum": 2, "maximum": 64},
+        "max_err": {"type": "integer", "minimum": 0, "description": "accept iff at most max_err of T bits disagree"},
+        "norm": {"const": "none"},
+        "prg_bits": {"const": 200}
+      }
+    }
+  }
+}

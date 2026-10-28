@@ -24,7 +24,11 @@ dependencies = [
 torch = ["torch>=2.2"]
 tf = ["tensorflow>=2.16", "tf2onnx>=1.16"]          # tf2onnx: Keras -> ONNX export (WM-05)
 onnx = ["onnx>=1.16", "onnxscript>=0.2"]             # onnxscript: torch.onnx.export(dynamo=True)
-dev = ["pytest>=8", "pytest-timeout>=2.3"]
+# sigil.zk needs only the standard library in Python; its toolchain (Node.js >= 20.19 with snarkjs from
+# circuits/package.json, and circom 2.2.3) is not on PyPI and is installed by setup.ps1 / setup.sh.
+zk = []
+attacks = ["torch>=2.2", "scipy>=1.11", "scikit-learn>=1.4"]   # sigil.attacks / `sigil attack` (ROB-01, ROB-02)
+dev = ["pytest>=8", "pytest-timeout>=2.3", "jsonschema>=4.20"]
 
 [project.scripts]
 sigil = "sigil.cli:main"

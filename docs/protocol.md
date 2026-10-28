@@ -92,6 +92,15 @@ which coincides with RFC 8785 for these schemas. Field elements are decimal stri
 **Dispute rule:** among valid (registration, receipt) pairs for the same model, the earliest `registered_at`
 wins. Receipts can't be back-dated without the registry key.
 
+**Proof bundle:** `sigil prove` writes `proof.json` (SnarkJS Groth16), `public.json` (the five public signals of
+§7, in order), a copy of `claim.json`, and the manifest `bundle.json` (`sigil.bundle/v2`: circuit name and the
+SHA-256 of the verification key the proof was made for). A verifier rejects a bundle whose manifest names a
+different verification key from its own for that configuration; bundles without a manifest are still checked.
+
+**Schemas:** every format above has a JSON Schema (draft 2020-12) in `sdk/src/sigil/schemas/`
+(`sigil.schemas.validate(name, obj)`). They check structure only; signatures, hashes and the proof are checked
+by §8.
+
 ## 7. The zero-knowledge statement (circuits/ownership.circom)
 
 **Public:** pk_hash, config_hash, commitment, w_hash, nonce.
@@ -109,7 +118,9 @@ The circuit, compiled for fixed (T, M, w_bits, sum_bits, max_err, PRG_BITS), enf
 6. #{i : bit_i ≠ b_i} ≤ max_err: the **threshold is enforced in-circuit** (FIX-06).
 7. nonce² is computed, so the nonce is bound (an unconstrained public input isn't).
 
-Size at T = 64, M = 288: **116,822 constraints** (`--O2`), so a 2¹⁷ Powers of Tau.
+Size at T = 64, M = 288: **116,822 constraints** (`--O2`), so a 2¹⁷ Powers of Tau. Costs for every
+configuration (constraints, prove and verify time, key sizes, peak memory) are in
+[reports/zk_bench.md](reports/zk_bench.md) (ZK-10).
 
 ## 8. Verification (sigil.verify.verify_ownership)
 

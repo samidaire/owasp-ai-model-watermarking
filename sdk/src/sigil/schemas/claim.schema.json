@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:claim:v2",
+  "title": "sigil ownership claim (protocol v2)",
+  "description": "Opened by a verifier about one suspect model file; the owner's proof must carry its nonce, so a proof can't be replayed for another claim (sigil.records.make_claim).",
+  "type": "object",
+  "required": ["schema", "claim_id", "nonce", "registration_sha256", "suspect_model_sha256", "opened_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "sigil.claim/v2"},
+    "claim_id": {"type": "string",
+                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "nonce": {"$ref": "urn:sigil:schema:registration:v2#/$defs/field", "description": "fresh random field element"},
+    "registration_sha256": {"$ref": "urn:sigil:schema:registration:v2#/$defs/hex32"},
+    "suspect_model_sha256": {"$ref": "urn:sigil:schema:registration:v2#/$defs/hex32"},
+    "opened_at": {"$ref": "urn:sigil:schema:registration:v2#/$defs/time"}
+  }
+}

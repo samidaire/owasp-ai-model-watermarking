@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:bundle:v2",
+  "title": "Proof bundle manifest (bundle.json)",
+  "description": "Written by `sigil prove` next to proof.json, public.json and claim.json. Names the circuit and the SHA-256 of the verification key the proof was made for; `sigil verify` rejects the bundle when its own key for that configuration differs. Bundles without a manifest (older ones) are still verified.",
+  "type": "object",
+  "required": ["schema", "circuit", "vkey_sha256", "files", "created_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "sigil.bundle/v2"},
+    "circuit": {"type": "string", "pattern": "^ownership_T[0-9]+_M[0-9]+_E[0-9]+_W[0-9]+$"},
+    "vkey_sha256": {"$ref": "urn:sigil:schema:registration:v2#/$defs/hex32",
+                    "description": "SHA-256 of circuits/keys/<circuit>.vkey.json"},
+    "files": {"type": "array", "items": {"enum": ["proof.json", "public.json", "claim.json"]},
+              "minItems": 3, "maxItems": 3, "uniqueItems": true},
+    "created_at": {"$ref": "urn:sigil:schema:registration:v2#/$defs/time"}
+  }
+}

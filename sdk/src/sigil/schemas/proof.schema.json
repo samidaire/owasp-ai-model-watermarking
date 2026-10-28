@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:proof:v2",
+  "title": "Groth16 proof (bundle proof.json)",
+  "description": "A SnarkJS Groth16 proof on BN254, as `snarkjs groth16 prove` writes it: three curve points in projective coordinates, every coordinate a decimal string.",
+  "type": "object",
+  "required": ["pi_a", "pi_b", "pi_c", "protocol", "curve"],
+  "additionalProperties": false,
+  "properties": {
+    "pi_a": {"$ref": "#/$defs/g1"},
+    "pi_b": {"$ref": "#/$defs/g2"},
+    "pi_c": {"$ref": "#/$defs/g1"},
+    "protocol": {"const": "groth16"},
+    "curve": {"const": "bn128"}
+  },
+  "$defs": {
+    "coord": {"type": "string", "pattern": "^(0|[1-9][0-9]{0,77})$"},
+    "g1": {"type": "array", "items": {"$ref": "#/$defs/coord"}, "minItems": 3, "maxItems": 3},
+    "g2": {"type": "array", "minItems": 3, "maxItems": 3,
+           "items": {"type": "array", "items": {"$ref": "#/$defs/coord"}, "minItems": 2, "maxItems": 2}}
+  }
+}

@@ -19,6 +19,7 @@ from .protocol import Config, commitment, config_hash, pk_hash
 REG_SCHEMA = "sigil.registration/v2"
 RECEIPT_SCHEMA = "sigil.receipt/v2"
 CLAIM_SCHEMA = "sigil.claim/v2"
+BUNDLE_SCHEMA = "sigil.bundle/v2"      # bundle.json next to a proof (sigil.schemas, SDK-05)
 
 
 def _check_values(obj):

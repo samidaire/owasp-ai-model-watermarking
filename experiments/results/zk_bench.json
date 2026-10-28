@@ -1,0 +1,60 @@
+{
+  "env": {
+    "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "logical_cpus": 16,
+    "ram_bytes": 16422035456,
+    "os": "Windows-11-10.0.26300-SP0",
+    "node": "v24.16.0",
+    "python": "3.12.13"
+  },
+  "git_commit": "68c5ba6f49d26c1b0ab5e9c79e91364ec2f4fffa",
+  "rows": [
+    {
+      "circuit": "ownership_T64_M288_E8_W24",
+      "T": 64,
+      "M": 288,
+      "max_err": 8,
+      "constraints": 116822,
+      "ptau": "ppot_0080_17.ptau",
+      "setup_s": 151.9,
+      "witness_s_median": 0.503,
+      "prove_s_median": 3.899,
+      "verify_s_median": 0.407,
+      "proof_json_bytes": 741,
+      "zkey_bytes": 100675685,
+      "vkey_bytes": 3654,
+      "peak_node_rss_bytes": 1999151104,
+      "runs": 5
+    },
+    {
+      "circuit": "ownership_T256_M288_E32_W24",
+      "T": 256,
+      "M": 288,
+      "max_err": 32,
+      "constraints": 402292,
+      "ptau": "ppot_0080_19.ptau",
+      "setup_s": 480.6,
+      "witness_s_median": 0.929,
+      "prove_s_median": 11.55,
+      "verify_s_median": 0.409,
+      "proof_json_bytes": 733,
+      "zkey_bytes": 329983909,
+      "vkey_bytes": 3657,
+      "peak_node_rss_bytes": 5333200896,
+      "runs": 5
+    }
+  ],
+  "compiled_not_set_up": [
+    {
+      "circuit": "ownership_T64_M2304_E8_W24",
+      "T": 64,
+      "M": 2304,
+      "max_err": 8,
+      "layer": "layer3.1.conv2",
+      "constraints": 897932,
+      "wires": 896396,
+      "ptau_power": 20,
+      "r1cs_bytes": 426714908
+    }
+  ]
+}

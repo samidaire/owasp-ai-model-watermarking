@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install test dependencies (no ML stack)
-        run: uv pip install --system pytest numpy cryptography httpx
+        run: uv pip install --system pytest numpy cryptography httpx jsonschema
       - name: Install the SDK (core only) when present
         shell: bash
         run: if [ -f sdk/pyproject.toml ]; then uv pip install --system -e ./sdk; fi

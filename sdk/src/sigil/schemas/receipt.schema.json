@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sigil:schema:receipt:v2",
+  "title": "sigil registry receipt (protocol v2)",
+  "description": "A registry's signed statement that it saw this exact registration at this time (sigil.records.make_receipt). The earliest valid receipt wins a dispute.",
+  "type": "object",
+  "required": ["schema", "registration_sha256", "registered_at", "registry_public_key", "registry_signature"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "sigil.receipt/v2"},
+    "registration_sha256": {"$ref": "urn:sigil:schema:registration:v2#/$defs/hex32",
+                            "description": "SHA-256 of the registration's canonical JSON"},
+    "registered_at": {"$ref": "urn:sigil:schema:registration:v2#/$defs/time"},
+    "registry_public_key": {"$ref": "urn:sigil:schema:registration:v2#/$defs/hex32"},
+    "registry_signature": {"$ref": "urn:sigil:schema:registration:v2#/$defs/signature"}
+  }
+}
