@@ -7,7 +7,7 @@ This document says **how, when and by whom** the work gets done. [REQUIREMENTS.m
 ```
  Phase 0         Phase 1                              Phase 2                Phase 3
  Set up    ──▶   Complete & correct the build   ──▶   Update the UI    ──▶   Migrate to the
- (1 week)        against the SOP                      design (canvas)         new UI
+ (1 week)        against the SOP                      design (canvas)        new UI
                  M1 … M7
                       │                                    │                      │
                  [Gate 1: SOP-complete]              [Gate 2: design      [Gate 3: parity
