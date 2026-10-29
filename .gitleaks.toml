@@ -1,0 +1,9 @@
+# Secret scanning (CR-04): gitleaks' default rules, plus the files whose high-entropy values are public by design.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public Groth16 setup transcripts: SHA-256 / BLAKE2b fingerprints of the ptau, r1cs, zkey and vkey files"
+paths = [
+  '''circuits/keys/.*\.setup\.json''',
+]

@@ -4,12 +4,13 @@ The one test that trains on MNIST is marked ``ml``.
 """
 import numpy as np
 import pytest
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
-from sigil import attacks as A
-from sigil import protocol as P
+torch = pytest.importorskip("torch")
+import torch.nn as nn  # noqa: E402
+import torch.nn.functional as F  # noqa: E402
+
+from sigil import attacks as A  # noqa: E402
+from sigil import protocol as P  # noqa: E402
 
 
 class Tiny(nn.Module):
