@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sigil Part 3 Cue Sheet</title>
+<meta name="author" content="Sigil team: Sami Daire">
+<meta name="description" content="One-page presenter cue sheet for part 3 of the Sigil demo: what to click, what to check and what to say.">
+<!-- Source of docs/Sigil-Part3-Sami-Cue-Sheet.pdf. Rebuild (Windows, Microsoft Edge):
+     msedge --headless=new --no-pdf-header-footer --print-to-pdf=docs\Sigil-Part3-Sami-Cue-Sheet.pdf docs\guide\sami-cue-sheet.html
+     Numbers are from the saved results in demo/results/ (29 Oct 2026); a live run changes them a little. -->
+<style>
+/* One A4 page in the project guide's Cocoa Pop palette: a header, a "before your turn" strip, seven step cards in
+   two columns (the last one full width), then the hand-off and the likely question. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Instrument Sans"; src: url("fonts/instrument-sans-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 800; }
+
+:root {
+  --page: #ffffff;
+  --cream: #f4ebdf;
+  --sand: #e8d8c4;
+  --ink: #2a1a12;       /* espresso */
+  --ink-2: #5e4636;
+  --muted: #76604f;
+  --accent: #c8743a;    /* caramel */
+  --accent-text: #7a4e33;
+  --accent-soft: #f6e4d3;
+  --good: #3d5a3a;
+  --warn: #a3412a;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@page { size: A4; margin: 8mm 11mm 8mm; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 8.25pt; line-height: 1.32; }
+.wrap { max-width: 188mm; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); margin: 0; color: var(--ink); text-wrap: balance; }
+p { margin: 0; }
+b { font-weight: 650; color: var(--ink); }
+.ui { font-weight: 650; color: var(--ink); background: var(--cream); border-radius: 3px; padding: 0 .3em; white-space: nowrap; }
+.mono { font-family: var(--mono); font-size: .92em; font-variant-numeric: tabular-nums; }
+
+/* header */
+.top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2pt 11pt; align-items: end; border-bottom: 2px solid var(--ink); padding-bottom: 7pt; }
+.no { grid-row: span 2; font-family: var(--display); font-weight: 800; font-size: 44pt; line-height: .8; color: var(--accent); }
+.eyebrow { font-family: var(--mono); font-size: 7pt; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
+h1 { font-weight: 800; font-size: 19pt; line-height: 1.05; letter-spacing: -.02em; }
+.meta { grid-row: span 2; align-self: end; text-align: right; font-family: var(--mono); font-size: 7.4pt; color: var(--muted); line-height: 1.5; }
+.meta b { font-family: var(--mono); font-weight: 600; }
+
+/* before you start */
+.before { margin-top: 6pt; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; padding: 5pt 9pt; color: var(--ink-2); }
+.before h2, .end h2 { font-family: var(--mono); font-weight: 600; font-size: 7pt; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 2pt; }
+
+/* step cards */
+.steps { margin-top: 6pt; display: grid; grid-template-columns: 1fr 1fr; gap: 5pt; }
+.card { border: 2px solid var(--ink); border-radius: 8px; padding: 5pt 8pt 6pt; break-inside: avoid; }
+.card header { display: flex; align-items: center; gap: 6pt; margin-bottom: 3pt; }
+.card .n { flex: none; display: grid; place-items: center; width: 15pt; height: 15pt; border-radius: 50%; background: var(--ink); color: #fff; font-family: var(--mono); font-weight: 600; font-size: 7.6pt; }
+.card h3 { font-weight: 700; font-size: 10.5pt; line-height: 1.15; }
+.card h3 small { font-family: var(--sans); font-weight: 500; font-size: 8pt; color: var(--muted); }
+.row { display: grid; grid-template-columns: 30pt minmax(0, 1fr); gap: 5pt; }
+.row + .row { margin-top: 2pt; }
+.lab { font-family: var(--mono); font-size: 6.6pt; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-text); padding-top: 1.3pt; }
+.row div { color: var(--ink-2); }
+.row ul { margin: 0; padding-left: 10pt; }
+.row li + li { margin-top: 1pt; }
+.say { background: var(--cream); border-radius: 5px; padding: 3pt 6pt; color: var(--ink); font-style: italic; }
+.card.wide { grid-column: 1 / -1; }
+.wide .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12pt; }
+.wide .row.last { margin-top: 4pt; padding-top: 4pt; border-top: 1px solid var(--sand); }
+
+/* misuse table */
+table { border-collapse: collapse; width: 100%; font-size: 8pt; margin-top: 2pt; }
+td { padding: 1.6pt 5pt; border-bottom: 1px solid var(--sand); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+td:last-child { color: var(--warn); }
+
+/* hand-off, question, notes */
+.end { margin-top: 5pt; display: grid; grid-template-columns: 1fr 1fr; gap: 5pt; break-inside: avoid; }
+.box { border: 1.5px dashed var(--ink); border-radius: 6px; padding: 5pt 9pt; color: var(--ink-2); break-inside: avoid; }
+.box.qa { border: 0; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="no">3</div>
+    <div class="eyebrow">Sigil · presenter cue sheet</div>
+    <div class="meta"><b>Sami Daire</b><br>about 5 minutes<br>demos C–F + Verify</div>
+    <h1>Why proofs can be forged, and our fix</h1>
+  </header>
+
+  <section class="before">
+    <h2>Before your turn</h2>
+    <p>The app is open at <span class="mono">http://127.0.0.1:8765</span> → <span class="ui">Open dashboard</span>. In the left sidebar, <b>C, D, E and F</b> each have a ✓. If a page says “Nothing has run yet”, press its Run button once (C and D ≈ 3 s, E ≈ 10 s). The bottom bar says <b>Idle</b>. The ← → keys move between demos. Numbers change a little with each live run, so read them off the screen. If something breaks: <b>Show saved results</b> in the sidebar, or the backup <span class="mono">python demo/server.py --simulate --port 8766</span>.</p>
+  </section>
+
+  <div class="steps">
+
+    <article class="card">
+      <header><span class="n">1</span><h3>Start the long run first <small>· Demo F</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div>Sidebar <span class="ui">F · Protocol v2</span> → <span class="ui">Run demo F live</span> (top right). Takes about 80 s.</div></div>
+      <div class="row"><span class="lab">Check</span><div>The console bar at the bottom starts moving.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“This makes a brand-new proof right now. While it runs, I’ll show you why we need it.”</div></div>
+    </article>
+
+    <article class="card">
+      <header><span class="n">2</span><h3>The problem <small>· Demo C, Ownership forgery</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div>Sidebar <span class="ui">C · Ownership forgery</span>.</div></div>
+      <div class="row"><span class="lab">Show</span><div>Owner: <b>0/64</b> bits wrong. Thief: also <b>0/64</b>, and the message reads <b>MALLORY!</b> The “never watermarked” table: every row says <b>False claim works</b>.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“Old methods let you pick the key after seeing the model. A thief makes a fake key that finds their own name in our model with zero errors, even in models nobody marked. So reading a mark alone proves nothing.”</div></div>
+    </article>
+
+    <article class="card">
+      <header><span class="n">3</span><h3>Our fix: lock the seed first <small>· Demo D</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div><span class="ui">→</span> or sidebar <span class="ui">D · Committed seed</span>.</div></div>
+      <div class="row"><span class="lab">Show</span><div>Naive fix: <b>1,000/1,000</b> fakes pass. Real fix: <b>0/100,000</b> pass, best thief still <b>16/64</b> wrong. On the chart every try is far from the green “accept” line.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“The owner publishes a hash of a secret seed at registration; the key and the mark both come from it. Now the thief must guess the seed. 100,000 tries, none came close. An even chance needs about 2.5 billion tries, around 196 hours on one CPU core. At 256 bits it is out of reach.”</div></div>
+    </article>
+
+    <article class="card">
+      <header><span class="n">4</span><h3>Hiding the secret isn’t enough <small>· Demo E</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div><span class="ui">→</span> or sidebar <span class="ui">E · Zero-knowledge proofs</span>.</div></div>
+      <div class="row"><span class="lab">Show</span><div>E1: owner <b>and</b> thief both get “Proof verified: true”. E2: the owner’s and the thief’s verification keys are <b>identical</b>.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“A zero-knowledge proof hides the secret. But with the EZKL tool the thief’s fake proof passes too, under the owner’s own key. A valid proof alone doesn’t say who the owner is.”</div></div>
+    </article>
+
+    <article class="card">
+      <header><span class="n">5</span><h3>The full system <small>· Demo F (the run is done now)</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div><span class="ui">→</span> or sidebar <span class="ui">F · Protocol v2</span>.</div></div>
+      <div class="row"><span class="lab">Check</span><div>“Ownership verified · 0 of 64 bits revealed” and every check has a green tick.</div></div>
+      <div class="row"><span class="lab">Show</span><div>Prove ≈ <b>4 s</b>, proof ≈ <b>880 bytes</b>, owner <b>0/64</b> wrong. F3: thief “no proof possible”. F4: all four misuses <b>Rejected</b>.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“Our circuit rebuilds the key and mark from the locked seed inside the proof, allows at most 8 wrong bits, and is tied to this exact file and this one claim. The proof is under 1 KB; EZKL’s is 60 KB. The thief has no seed: 43 of 64 bits wrong, so no proof.”</div></div>
+    </article>
+
+    <article class="card">
+      <header><span class="n">6</span><h3>The final check <small>· Verify ownership</small></h3></header>
+      <div class="row"><span class="lab">Click</span><div>Sidebar <span class="ui">Verify ownership</span>.</div></div>
+      <div class="row"><span class="lab">Show</span><div>The <b>Ownership proven</b> stamp and the list of checks, all ticked. Scroll down to the proof itself.</div></div>
+      <div class="row"><span class="lab">Say</span><div class="say">“That’s the whole proof: 3 points, under 1 KB, and not one watermark bit is in it. Anyone can check it with the public key; the watermark never leaves the owner.”</div></div>
+    </article>
+
+    <article class="card wide">
+      <header><span class="n">7</span><h3>Try to cheat, then on-chain <small>· still on Verify ownership</small></h3></header>
+      <div class="cols">
+        <div>
+          <div class="row"><span class="lab">Click</span><div>Each <span class="ui">Try a misuse</span> button, one by one (about 1 s each).</div></div>
+          <div class="row"><span class="lab">Check</span><div>The console marks the failing check with <b class="mono">[XX]</b>.</div></div>
+          <div class="row"><span class="lab">Say</span><div class="say">“Each button changes one thing. The verifier catches every one, each with its own reason.”</div></div>
+        </div>
+        <table>
+          <tr><td>replayed for another claim</td><td>made for a different claim</td></tr>
+          <tr><td>checked against a different model</td><td>about a different model</td></tr>
+          <tr><td>tampered proof bytes</td><td>the proof doesn’t verify</td></tr>
+          <tr><td>receipt from an untrusted registry</td><td>the receipt isn’t trusted</td></tr>
+        </table>
+        <div class="row last"><span class="lab">Last</span><div>Click the <span class="ui">On-chain</span> tab and show <b>243,225 gas</b>. After a live F run it says the proof was made earlier. That is expected.</div></div>
+        <div class="row last"><span class="lab">Say</span><div class="say">“The same proof is also checked by a smart contract on a local blockchain.”</div></div>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="end">
+    <section class="box">
+      <h2>Hand-off to Yash</h2>
+      <p>“Yash will show what runs behind the screen, who wins when two people claim the same model, and how this would be used for real.”</p>
+    </section>
+    <section class="box qa">
+      <h2>If asked: “What does the verifier learn?”</h2>
+      <p>“Only that the registered owner’s mark is in this exact file, with at most 8 of 64 bits wrong. Nothing about the seed, the key or the mark.”</p>
+    </section>
+  </div>
+
+</div>
+</body>
+</html>
